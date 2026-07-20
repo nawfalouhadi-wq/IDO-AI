@@ -1,0 +1,416 @@
+import json
+import os
+import random
+import datetime
+
+
+# =========================
+# Welcome Screen
+# =========================
+
+print("=" * 55)
+print("              Welcome to Ido AI 3.0")
+print("=" * 55)
+print("Features:")
+print("✓ English ↔ French Translation")
+print("✓ Sentence Translation")
+print("✓ Learning System")
+print("✓ Memory Save")
+print("✓ Questions & Answers")
+print("✓ Calculator")
+print("✓ Current Time")
+print("✓ Smart Reactions")
+print("=" * 55)
+print("Type 'exit' to close the AI.")
+print()
+
+
+# =========================
+# Translation Dictionary
+# =========================
+
+translations = {
+    "hello": "bonjour",
+    "hi": "salut",
+    "welcome": "bienvenue",
+    "dog": "chien",
+    "cat": "chat",
+    "book": "livre",
+    "school": "école",
+    "teacher": "professeur",
+    "student": "étudiant",
+    "computer": "ordinateur",
+    "phone": "téléphone",
+    "water": "eau",
+    "food": "nourriture",
+    "car": "voiture",
+    "house": "maison",
+    "friend": "ami",
+    "love": "amour",
+    "happy": "heureux",
+    "sad": "triste",
+    "apple": "pomme",
+    "banana": "banane",
+    "orange": "orange",
+    "grape": "raisin",
+    "bread": "pain",
+    "milk": "lait",
+    "coffee": "café",
+    "tea": "thé",
+    "table": "table",
+    "chair": "chaise",
+    "window": "fenêtre",
+    "door": "porte",
+    "sun": "soleil",
+    "moon": "lune",
+    "star": "étoile",
+    "tree": "arbre",
+    "flower": "fleur",
+    "river": "rivière",
+    "mountain": "montagne",
+    "sea": "mer",
+    "bird": "oiseau",
+    "fish": "poisson",
+    "cow": "vache",
+    "horse": "cheval",
+    "sheep": "mouton",
+    "goat": "chèvre",
+    "rabbit": "lapin",
+    "lion": "lion",
+    "tiger": "tigre",
+    "bear": "ours",
+    "red": "rouge",
+    "blue": "bleu",
+    "green": "vert",
+    "yellow": "jaune"
+}
+
+
+# =========================
+# Load Memory
+# =========================
+
+if os.path.exists("memory.json"):
+    with open("memory.json", "r", encoding="utf-8") as file:
+        translations.update(json.load(file))
+# =========================
+# Reverse Translation
+# =========================
+
+def update_reverse_translation():
+    reverse_translations = {}
+
+    for english, french in translations.items():
+        reverse_translations[french] = english
+
+    return reverse_translations
+
+
+reverse_translations = update_reverse_translation()
+
+
+
+# =========================
+# Sentence Translation
+# =========================
+
+sentences = {
+    "i love you": "je t'aime",
+    "i love my dog": "j'aime mon chien",
+    "i am happy": "je suis heureux",
+    "i am sad": "je suis triste",
+    "good morning": "bonjour",
+    "good night": "bonne nuit",
+    "thank you very much": "merci beaucoup",
+    "see you later": "à plus tard"
+}
+
+
+
+# =========================
+# Questions
+# =========================
+
+questions = {
+    "how are you": "I am fine, thank you!",
+    "what is your name": "My name is Ido AI.",
+    "who made you": "I was created by Nawfal.",
+    "what can you do": "I can translate, learn, calculate and remember.",
+    "who are you": "I am Ido AI 3.0."
+}
+
+
+
+# =========================
+# Normal Responses
+# =========================
+
+responses = {
+    "hello": "Hello! Nice to meet you.",
+    "hi": "Hi! How can I help you?",
+    "thank you": "You're welcome!",
+    "thanks": "No problem!",
+    "good morning": "Good morning! Have a nice day.",
+    "good night": "Good night! Sleep well.",
+    "bye": "Goodbye! See you later.",
+    "how are you": "I am great! Thank you for asking."
+}
+
+
+
+# =========================
+# Smart Random Responses
+# =========================
+
+random_responses = [
+    "Interesting!",
+    "I understand.",
+    "Nice!",
+    "Good idea!",
+    "Tell me more.",
+    "I am learning!",
+    "That is interesting."
+]
+# =========================
+# Save Memory Function
+# =========================
+
+def save_memory():
+    with open("memory.json", "w", encoding="utf-8") as file:
+        json.dump(
+            translations,
+            file,
+            ensure_ascii=False,
+            indent=4
+        )
+
+
+
+# =========================
+# Learn New Word Function
+# =========================
+
+def learn_word(text):
+
+    if "=" not in text:
+        print("AI: Use this format:")
+        print("AI: learn word = translation")
+        return
+
+    data = text.replace("learn", "").strip()
+
+    english, french = data.split("=", 1)
+
+    english = english.strip()
+    french = french.strip()
+
+    translations[english] = french
+
+    save_memory()
+
+    update_reverse_translation()
+
+    print("AI: I learned a new word!")
+    print("AI:", english, "=", french)
+
+
+
+# =========================
+# Forget Word Function
+# =========================
+
+def forget_word(word):
+
+    if word in translations:
+
+        del translations[word]
+
+        save_memory()
+
+        update_reverse_translation()
+
+        print("AI: I forgot", word)
+
+    else:
+        print("AI: I don't know this word.")
+
+
+
+# =========================
+# Show Memory Function
+# =========================
+
+def show_memory():
+
+    print("AI: My memory:")
+
+    for english, french in translations.items():
+        print("-", english, "=", french)
+
+
+
+# =========================
+# Calculator Function
+# =========================
+
+def calculator(expression):
+
+    try:
+        allowed = "0123456789+-*/(). "
+
+        for char in expression:
+
+            if char not in allowed:
+                return "Invalid calculation."
+
+        result = eval(expression)
+
+        return result
+
+    except:
+        return "Invalid calculation."
+# =========================
+# Translation Function
+# =========================
+
+def translate_text(text):
+
+    words = text.split()
+    result = []
+
+    for word in words:
+
+        if word in translations:
+            result.append(translations[word])
+
+        elif word in reverse_translations:
+            result.append(reverse_translations[word])
+
+        else:
+            result.append(word)
+
+    return " ".join(result)
+
+
+
+# =========================
+# Current Time Function
+# =========================
+
+def get_time():
+
+    now = datetime.datetime.now()
+
+    return now.strftime("%H:%M:%S")
+
+
+
+# =========================
+# AI Answer Function
+# =========================
+
+def ai_answer(user):
+
+    if user in responses:
+        return responses[user]
+
+
+    elif user in questions:
+        return questions[user]
+
+
+    elif user in sentences:
+        return sentences[user]
+
+
+    elif user in translations:
+        return translations[user]
+
+
+    elif user in reverse_translations:
+        return reverse_translations[user]
+
+
+    elif " " in user:
+        return translate_text(user)
+
+
+    else:
+        return random.choice(random_responses)
+# =========================
+# Main AI Loop
+# =========================
+
+while True:
+
+    user = input("You ➜ ").lower().strip()
+
+    user = user.replace("!", "")
+    user = user.replace("?", "")
+    user = user.replace(".", "")
+
+
+    if user == "exit":
+
+        print("AI: Goodbye! See you later.")
+        break
+
+
+
+    elif user == "time":
+
+        print("AI:", get_time())
+
+
+
+    elif user == "memory":
+
+        show_memory()
+
+
+
+    elif user.startswith("learn "):
+
+        learn_word(user)
+
+
+
+    elif user.startswith("forget "):
+
+        word = user.replace("forget ", "").strip()
+
+        forget_word(word)
+
+
+
+    elif "+" in user or "-" in user or "*" in user or "/" in user:
+
+        print("AI:", calculator(user))
+
+
+
+    else:
+
+        answer = ai_answer(user)
+
+        if answer in random_responses:
+
+            print("AI:", answer)
+
+            teach = input("AI: I don't know this word. Teach me? (yes/no): ")
+
+            if teach == "yes":
+
+                translation = input("French translation: ")
+
+                translations[user] = translation
+
+                save_memory()
+
+                update_reverse_translation()
+
+                print("AI: Thank you! I learned it.")
+
+        else:
+
+            print("AI:", answer)
