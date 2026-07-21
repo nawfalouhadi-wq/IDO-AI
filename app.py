@@ -7,6 +7,7 @@ from calculator import calculate
 from translator import translate
 from memory import get_answer
 
+
 # استيراد Ollama بشكل آمن
 try:
     from ollama_ai import ask_ollama
@@ -15,7 +16,7 @@ except Exception:
     ollama_available = False
 
 
-# Flask يبحث الآن داخل مجلد templates
+# Flask سيبحث تلقائياً داخل مجلد templates
 app = Flask(__name__)
 
 
@@ -28,19 +29,18 @@ def ai_response(question):
             return "اكتب سؤالاً أولاً"
 
 
-        # 1 - الحاسبة
+        # الحاسبة
         try:
-            calc = calculate(question)
+            result = calculate(question)
 
-            if calc is not None:
-                return f"🧮 النتيجة: {calc}"
+            if result is not None:
+                return f"🧮 النتيجة: {result}"
 
         except Exception:
             pass
 
 
-
-        # 2 - الترجمة
+        # الترجمة
         try:
             translated = translate(question)
 
@@ -51,47 +51,40 @@ def ai_response(question):
             pass
 
 
-
-        # 3 - الذاكرة
+        # الذاكرة
         try:
-            saved = get_answer(question)
+            memory_answer = get_answer(question)
 
-            if saved:
-                return saved
+            if memory_answer:
+                return memory_answer
 
         except Exception:
             pass
 
 
-
-        # 4 - عقل Ido AI
+        # عقل Ido AI
         answer = get_response(question)
-
 
         if not answer:
             answer = "لم أفهم السؤال"
 
 
-
-        # 5 - Ollama إذا لم يجد جواباً
+        # Ollama عند الحاجة فقط
         if (
-            "لم أفهم" in answer
-            or "لا أعرف" in answer
-            or answer.strip() == ""
+            ("لم أفهم" in answer or "لا أعرف" in answer)
+            and ollama_available
         ):
-
-            if ollama_available:
+            try:
                 return ask_ollama(question)
-
+            except Exception:
+                pass
 
 
         return answer
 
 
-
     except Exception as e:
-
-        return f"⚠️ حدث خطأ: {str(e)}"
+        return f"⚠️ خطأ: {e}"
 
 
 
@@ -107,8 +100,8 @@ def home():
 
         question = request.form.get("question", "")
 
-        answer = ai_response(question)
-
+        if question.strip():
+            answer = ai_response(question)
 
 
     return render_template(
@@ -119,7 +112,8 @@ def home():
 
 
 
-# تشغيل التطبيق
+# تشغيل محلي فقط
+# Railway يستخدم gunicorn app:app
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 5000))
