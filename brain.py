@@ -1,13 +1,26 @@
 def get_response(message):
     message = message.lower().strip()
 
-    if "hello" in message or "hi" in message:
-        return "Hello! أنا Ido AI 🤖"
+    responses = {
 
-    if "مرحبا" in message or "سلام" in message:
-        return "مرحبًا بك! كيف يمكنني مساعدتك؟ 😊"
+        "hello": "Hello! أنا Ido AI 🤖",
+        "hi": "Hello! أنا Ido AI 🤖",
 
-    if "اسمك" in message:
-        return "أنا Ido AI"
+        "مرحبا": "مرحبًا بك! كيف يمكنني مساعدتك؟ 😊",
+        "سلام": "وعليكم السلام! كيف حالك؟ 😊",
+
+        "اسمك": "أنا Ido AI 🤖",
+
+        "كيف حالك": "أنا بخير، شكرًا لسؤالك 😊",
+
+        "من صنعك": "أنا مشروع ذكاء اصطناعي اسمه Ido AI 🤖",
+
+        "الوقت": "يمكنك معرفة الوقت من النظام ⏰",
+
+    }
+
+    for key, answer in responses.items():
+        if key in message:
+            return answer
 
     return "لم أفهم سؤالك بعد، لكنني أتعلم يومًا بعد يوم 🤖"

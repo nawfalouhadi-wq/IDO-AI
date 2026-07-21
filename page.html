@@ -4,396 +4,506 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>IDO AI</title>
 
 <style>
 
 *{
+    margin:0;
+    padding:0;
     box-sizing:border-box;
+    font-family:Arial,sans-serif;
 }
-
 
 body{
-
-    margin:0;
-    height:100vh;
-
     background:#202123;
-
-    font-family:Arial,sans-serif;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    color:white;
-
+    color:#fff;
+    transition:0.3s;
 }
 
-
-
-.container{
-
-    width:90%;
-    max-width:750px;
-
-    text-align:center;
-
+body.light{
+    background:#f4f4f4;
+    color:#222;
 }
 
+.header{
+    position:fixed;
+    top:20px;
+    right:20px;
+    z-index:1000;
+}
 
+.panel{
+    width:220px;
+    background:#343541;
+    border-radius:18px;
+    padding:15px;
+    box-shadow:0 8px 25px rgba(0,0,0,.35);
+}
+
+body.light .panel{
+    background:#ffffff;
+}
 
 .logo{
-
-    font-size:45px;
-
+    text-align:center;
+    font-size:28px;
     font-weight:bold;
-
-    letter-spacing:5px;
-
-    margin-bottom:20px;
-
-    color:white;
-
+    margin-bottom:15px;
 }
 
+.status{
+    text-align:center;
+    color:#00d26a;
+    margin-bottom:15px;
+}
 
-
-.mode{
-
-    position:fixed;
-
-    top:20px;
-
-    left:20px;
-
-    background:#343541;
-
-    padding:12px 18px;
-
-    border-radius:15px;
-
+.menu-btn{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+    border:none;
+    border-radius:12px;
     cursor:pointer;
-
+    background:#444654;
+    color:white;
+    font-size:16px;
+    transition:.25s;
 }
 
+.menu-btn:hover{
+    background:#10a37f;
+}
 
+body.light .menu-btn{
+    background:#e8e8e8;
+    color:#222;
+}
+
+.container{
+    max-width:850px;
+    margin:auto;
+    padding:120px 20px 40px;
+}
 
 .box{
-
     background:#343541;
-
-    padding:20px;
-
     border-radius:20px;
-
+    padding:25px;
 }
 
-
+body.light .box{
+    background:white;
+}
 
 .answer{
-
     background:#202123;
-
     border-radius:15px;
-
     padding:20px;
-
-    min-height:100px;
-
-    text-align:right;
-
-    font-size:20px;
-
-    line-height:1.7;
-
+    min-height:120px;
     margin-bottom:20px;
-
+    line-height:1.8;
+    font-size:19px;
 }
 
-
+body.light .answer{
+    background:#f2f2f2;
+    color:#222;
+}
 
 form{
-
     display:flex;
-
     gap:10px;
-
 }
-
-
 
 textarea{
-
     flex:1;
-
-    height:90px;
-
-    resize:none;
-
+    height:100px;
     border:none;
-
     outline:none;
-
+    resize:none;
     border-radius:15px;
-
     padding:15px;
-
     font-size:18px;
-
 }
-
-
 
 button{
-
     width:120px;
-
     border:none;
-
     border-radius:15px;
-
     background:#10a37f;
-
     color:white;
-
-    font-size:18px;
-
     cursor:pointer;
-
+    font-size:18px;
 }
-
-
 
 button:hover{
-
-    background:#13c997;
-
+    background:#14c796;
 }
-
-
 
 .tools{
-
-    margin-top:15px;
-
+    margin-top:20px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
 }
-
-
 
 .tool-btn{
-
     background:#444654;
-
-    padding:10px 18px;
-
-    border-radius:15px;
-
-    display:inline-block;
-
-    margin:5px;
-
+    padding:10px 16px;
+    border-radius:12px;
     cursor:pointer;
-
 }
-
-
 
 .tool-btn:hover{
-
     background:#565869;
-
 }
-
-
-
-#micStatus{
-
-    margin-top:10px;
-
-    color:#10a37f;
-
-}
-
-
 
 .time{
-
-    margin-top:15px;
-
-    color:#aaa;
-
+    margin-top:20px;
+    text-align:center;
+    color:#999;
 }
 
+#typing{
+    display:none;
+    color:#10a37f;
+    margin-top:10px;
+}
+
+@media(max-width:768px){
+
+.header{
+    position:static;
+    margin:20px;
+}
+
+.panel{
+    width:100%;
+}
+
+form{
+    flex-direction:column;
+}
+
+button{
+    width:100%;
+}
+
+}
 
 </style>
 
 </head>
 
-
 <body>
 
+<div class="header">
 
-<div class="mode">
-🌙
+    <div class="panel">
+
+        <div class="logo">
+            🤖 IDO AI
+        </div>
+
+        <div class="status" id="status">
+            🟢 متصل
+        </div>
+
+        <button class="menu-btn" id="themeBtn">
+            🌙 الوضع الليلي
+        </button>
+
+        <button class="menu-btn" id="newChatBtn">
+            💬 محادثة جديدة
+        </button>
+
+        <button class="menu-btn" id="clearBtn">
+            🗑️ مسح الرسالة
+        </button>
+
+        <button class="menu-btn" id="settingsBtn">
+            ⚙️ الإعدادات
+        </button>
+
+    </div>
+
 </div>
-
-
 
 <div class="container">
 
+    <div class="box">
 
-<div class="logo">
-IDO AI
-</div>
+        <div class="answer" id="answer">
 
+            {% if answer %}
+                {{ answer }}
+            {% else %}
+                <b>مرحبًا بك في IDO AI 🤖</b>
+                <br><br>
+                اكتب سؤالك وسأجيبك.
+            {% endif %}
 
-<div class="box">
+        </div>
 
+        <div id="typing">
+            🤖 IDO AI يكتب...
+        </div>
 
-<div class="answer">
+        <div id="copyMessage" style="display:none;color:#10a37f;margin-top:10px;">
+            ✅ تم نسخ الرد.
+        </div>
 
-{% if answer %}
+        <form method="POST" id="chatForm">
 
-{{ answer }}
+            <textarea
+                id="question"
+                name="question"
+                placeholder="اكتب رسالتك هنا..."
+                required></textarea>
 
-{% else %}
+            <button type="submit">
+                إرسال
+            </button>
 
-مرحباً! أنا IDO AI 🤖  
-كيف يمكنني مساعدتك؟
+        </form>
 
-{% endif %}
+        <div class="tools">
 
-</div>
+            <div class="tool-btn" id="micBtn">
+                🎤 الميكروفون
+            </div>
 
+            <div class="tool-btn" id="copyBtn">
+                📋 نسخ الرد
+            </div>
 
+        </div>
 
-<form method="POST">
+        <div id="micStatus">
+            الميكروفون مغلق
+        </div>
 
+        <div class="time">
+            🕒 {{ time }}
+        </div>
 
-<textarea
-id="question"
-name="question"
-placeholder="اكتب رسالتك هنا..."
-></textarea>
-
-
-<button type="submit">
-إرسال
-</button>
-
-
-</form>
-
-
-
-<div class="tools">
-
-
-<div class="tool-btn" id="micBtn">
-🎤 تفعيل الميكروفون
-</div>
-
-
-</div>
-
-
-
-<div id="micStatus">
-الميكروفون مغلق
-</div>
-
-
-
-<div class="time">
-الوقت: {{ time }}
-</div>
-
+    </div>
 
 </div>
-
-
-</div>
-
-
 
 <script>
 
+const body = document.body;
+
+const themeBtn = document.getElementById("themeBtn");
+const newChatBtn = document.getElementById("newChatBtn");
+const clearBtn = document.getElementById("clearBtn");
+const copyBtn = document.getElementById("copyBtn");
+
+const textarea = document.getElementById("question");
+const answer = document.getElementById("answer");
+const typing = document.getElementById("typing");
+const copyMessage = document.getElementById("copyMessage");
+
+
+// الوضع الليلي
+
+if(localStorage.getItem("theme") === "light"){
+
+    body.classList.add("light");
+    themeBtn.innerHTML = "☀️ الوضع النهاري";
+
+}
+
+themeBtn.onclick = function(){
+
+    body.classList.toggle("light");
+
+    if(body.classList.contains("light")){
+
+        localStorage.setItem("theme","light");
+        themeBtn.innerHTML = "☀️ الوضع النهاري";
+
+    }else{
+
+        localStorage.setItem("theme","dark");
+        themeBtn.innerHTML = "🌙 الوضع الليلي";
+
+    }
+
+};
+
+
+// نسخ الرد
+
+copyBtn.onclick = function(){
+
+    navigator.clipboard.writeText(answer.innerText);
+
+    copyMessage.style.display = "block";
+
+    setTimeout(function(){
+
+        copyMessage.style.display = "none";
+
+    },2000);
+
+};
+
+
+// محادثة جديدة
+
+newChatBtn.onclick = function(){
+
+    textarea.value = "";
+
+    textarea.focus();
+
+};
+
+
+// مسح الرسالة
+
+clearBtn.onclick = function(){
+
+    textarea.value = "";
+
+    answer.innerHTML = "✅ تم حذف الرسالة";
+
+};
+
+// مؤشر الكتابة
+
+document.getElementById("chatForm").onsubmit = function(){
+
+    typing.style.display = "block";
+
+};
+// تشغيل الميكروفون
+
 const micBtn = document.getElementById("micBtn");
 const micStatus = document.getElementById("micStatus");
-const textarea = document.getElementById("question");
-
 
 let recognition;
 let active = false;
-
 
 if ("webkitSpeechRecognition" in window) {
 
     recognition = new webkitSpeechRecognition();
 
     recognition.lang = "ar-SA";
-
     recognition.continuous = false;
-
     recognition.interimResults = false;
-
 
     recognition.onresult = function(event){
 
-        let text = event.results[0][0].transcript;
-
-        textarea.value += text;
+        textarea.value += event.results[0][0].transcript;
 
     };
 
+    recognition.onstart = function(){
+
+        micStatus.innerHTML = "🎤 تحدث الآن...";
+        micBtn.innerHTML = "🔴 إيقاف الميكروفون";
+
+    };
 
     recognition.onend = function(){
 
         active = false;
 
-        micBtn.innerHTML = "🎤 تفعيل الميكروفون";
-
         micStatus.innerHTML = "الميكروفون مغلق";
+        micBtn.innerHTML = "🎤 الميكروفون";
 
     };
 
 }
 
-
-
 micBtn.onclick = function(){
-
 
     if(!recognition){
 
-        alert("المتصفح لا يدعم الميكروفون");
-
+        alert("هذا المتصفح لا يدعم التعرف على الصوت.");
         return;
 
     }
 
+    if(active){
 
+        recognition.stop();
+        active = false;
 
-    if(!active){
+    }else{
 
         recognition.start();
-
         active = true;
-
-
-        micBtn.innerHTML = "🎤 الميكروفون مفعل";
-
-        micStatus.innerHTML = "تحدث الآن...";
 
     }
 
+};</script>
+<div id="settingsBox" style="
+display:none;
+position:fixed;
+top:90px;
+right:20px;
+width:260px;
+background:#343541;
+padding:15px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,.4);
+z-index:9999;
+">
+
+<h3>⚙️ الإعدادات</h3>
+
+<hr>
+
+<p>🌙 الوضع الليلي يعمل من الزر الرئيسي.</p>
+
+<p>🎤 الميكروفون يعمل.</p>
+
+</div>
+
+
+<script>
+
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsBox = document.getElementById("settingsBox");
+
+settingsBtn.onclick = function(){
+
+    if(settingsBox.style.display === "block"){
+
+        settingsBox.style.display = "none";
+
+    }else{
+
+        settingsBox.style.display = "block";
+
+    }
 
 };
 
+
+// إخفاء الإعدادات عند الضغط خارجها
+
+document.addEventListener("click", function(event){
+
+    if(
+        event.target.id !== "settingsBtn" &&
+        !event.target.closest("#settingsBox")
+    ){
+
+        settingsBox.style.display = "none";
+
+    }
+
+});
+
 </script>
 
-
 </body>
-
 </html>

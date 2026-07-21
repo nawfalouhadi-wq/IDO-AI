@@ -1,45 +1,66 @@
 from flask import Flask, render_template, request
 from datetime import datetime
+import os
 
 from brain import get_response
 from calculator import calculate
 from translator import translate
 from memory import get_answer
-from ollama_ai import ask_ollama
+
+# استيراد Ollama بشكل آمن
+try:
+    from ollama_ai import ask_ollama
+    ollama_available = True
+except Exception:
+    ollama_available = False
 
 
-app = Flask(__name__, template_folder=".")
-
+# Flask يبحث الآن داخل مجلد templates
+app = Flask(__name__)
 
 
 def ai_response(question):
 
     try:
-
         question = question.strip()
+
+        if not question:
+            return "اكتب سؤالاً أولاً"
 
 
         # 1 - الحاسبة
-        calc = calculate(question)
+        try:
+            calc = calculate(question)
 
-        if calc is not None:
-            return f"🧮 النتيجة: {calc}"
+            if calc is not None:
+                return f"🧮 النتيجة: {calc}"
+
+        except Exception:
+            pass
 
 
 
         # 2 - الترجمة
-        translated = translate(question)
+        try:
+            translated = translate(question)
 
-        if translated.lower() != question.lower():
-            return f"🌍 {translated}"
+            if translated and translated.lower() != question.lower():
+                return f"🌍 {translated}"
+
+        except Exception:
+            pass
 
 
 
         # 3 - الذاكرة
-        saved = get_answer(question)
+        try:
+            saved = get_answer(question)
 
-        if saved:
-            return saved
+            if saved:
+                return saved
+
+        except Exception:
+            pass
 
 
 
@@ -47,15 +68,20 @@ def ai_response(question):
         answer = get_response(question)
 
 
+        if not answer:
+            answer = "لم أفهم السؤال"
 
-        # 5 - إذا احتاج نموذج Ollama
+
+
+        # 5 - Ollama إذا لم يجد جواباً
         if (
             "لم أفهم" in answer
             or "لا أعرف" in answer
             or answer.strip() == ""
         ):
 
-            return ask_ollama(question)
+            if ollama_available:
+                return ask_ollama(question)
 
 
 
@@ -65,9 +91,7 @@ def ai_response(question):
 
     except Exception as e:
 
-        return f"حدث خطأ: {e}"
-
-
+        return f"⚠️ حدث خطأ: {str(e)}"
 
 
 
@@ -76,34 +100,31 @@ def home():
 
     answer = ""
 
-    time = datetime.now().strftime("%H:%M:%S")
-
+    current_time = datetime.now().strftime("%H:%M:%S")
 
 
     if request.method == "POST":
 
-        question = request.form.get(
-            "question",
-            ""
-        )
+        question = request.form.get("question", "")
 
-
-        if question.strip():
-
-            answer = ai_response(question)
+        answer = ai_response(question)
 
 
 
     return render_template(
         "page.html",
         answer=answer,
-        time=time
+        time=current_time
     )
 
 
 
-
-
+# تشغيل التطبيق
 if __name__ == "__main__":
 
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+
+    app.run(
+        host="0.0.0.0",
+        port=port
+    )

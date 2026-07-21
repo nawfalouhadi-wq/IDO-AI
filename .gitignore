@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+
+.env
+
+memory.json
+
+.vscode/
+
+venv/
+env/
