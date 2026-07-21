@@ -1,10 +1,20 @@
 import requests
+import os
+
+
+# رابط Ollama
+# إذا وضعت رابط خارجي في المتغير OLLAMA_URL سيستخدمه
+# وإذا لم يوجد سيستخدم Ollama الموجود في الجهاز
+OLLAMA_URL = os.environ.get(
+    "OLLAMA_URL",
+    "http://localhost:11434"
+)
 
 
 def ask_ollama(message):
     try:
         response = requests.post(
-            "http://localhost:11434/api/generate",
+            f"{OLLAMA_URL}/api/generate",
             json={
                 "model": "llama3.2",
                 "prompt": message,
@@ -45,5 +55,4 @@ def get_response(message):
         if key in message:
             return answer
 
-    # إذا لم يجد جوابًا محفوظًا، يسأل Ollama
     return ask_ollama(message)
