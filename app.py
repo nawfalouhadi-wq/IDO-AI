@@ -16,8 +16,11 @@ except Exception:
     ollama_available = False
 
 
-# Flask سيبحث تلقائياً داخل مجلد templates
-app = Flask(__name__)
+# اجعل Flask يبحث عن القوالب في نفس مجلد app.py
+app = Flask(
+    __name__,
+    template_folder="."
+)
 
 
 def ai_response(question):
@@ -27,7 +30,6 @@ def ai_response(question):
 
         if not question:
             return "اكتب سؤالاً أولاً"
-
 
         # الحاسبة
         try:
@@ -39,7 +41,6 @@ def ai_response(question):
         except Exception:
             pass
 
-
         # الترجمة
         try:
             translated = translate(question)
@@ -49,7 +50,6 @@ def ai_response(question):
 
         except Exception:
             pass
-
 
         # الذاكرة
         try:
@@ -61,13 +61,11 @@ def ai_response(question):
         except Exception:
             pass
 
-
         # عقل Ido AI
         answer = get_response(question)
 
         if not answer:
             answer = "لم أفهم السؤال"
-
 
         # Ollama عند الحاجة فقط
         if (
@@ -79,13 +77,10 @@ def ai_response(question):
             except Exception:
                 pass
 
-
         return answer
-
 
     except Exception as e:
         return f"⚠️ خطأ: {e}"
-
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -95,7 +90,6 @@ def home():
 
     current_time = datetime.now().strftime("%H:%M:%S")
 
-
     if request.method == "POST":
 
         question = request.form.get("question", "")
@@ -103,13 +97,11 @@ def home():
         if question.strip():
             answer = ai_response(question)
 
-
     return render_template(
         "page.html",
         answer=answer,
         time=current_time
     )
-
 
 
 # تشغيل محلي فقط
