@@ -2,9 +2,6 @@ import requests
 import os
 
 
-# رابط Ollama
-# إذا وضعت رابط خارجي في المتغير OLLAMA_URL سيستخدمه
-# وإذا لم يوجد سيستخدم Ollama الموجود في الجهاز
 OLLAMA_URL = os.environ.get(
     "OLLAMA_URL",
     "http://localhost:11434"
@@ -24,10 +21,10 @@ def ask_ollama(message):
         )
 
         data = response.json()
-        return data["response"]
+        return data.get("response", "لم أحصل على إجابة من Ollama")
 
-    except Exception as e:
-        return f"خطأ في الاتصال بـ Ollama: {e}"
+    except Exception:
+        return "أنا Ido AI، لا أستطيع الاتصال بالذكاء الاصطناعي الخارجي حاليًا 🤖"
 
 
 def get_response(message):
@@ -49,10 +46,14 @@ def get_response(message):
 
         "الوقت": "يمكنك معرفة الوقت من النظام ⏰",
 
+        "كم عدد الناس في العالم": "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
+
     }
+
 
     for key, answer in responses.items():
         if key in message:
             return answer
+
 
     return ask_ollama(message)
