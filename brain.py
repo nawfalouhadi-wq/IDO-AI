@@ -21,10 +21,10 @@ def ask_ollama(message):
         )
 
         data = response.json()
-        return data.get("response", "لم أحصل على إجابة من Ollama")
+        return data.get("response", None)
 
     except Exception:
-        return "أنا Ido AI، لا أستطيع الاتصال بالذكاء الاصطناعي الخارجي حاليًا 🤖"
+        return None
 
 
 def get_response(message):
@@ -46,14 +46,25 @@ def get_response(message):
 
         "الوقت": "يمكنك معرفة الوقت من النظام ⏰",
 
-        "كم عدد الناس في العالم": "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
+        "كم عدد الناس في العالم":
+            "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
 
     }
 
 
+    # البحث عن رد جاهز
     for key, answer in responses.items():
         if key in message:
             return answer
 
 
-    return ask_ollama(message)
+    # تجربة Ollama
+    ollama_answer = ask_ollama(message)
+
+    if ollama_answer:
+        return ollama_answer
+
+
+    # إذا لم يعمل Ollama
+    return "أنا Ido AI 🤖 لا أملك إجابة لهذا السؤال حاليًا، لكن يمكنك تشغيل Ollama للحصول على ذكاء اصطناعي أقوى."
+
