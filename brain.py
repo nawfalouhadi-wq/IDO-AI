@@ -20,11 +20,16 @@ def ask_ollama(message):
             timeout=120
         )
 
-        data = response.json()
-        return data.get("response", None)
+        print("Ollama status:", response.status_code)
+        print("Ollama response:", response.text)
 
-    except Exception:
+        data = response.json()
+        return data.get("response")
+
+    except Exception as e:
+        print("Ollama error:", e)
         return None
+
 
 
 def get_response(message):
@@ -50,10 +55,10 @@ def get_response(message):
             "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
 
         "ما هو الذكاء الاصطناعي":
-            "الذكاء الاصطناعي هو تقنية تجعل الحاسوب قادرًا على التعلم وفهم الأوامر واتخاذ قرارات 🤖",
+            "الذكاء الاصطناعي هو تقنية تجعل الحاسوب قادرًا على التعلم وفهم الأوامر واتخاذ القرارات 🤖",
 
         "ما هي بايثون":
-            "Python هي لغة برمجة سهلة وقوية تستخدم في تطوير البرامج والذكاء الاصطناعي 🐍",
+            "Python هي لغة برمجة قوية وسهلة تستخدم في تطوير البرامج والذكاء الاصطناعي 🐍",
 
         "ما هي عاصمة المغرب":
             "عاصمة المغرب هي الرباط 🇲🇦",
@@ -81,11 +86,13 @@ def get_response(message):
             return answer
 
 
+    # استعمال Ollama للأسئلة غير الموجودة
     ollama_answer = ask_ollama(message)
 
     if ollama_answer:
         return ollama_answer
 
 
-    return "أنا Ido AI 🤖 لم أجد إجابة لهذا السؤال حاليًا."
+    # في حالة توقف Ollama
+    return "أنا Ido AI 🤖 لم أجد إجابة حاليًا. يمكنك تشغيل Ollama للحصول على ذكاء اصطناعي أقوى."
 
