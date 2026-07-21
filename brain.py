@@ -6,7 +6,7 @@ OLLAMA_URL = os.environ.get(
     "OLLAMA_URL",
     "http://localhost:11434"
 )
-
+print("BRAIN.PY LOADED - OLLAMA READY")
 
 def ask_ollama(message):
     try:
