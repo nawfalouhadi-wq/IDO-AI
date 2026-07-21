@@ -1,12 +1,33 @@
 import requests
 import os
 
+from dotenv import load_dotenv
+from openai import OpenAI
 
+
+# تحميل ملف .env
+load_dotenv()
+
+
+# رابط Ollama
 OLLAMA_URL = os.environ.get(
     "OLLAMA_URL",
     "http://localhost:11434"
 )
-print("BRAIN.PY LOADED - OLLAMA READY")
+
+
+# OpenAI
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY")
+)
+
+
+print("BRAIN.PY LOADED - OLLAMA + OPENAI READY")
+
+
+# -------------------------
+# Ollama
+# -------------------------
 
 def ask_ollama(message):
     try:
@@ -21,9 +42,9 @@ def ask_ollama(message):
         )
 
         print("Ollama status:", response.status_code)
-        print("Ollama response:", response.text)
 
         data = response.json()
+
         return data.get("response")
 
     except Exception as e:
@@ -32,8 +53,38 @@ def ask_ollama(message):
 
 
 
+# -------------------------
+# OpenAI
+# -------------------------
+
+def ask_openai(message):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": message
+                }
+            ]
+        )
+
+        return response.choices[0].message.content
+
+    except Exception as e:
+        print("OpenAI error:", e)
+        return None
+
+
+
+# -------------------------
+# Ido AI
+# -------------------------
+
 def get_response(message):
+
     message = message.lower().strip()
+
 
     responses = {
 
@@ -45,11 +96,14 @@ def get_response(message):
 
         "اسمك": "أنا Ido AI 🤖",
 
-        "كيف حالك": "أنا بخير، شكرًا لسؤالك 😊",
+        "كيف حالك":
+            "أنا بخير، شكرًا لسؤالك 😊",
 
-        "من صنعك": "أنا مشروع ذكاء اصطناعي اسمه Ido AI 🤖",
+        "من صنعك":
+            "أنا مشروع ذكاء اصطناعي اسمه Ido AI 🤖",
 
-        "الوقت": "يمكنك معرفة الوقت من النظام ⏰",
+        "الوقت":
+            "يمكنك معرفة الوقت من النظام ⏰",
 
         "كم عدد الناس في العالم":
             "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
@@ -66,9 +120,6 @@ def get_response(message):
         "ما هي عاصمة فرنسا":
             "عاصمة فرنسا هي باريس 🇫🇷",
 
-        "من هو رئيس المغرب":
-            "رئيس الدولة في المغرب هو الملك محمد السادس 🇲🇦",
-
         "شكرا":
             "على الرحب والسعة! 😊",
 
@@ -81,18 +132,28 @@ def get_response(message):
     }
 
 
+    # الردود الجاهزة
     for key, answer in responses.items():
         if key in message:
             return answer
 
 
-    # استعمال Ollama للأسئلة غير الموجودة
+
+    # 1) تجربة Ollama
     ollama_answer = ask_ollama(message)
 
     if ollama_answer:
         return ollama_answer
 
 
-    # في حالة توقف Ollama
-    return "أنا Ido AI 🤖 لم أجد إجابة حاليًا. يمكنك تشغيل Ollama للحصول على ذكاء اصطناعي أقوى."
 
+    # 2) إذا لم يعمل Ollama استخدم OpenAI
+    openai_answer = ask_openai(message)
+
+    if openai_answer:
+        return openai_answer
+
+
+
+    # 3) إذا فشل كل شيء
+    return "أنا Ido AI 🤖 لم أجد إجابة حاليًا."

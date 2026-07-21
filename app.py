@@ -8,19 +8,25 @@ from translator import translate
 from memory import get_answer
 
 
-# استيراد Ollama بشكل آمن
+# استيراد API
 try:
-    from ollama_ai import ask_ollama
-    ollama_available = True
-except Exception:
-    ollama_available = False
+    from api import api
+    api_available = True
+except Exception as e:
+    print("API error:", e)
+    api_available = False
 
 
-# اجعل Flask يبحث عن القوالب في نفس مجلد app.py
+# إنشاء تطبيق Flask
 app = Flask(
     __name__,
-    template_folder="."
+    template_folder="templates"
 )
+
+
+# تسجيل API
+if api_available:
+    app.register_blueprint(api)
 
 
 def ai_response(question):
@@ -30,6 +36,7 @@ def ai_response(question):
 
         if not question:
             return "اكتب سؤالاً أولاً"
+
 
         # الحاسبة
         try:
@@ -41,6 +48,7 @@ def ai_response(question):
         except Exception:
             pass
 
+
         # الترجمة
         try:
             translated = translate(question)
@@ -50,6 +58,7 @@ def ai_response(question):
 
         except Exception:
             pass
+
 
         # الذاكرة
         try:
@@ -61,26 +70,21 @@ def ai_response(question):
         except Exception:
             pass
 
+
         # عقل Ido AI
         answer = get_response(question)
+
 
         if not answer:
             answer = "لم أفهم السؤال"
 
-        # Ollama عند الحاجة فقط
-        if (
-            ("لم أفهم" in answer or "لا أعرف" in answer)
-            and ollama_available
-        ):
-            try:
-                return ask_ollama(question)
-            except Exception:
-                pass
 
         return answer
 
+
     except Exception as e:
         return f"⚠️ خطأ: {e}"
+
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -90,12 +94,14 @@ def home():
 
     current_time = datetime.now().strftime("%H:%M:%S")
 
+
     if request.method == "POST":
 
         question = request.form.get("question", "")
 
         if question.strip():
             answer = ai_response(question)
+
 
     return render_template(
         "page.html",
@@ -104,13 +110,13 @@ def home():
     )
 
 
-# تشغيل محلي فقط
-# Railway يستخدم gunicorn app:app
+
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT", 5000))
 
     app.run(
         host="0.0.0.0",
-        port=port
+        port=port,
+        debug=True
     )

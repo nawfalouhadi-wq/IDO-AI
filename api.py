@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+from brain import get_response
+
 
 api = Blueprint("api", __name__)
 
@@ -23,8 +25,8 @@ def chat_api():
         })
 
 
-    # هنا سيتم ربطه بعقل Ido AI
-    answer = f"Ido AI استلم: {message}"
+    # إرسال الرسالة إلى عقل Ido AI
+    answer = get_response(message)
 
 
     return jsonify({
