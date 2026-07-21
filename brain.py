@@ -1,3 +1,25 @@
+import requests
+
+
+def ask_ollama(message):
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={
+                "model": "llama3.2",
+                "prompt": message,
+                "stream": False
+            },
+            timeout=120
+        )
+
+        data = response.json()
+        return data["response"]
+
+    except Exception as e:
+        return f"خطأ في الاتصال بـ Ollama: {e}"
+
+
 def get_response(message):
     message = message.lower().strip()
 
@@ -23,4 +45,5 @@ def get_response(message):
         if key in message:
             return answer
 
-    return "لم أفهم سؤالك بعد، لكنني أتعلم يومًا بعد يوم 🤖"
+    # إذا لم يجد جوابًا محفوظًا، يسأل Ollama
+    return ask_ollama(message)
