@@ -1,26 +1,26 @@
-import requests
 import os
+import requests
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
-
-# تحميل ملف .env
+# تحميل متغيرات البيئة
 load_dotenv()
 
-
 # رابط Ollama
-OLLAMA_URL = os.environ.get(
+OLLAMA_URL = os.getenv(
     "OLLAMA_URL",
     "http://localhost:11434"
 )
 
+# مفتاح OpenAI
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-# OpenAI
-client = OpenAI(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+# إنشاء العميل فقط إذا كان المفتاح موجودًا
+client = None
 
+if OPENAI_API_KEY:
+    client = OpenAI(api_key=OPENAI_API_KEY)
 
 print("BRAIN.PY LOADED - OLLAMA + OPENAI READY")
 
@@ -38,19 +38,18 @@ def ask_ollama(message):
                 "prompt": message,
                 "stream": False
             },
-            timeout=120
+            timeout=60
         )
 
-        print("Ollama status:", response.status_code)
+        if response.status_code != 200:
+            return None
 
         data = response.json()
 
         return data.get("response")
 
-    except Exception as e:
-        print("Ollama error:", e)
+    except Exception:
         return None
-
 
 
 # -------------------------
@@ -58,6 +57,10 @@ def ask_ollama(message):
 # -------------------------
 
 def ask_openai(message):
+
+    if client is None:
+        return None
+
     try:
         response = client.chat.completions.create(
             model="gpt-4.1-mini",
@@ -71,10 +74,8 @@ def ask_openai(message):
 
         return response.choices[0].message.content
 
-    except Exception as e:
-        print("OpenAI error:", e)
+    except Exception:
         return None
-
 
 
 # -------------------------
@@ -84,7 +85,6 @@ def ask_openai(message):
 def get_response(message):
 
     message = message.lower().strip()
-
 
     responses = {
 
@@ -96,64 +96,45 @@ def get_response(message):
 
         "اسمك": "أنا Ido AI 🤖",
 
-        "كيف حالك":
-            "أنا بخير، شكرًا لسؤالك 😊",
+        "كيف حالك": "أنا بخير، شكراً لسؤالك 😊",
 
-        "من صنعك":
-            "أنا مشروع ذكاء اصطناعي اسمه Ido AI 🤖",
+        "من صنعك": "أنا مشروع ذكاء اصطناعي اسمه Ido AI 🤖",
 
-        "الوقت":
-            "يمكنك معرفة الوقت من النظام ⏰",
+        "الوقت": "يمكنك معرفة الوقت من النظام ⏰",
 
-        "كم عدد الناس في العالم":
-            "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
+        "كم عدد الناس في العالم": "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
 
-        "ما هو الذكاء الاصطناعي":
-            "الذكاء الاصطناعي هو تقنية تجعل الحاسوب قادرًا على التعلم وفهم الأوامر واتخاذ القرارات 🤖",
+        "ما هو الذكاء الاصطناعي": "الذكاء الاصطناعي هو تقنية تجعل الحاسوب قادرًا على التعلم وفهم الأوامر واتخاذ القرارات 🤖",
 
-        "ما هي بايثون":
-            "Python هي لغة برمجة قوية وسهلة تستخدم في تطوير البرامج والذكاء الاصطناعي 🐍",
+        "ما هي بايثون": "Python هي لغة برمجة قوية وسهلة تستخدم في تطوير البرامج والذكاء الاصطناعي 🐍",
 
-        "ما هي عاصمة المغرب":
-            "عاصمة المغرب هي الرباط 🇲🇦",
+        "ما هي عاصمة المغرب": "عاصمة المغرب هي الرباط 🇲🇦",
 
-        "ما هي عاصمة فرنسا":
-            "عاصمة فرنسا هي باريس 🇫🇷",
+        "ما هي عاصمة فرنسا": "عاصمة فرنسا هي باريس 🇫🇷",
 
-        "شكرا":
-            "على الرحب والسعة! 😊",
+        "شكرا": "على الرحب والسعة 😊",
 
-        "شكراً":
-            "العفو! أنا هنا لمساعدتك 🤖",
+        "شكراً": "العفو 😊",
 
-        "وداعا":
-            "إلى اللقاء! أتمنى لك يومًا سعيدًا 😊",
-
+        "وداعا": "إلى اللقاء! أتمنى لك يوماً سعيداً 😊",
     }
 
-
     # الردود الجاهزة
-    for key, answer in responses.items():
+    for key, value in responses.items():
         if key in message:
-            return answer
+            return value
 
+    # تجربة Ollama
+    answer = ask_ollama(message)
 
+    if answer:
+        return answer
 
-    # 1) تجربة Ollama
-    ollama_answer = ask_ollama(message)
+    # تجربة OpenAI
+    answer = ask_openai(message)
 
-    if ollama_answer:
-        return ollama_answer
+    if answer:
+        return answer
 
-
-
-    # 2) إذا لم يعمل Ollama استخدم OpenAI
-    openai_answer = ask_openai(message)
-
-    if openai_answer:
-        return openai_answer
-
-
-
-    # 3) إذا فشل كل شيء
-    return "أنا Ido AI 🤖 لم أجد إجابة حاليًا."
+    # إذا لم يعمل أي شيء
+    return "أنا Ido AI 🤖 لم أجد إجابة حالياً."
