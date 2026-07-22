@@ -41,14 +41,18 @@ def ask_ollama(message):
             timeout=60
         )
 
+        print("Ollama Status:", response.status_code)
+
         if response.status_code != 200:
+            print("Ollama Response:", response.text)
             return None
 
         data = response.json()
 
         return data.get("response")
 
-    except Exception:
+    except Exception as e:
+        print("Ollama ERROR:", e)
         return None
 
 
@@ -59,6 +63,7 @@ def ask_ollama(message):
 def ask_openai(message):
 
     if client is None:
+        print("OpenAI ERROR: OPENAI_API_KEY غير موجود.")
         return None
 
     try:
@@ -74,7 +79,8 @@ def ask_openai(message):
 
         return response.choices[0].message.content
 
-    except Exception:
+    except Exception as e:
+        print("OpenAI ERROR:", e)
         return None
 
 
