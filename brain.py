@@ -6,6 +6,7 @@ from google import genai
 # تحميل ملف .env
 load_dotenv()
 
+
 # =========================
 # Gemini
 # =========================
@@ -41,7 +42,6 @@ print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
 # =========================
 
 def ask_gemini(message):
-
     if gemini_client is None:
         print("Gemini ERROR: client غير جاهز.")
         return None
@@ -56,7 +56,7 @@ def ask_gemini(message):
 
         if response and response.text:
             print("Gemini response received.")
-            return response.text
+            return response.text.strip()
 
         print("Gemini returned empty response.")
         return None
@@ -71,7 +71,6 @@ def ask_gemini(message):
 # =========================
 
 def ask_ollama(message):
-
     try:
         print("Trying Ollama...")
 
@@ -97,7 +96,7 @@ def ask_ollama(message):
 
         if answer:
             print("Ollama response received.")
-            return answer
+            return answer.strip()
 
         return None
 
@@ -116,25 +115,54 @@ def get_response(message):
     message_lower = original_message.lower()
 
     # =========================
-    # الردود السريعة
+    # الردود السريعة والثابتة
     # =========================
 
     responses = {
 
-        "hello": "Hello! أنا Ido AI 🤖",
+        "hello":
+            "Hello! أنا Ido AI 🤖",
 
-        "hi": "Hello! أنا Ido AI 🤖",
+        "hi":
+            "Hello! أنا Ido AI 🤖",
 
-        "مرحبا": "مرحبًا بك! كيف يمكنني مساعدتك؟ 😊",
+        "مرحبا":
+            "مرحبًا بك! كيف يمكنني مساعدتك؟ 😊",
 
-        "سلام": "وعليكم السلام! كيف حالك؟ 😊",
+        "سلام":
+            "وعليكم السلام! كيف حالك؟ 😊",
 
-        "اسمك": "أنا Ido AI 🤖",
+        "اسمك":
+            "أنا Ido AI 🤖",
 
-        "كيف حالك": "أنا بخير، شكرًا لسؤالك 😊",
+        "ما اسمك":
+            "أنا Ido AI 🤖",
+
+        "كيف حالك":
+            "أنا بخير، شكرًا لسؤالك 😊",
+
+        # =========================
+        # هوية Ido AI
+        # =========================
 
         "من صنعك":
-            "أنا مشروع ذكاء اصطناعي اسمه Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
+
+        "من طورك":
+            "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
+
+        "من بناك":
+            "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
+
+        "من هو مطورك":
+            "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
+
+        "من برمجك":
+            "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
+
+        # =========================
+        # معلومات عامة
+        # =========================
 
         "الوقت":
             "يمكنك معرفة الوقت من النظام ⏰",
@@ -154,6 +182,10 @@ def get_response(message):
         "ما هي عاصمة فرنسا":
             "عاصمة فرنسا هي باريس 🇫🇷",
 
+        # =========================
+        # المجاملات
+        # =========================
+
         "شكرا":
             "على الرحب والسعة 😊",
 
@@ -164,6 +196,7 @@ def get_response(message):
             "إلى اللقاء! أتمنى لك يومًا سعيدًا 😊",
     }
 
+
     # =========================
     # البحث في الردود الجاهزة
     # =========================
@@ -172,6 +205,7 @@ def get_response(message):
 
         if key in message_lower:
             return value
+
 
     # =========================
     # Gemini أولًا
@@ -182,16 +216,18 @@ def get_response(message):
     if answer:
         return answer
 
-    print("Gemini failed. Trying Ollama...")
 
     # =========================
     # Ollama ثانيًا
     # =========================
 
+    print("Gemini failed. Trying Ollama...")
+
     answer = ask_ollama(original_message)
 
     if answer:
         return answer
+
 
     # =========================
     # فشل الاثنين
