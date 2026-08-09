@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 
 # تحميل ملف .env
+
 load_dotenv()
 
 # =========================
@@ -47,7 +48,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash-lite",
+            model="gemini-3.5-flash-lite",
             contents=message
         )
 
