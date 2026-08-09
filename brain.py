@@ -4,13 +4,10 @@ from dotenv import load_dotenv
 from google import genai
 
 # تحميل ملف .env
-
 load_dotenv()
 
 # =========================
-
 # Gemini
-
 # =========================
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -27,9 +24,7 @@ else:
     print("GEMINI_API_KEY: NOT FOUND")
 
 # =========================
-
 # Ollama
-
 # =========================
 
 OLLAMA_URL = os.getenv(
@@ -40,9 +35,7 @@ OLLAMA_URL = os.getenv(
 print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
 
 # =========================
-
 # Gemini
-
 # =========================
 
 def ask_gemini(message):
@@ -69,10 +62,9 @@ def ask_gemini(message):
         print("Gemini ERROR:", e)
         return None
 
+
 # =========================
-
 # Ollama
-
 # =========================
 
 def ask_ollama(message):
@@ -109,10 +101,9 @@ def ask_ollama(message):
         print("Ollama ERROR:", e)
         return None
 
+
 # =========================
-
 # Ido AI
-
 # =========================
 
 def get_response(message):
@@ -164,6 +155,9 @@ def get_response(message):
             "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
 
         "من برمجك":
+            "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
+
+        "من اخترعك":
             "تم تطويري وبنائي بواسطة نوفل الأهدي، وأدعى Ido AI 🤖",
 
         # =========================
@@ -236,4 +230,3 @@ def get_response(message):
     # =========================
 
     return "أنا Ido AI 🤖 لم أجد إجابة حاليًا."
-
