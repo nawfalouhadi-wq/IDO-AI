@@ -234,3 +234,5 @@ def get_response(message):
     # =========================
 
     return "أنا Ido AI 🤖 لم أجد إجابة حاليًا."
+
+
