@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 from google import genai
 
 # تحميل ملف .env
+
 load_dotenv()
 
-
 # =========================
+
 # Gemini
+
 # =========================
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -24,9 +26,10 @@ if GEMINI_API_KEY:
 else:
     print("GEMINI_API_KEY: NOT FOUND")
 
-
 # =========================
+
 # Ollama
+
 # =========================
 
 OLLAMA_URL = os.getenv(
@@ -36,9 +39,10 @@ OLLAMA_URL = os.getenv(
 
 print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
 
-
 # =========================
+
 # Gemini
+
 # =========================
 
 def ask_gemini(message):
@@ -50,7 +54,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-2.5-flash",
             contents=message
         )
 
@@ -65,9 +69,10 @@ def ask_gemini(message):
         print("Gemini ERROR:", e)
         return None
 
-
 # =========================
+
 # Ollama
+
 # =========================
 
 def ask_ollama(message):
@@ -104,9 +109,10 @@ def ask_ollama(message):
         print("Ollama ERROR:", e)
         return None
 
-
 # =========================
+
 # Ido AI
+
 # =========================
 
 def get_response(message):
@@ -196,7 +202,6 @@ def get_response(message):
             "إلى اللقاء! أتمنى لك يومًا سعيدًا 😊",
     }
 
-
     # =========================
     # البحث في الردود الجاهزة
     # =========================
@@ -206,7 +211,6 @@ def get_response(message):
         if key in message_lower:
             return value
 
-
     # =========================
     # Gemini أولًا
     # =========================
@@ -215,7 +219,6 @@ def get_response(message):
 
     if answer:
         return answer
-
 
     # =========================
     # Ollama ثانيًا
@@ -228,11 +231,9 @@ def get_response(message):
     if answer:
         return answer
 
-
     # =========================
     # فشل الاثنين
     # =========================
 
     return "أنا Ido AI 🤖 لم أجد إجابة حاليًا."
-
 
