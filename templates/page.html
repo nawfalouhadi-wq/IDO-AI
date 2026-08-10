@@ -7,9 +7,18 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <meta name="description" content="Aido AI - مساعد الذكاء الاصطناعي">
+
+    <meta name="theme-color" content="#2563eb">
+
     <title>Aido AI</title>
 
+
     <style>
+
+        /* =========================================================
+           RESET
+        ========================================================= */
 
         * {
             box-sizing: border-box;
@@ -17,580 +26,1390 @@
             padding: 0;
         }
 
-        body {
-            font-family: Arial, Tahoma, sans-serif;
-            background: #f5f7fb;
-            color: #1f2937;
-            height: 100vh;
-            overflow: hidden;
+
+        /* =========================================================
+           COLORS
+        ========================================================= */
+
+        :root {
+
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+
+            --background: #f5f7fb;
+
+            --surface: #ffffff;
+            --surface-2: #f1f5f9;
+
+            --border: #e5e7eb;
+
+            --text: #1f2937;
+            --muted: #6b7280;
+
+            --success: #22c55e;
+            --danger: #ef4444;
+
+            --shadow:
+                0 4px 20px rgba(0, 0, 0, 0.06);
+
+            --radius: 12px;
         }
+
+
+        /* =========================================================
+           DARK MODE
+        ========================================================= */
 
         body.dark {
-            background: #111827;
-            color: #f9fafb;
+
+            --background: #111827;
+
+            --surface: #1f2937;
+
+            --surface-2: #374151;
+
+            --border: #374151;
+
+            --text: #f9fafb;
+
+            --muted: #9ca3af;
+
+            --shadow:
+                0 4px 20px rgba(0, 0, 0, 0.25);
         }
+
+
+        /* =========================================================
+           HTML / BODY
+        ========================================================= */
+
+        html,
+        body {
+
+            width: 100%;
+            height: 100%;
+        }
+
+
+        body {
+
+            font-family:
+                Arial,
+                Tahoma,
+                sans-serif;
+
+            background:
+                var(--background);
+
+            color:
+                var(--text);
+
+            overflow:
+                hidden;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease;
+        }
+
+
+        button,
+        textarea,
+        input {
+
+            font-family: inherit;
+        }
+
+
+        button {
+
+            border: none;
+        }
+
+
+        button:focus-visible,
+        textarea:focus-visible {
+
+            outline:
+                2px solid var(--primary);
+
+            outline-offset:
+                2px;
+        }
+
+
+        /* =========================================================
+           APP
+        ========================================================= */
 
         .app {
-            display: flex;
+
             width: 100%;
             height: 100vh;
+
+            display: flex;
         }
 
-        /* =========================
-           Sidebar
-        ========================= */
+
+        /* =========================================================
+           SIDEBAR
+        ========================================================= */
 
         .sidebar {
+
             width: 270px;
-            background: #ffffff;
-            border-left: 1px solid #e5e7eb;
+            height: 100%;
+
+            flex-shrink: 0;
+
+            background:
+                var(--surface);
+
+            border-left:
+                1px solid var(--border);
+
             display: flex;
             flex-direction: column;
+
             padding: 18px;
+
+            z-index: 900;
+
+            transition:
+                right 0.25s ease;
         }
 
-        body.dark .sidebar {
-            background: #1f2937;
-            border-color: #374151;
-        }
 
         .brand {
+
             display: flex;
+
             align-items: center;
+
             gap: 12px;
+
             margin-bottom: 25px;
         }
+
 
         .brand-logo,
         .model-logo,
         .welcome-logo {
-            width: 46px;
-            height: 46px;
-            border-radius: 14px;
+
             display: flex;
+
             align-items: center;
             justify-content: center;
-            background: #2563eb;
-            color: white;
-            font-weight: bold;
+
+            background:
+                var(--primary);
+
+            color:
+                #ffffff;
+
+            font-weight:
+                bold;
         }
+
+
+        .brand-logo {
+
+            width: 46px;
+            height: 46px;
+
+            border-radius: 14px;
+        }
+
 
         .brand-name {
+
             font-size: 19px;
+
             font-weight: bold;
         }
 
+
         .brand-version {
+
+            display: block;
+
+            margin-top: 3px;
+
+            color:
+                var(--muted);
+
             font-size: 12px;
-            color: #6b7280;
         }
+
 
         .new-chat,
         .side-btn {
+
             width: 100%;
-            border: none;
-            background: transparent;
-            padding: 12px;
+
+            min-height: 44px;
+
+            padding: 11px 12px;
+
             border-radius: 10px;
+
             cursor: pointer;
+
             display: flex;
+
             align-items: center;
+
             gap: 10px;
+
+            color:
+                var(--text);
+
+            background:
+                transparent;
+
             font-size: 14px;
-            color: inherit;
+
             text-align: right;
         }
 
+
         .new-chat {
-            background: #2563eb;
-            color: white;
+
             justify-content: center;
+
+            background:
+                var(--primary);
+
+            color:
+                #ffffff;
+
             margin-bottom: 22px;
         }
 
+
         .new-chat:hover {
-            background: #1d4ed8;
+
+            background:
+                var(--primary-hover);
         }
+
 
         .side-btn:hover {
-            background: #f1f5f9;
+
+            background:
+                var(--surface-2);
         }
 
-        body.dark .side-btn:hover {
-            background: #374151;
-        }
 
         .icon {
+
             width: 20px;
             height: 20px;
+
             display: inline-flex;
+
+            flex-shrink: 0;
         }
+
 
         svg {
+
             width: 100%;
             height: 100%;
+
             fill: none;
-            stroke: currentColor;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
+
+            stroke:
+                currentColor;
+
+            stroke-width:
+                1.8;
+
+            stroke-linecap:
+                round;
+
+            stroke-linejoin:
+                round;
         }
 
+
         .sidebar-title {
+
+            color:
+                var(--muted);
+
             font-size: 13px;
-            color: #6b7280;
+
             margin-bottom: 10px;
         }
 
+
         .history {
+
             flex: 1;
+
             overflow-y: auto;
+
+            padding-left: 2px;
         }
+
 
         .history-item {
+
             padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
+
             margin-bottom: 5px;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
             font-size: 13px;
+
             overflow: hidden;
+
             white-space: nowrap;
-            text-overflow: ellipsis;
+
+            text-overflow:
+                ellipsis;
         }
+
 
         .history-item:hover {
-            background: #f1f5f9;
+
+            background:
+                var(--surface-2);
         }
 
-        body.dark .history-item:hover {
-            background: #374151;
+
+        .history-empty {
+
+            color:
+                var(--muted);
+
+            font-size: 13px;
+
+            text-align:
+                center;
+
+            padding:
+                20px 10px;
         }
+
 
         .sidebar-bottom {
-            border-top: 1px solid #e5e7eb;
-            padding-top: 12px;
+
+            border-top:
+                1px solid var(--border);
+
+            padding-top:
+                12px;
         }
 
-        body.dark .sidebar-bottom {
-            border-color: #374151;
-        }
 
-        /* =========================
-           Main
-        ========================= */
+        /* =========================================================
+           MAIN
+        ========================================================= */
 
         .main {
+
             flex: 1;
-            display: flex;
-            flex-direction: column;
+
             min-width: 0;
+
+            height: 100%;
+
+            display: flex;
+
+            flex-direction: column;
         }
+
+
+        /* =========================================================
+           TOPBAR
+        ========================================================= */
 
         .topbar {
+
             height: 70px;
-            background: #ffffff;
-            border-bottom: 1px solid #e5e7eb;
+
+            flex-shrink: 0;
+
+            padding:
+                0 22px;
+
+            background:
+                var(--surface);
+
+            border-bottom:
+                1px solid var(--border);
+
             display: flex;
+
             align-items: center;
-            justify-content: space-between;
-            padding: 0 22px;
+
+            justify-content:
+                space-between;
         }
 
-        body.dark .topbar {
-            background: #1f2937;
-            border-color: #374151;
-        }
 
         .topbar-right {
+
             display: flex;
+
             align-items: center;
+
             gap: 10px;
         }
 
+
         .model-logo {
+
             width: 40px;
             height: 40px;
+
             border-radius: 12px;
         }
 
+
         .model-name {
-            font-weight: bold;
+
+            font-weight:
+                bold;
         }
+
 
         .model-subtitle {
+
+            color:
+                var(--muted);
+
             font-size: 12px;
-            color: #6b7280;
+
+            margin-top: 2px;
         }
+
 
         .status {
+
             display: flex;
+
             align-items: center;
+
             gap: 7px;
+
+            color:
+                #16a34a;
+
             font-size: 13px;
-            color: #16a34a;
         }
+
+
+        .status.offline {
+
+            color:
+                var(--danger);
+        }
+
 
         .status-dot {
+
             width: 9px;
             height: 9px;
+
             border-radius: 50%;
-            background: #22c55e;
+
+            background:
+                var(--success);
         }
+
+
+        .status-dot.offline {
+
+            background:
+                var(--danger);
+        }
+
 
         .mobile-menu {
+
             display: none;
-            border: none;
-            background: transparent;
+
+            width: 38px;
+            height: 38px;
+
+            border-radius: 10px;
+
+            background:
+                transparent;
+
+            color:
+                var(--text);
+
             cursor: pointer;
-            color: inherit;
+
+            align-items: center;
+
+            justify-content:
+                center;
         }
 
-        /* =========================
-           Chat
-        ========================= */
+
+        .mobile-menu:hover {
+
+            background:
+                var(--surface-2);
+        }
+
+
+        /* =========================================================
+           CHAT
+        ========================================================= */
 
         .chat {
+
             flex: 1;
+
             overflow-y: auto;
-            padding: 35px 20px;
+
+            padding:
+                35px 20px;
+
+            scroll-behavior:
+                smooth;
         }
+
 
         .chat-inner {
+
+            width: 100%;
+
             max-width: 850px;
-            margin: auto;
+
+            margin:
+                0 auto;
         }
+
 
         .welcome {
-            min-height: 55vh;
+
+            min-height:
+                55vh;
+
             display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
+
+            flex-direction:
+                column;
+
+            justify-content:
+                center;
+
+            align-items:
+                center;
+
+            text-align:
+                center;
         }
 
+
+        .welcome.hidden {
+
+            display: none;
+        }
+
+
         .welcome-logo {
-            width: 70px;
-            height: 70px;
-            font-size: 22px;
+
+            width: 72px;
+            height: 72px;
+
+            border-radius: 20px;
+
+            font-size: 23px;
+
             margin-bottom: 20px;
         }
 
+
         .welcome h1 {
+
             font-size: 28px;
+
             margin-bottom: 10px;
         }
 
+
         .welcome p {
-            color: #6b7280;
+
+            color:
+                var(--muted);
         }
+
+
+        /* =========================================================
+           MESSAGES
+        ========================================================= */
 
         .message {
-            margin-bottom: 22px;
+
             display: flex;
-            flex-direction: column;
+
+            flex-direction:
+                column;
+
             gap: 6px;
+
+            margin-bottom: 22px;
+
+            animation:
+                messageAppear 0.2s ease;
         }
+
+
+        @keyframes messageAppear {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(5px);
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+            }
+        }
+
 
         .message-user {
-            align-items: flex-start;
+
+            align-items:
+                flex-start;
         }
+
 
         .message-ai {
-            align-items: flex-end;
+
+            align-items:
+                flex-end;
         }
+
+
+        .message-label {
+
+            color:
+                var(--muted);
+
+            font-size: 12px;
+
+            padding:
+                0 5px;
+        }
+
 
         .message-bubble {
-            max-width: 80%;
-            padding: 13px 16px;
-            border-radius: 16px;
-            line-height: 1.7;
-            white-space: pre-wrap;
-            word-wrap: break-word;
+
+            max-width:
+                82%;
+
+            padding:
+                13px 16px;
+
+            border-radius:
+                16px;
+
+            line-height:
+                1.7;
+
+            white-space:
+                pre-wrap;
+
+            word-break:
+                break-word;
+
+            overflow-wrap:
+                anywhere;
         }
+
 
         .message-user .message-bubble {
-            background: #2563eb;
-            color: white;
-            border-bottom-right-radius: 4px;
+
+            background:
+                var(--primary);
+
+            color:
+                #ffffff;
+
+            border-bottom-right-radius:
+                4px;
         }
+
 
         .message-ai .message-bubble {
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            border-bottom-left-radius: 4px;
+
+            background:
+                var(--surface);
+
+            border:
+                1px solid var(--border);
+
+            border-bottom-left-radius:
+                4px;
         }
 
-        body.dark .message-ai .message-bubble {
-            background: #1f2937;
-            border-color: #374151;
-        }
 
         .message-image {
-            max-width: 300px;
-            max-height: 300px;
-            border-radius: 12px;
-            margin-top: 8px;
+
+            max-width:
+                300px;
+
+            max-height:
+                300px;
+
+            border-radius:
+                12px;
+
+            object-fit:
+                contain;
+
+            margin-top:
+                8px;
         }
 
-        /* =========================
-           Typing
-        ========================= */
+
+        .message-actions {
+
+            display: flex;
+
+            gap: 5px;
+
+            margin-top: 3px;
+        }
+
+
+        .message-action {
+
+            width: 32px;
+            height: 32px;
+
+            border-radius: 8px;
+
+            background:
+                var(--surface-2);
+
+            color:
+                var(--text);
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+        }
+
+
+        .message-action:hover {
+
+            background:
+                var(--border);
+        }
+
+
+        /* =========================================================
+           TYPING
+        ========================================================= */
 
         .typing {
+
             display: none;
+
             align-items: center;
+
             gap: 8px;
-            color: #6b7280;
-            margin-bottom: 20px;
+
+            color:
+                var(--muted);
+
+            margin-bottom:
+                20px;
+
+            padding:
+                0 5px;
         }
 
+
+        .typing.show {
+
+            display: flex;
+        }
+
+
         .typing-dots {
+
             display: inline-flex;
+
             gap: 4px;
         }
 
+
         .typing-dots span {
+
             width: 6px;
             height: 6px;
-            background: #6b7280;
+
             border-radius: 50%;
-            animation: typing 1s infinite;
+
+            background:
+                var(--muted);
+
+            animation:
+                typing 1s infinite;
         }
+
 
         .typing-dots span:nth-child(2) {
-            animation-delay: .15s;
+
+            animation-delay:
+                0.15s;
         }
 
+
         .typing-dots span:nth-child(3) {
-            animation-delay: .3s;
+
+            animation-delay:
+                0.3s;
         }
+
 
         @keyframes typing {
 
             0%,
             60%,
             100% {
-                transform: translateY(0);
+
+                transform:
+                    translateY(0);
             }
 
             30% {
-                transform: translateY(-5px);
+
+                transform:
+                    translateY(-5px);
             }
         }
 
-        /* =========================
-           Input
-        ========================= */
+
+        /* =========================================================
+           COMPOSER
+        ========================================================= */
 
         .composer-area {
-            padding: 15px 20px 20px;
+
+            flex-shrink: 0;
+
+            padding:
+                15px 20px 20px;
         }
+
 
         .composer {
-            max-width: 850px;
-            margin: auto;
-            position: relative;
+
+            max-width:
+                850px;
+
+            margin:
+                0 auto;
         }
+
 
         .input-box {
-            background: #ffffff;
-            border: 1px solid #d1d5db;
-            border-radius: 18px;
-            padding: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, .05);
+
+            background:
+                var(--surface);
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                18px;
+
+            padding:
+                12px;
+
+            box-shadow:
+                var(--shadow);
         }
 
-        body.dark .input-box {
-            background: #1f2937;
-            border-color: #374151;
-        }
 
         textarea {
+
             width: 100%;
-            border: none;
-            outline: none;
-            resize: none;
-            background: transparent;
-            color: inherit;
-            font-family: inherit;
-            font-size: 15px;
-            min-height: 45px;
-            max-height: 150px;
-            padding: 8px;
+
+            min-height:
+                45px;
+
+            max-height:
+                150px;
+
+            padding:
+                8px;
+
+            border:
+                none;
+
+            outline:
+                none;
+
+            resize:
+                none;
+
+            background:
+                transparent;
+
+            color:
+                var(--text);
+
+            font-size:
+                15px;
+
+            line-height:
+                1.6;
         }
 
-        .tools {
-            display: flex;
-            align-items: center;
-            gap: 7px;
+
+        textarea::placeholder {
+
+            color:
+                var(--muted);
         }
+
+
+        .tools {
+
+            display: flex;
+
+            align-items:
+                center;
+
+            gap:
+                7px;
+        }
+
 
         .tool,
         .send-btn {
+
             width: 38px;
             height: 38px;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
+
+            border-radius:
+                10px;
+
+            cursor:
+                pointer;
+
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: inherit;
-            background: #f1f5f9;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
         }
 
-        body.dark .tool {
-            background: #374151;
+
+        .tool {
+
+            background:
+                var(--surface-2);
+
+            color:
+                var(--text);
         }
+
 
         .tool:hover {
-            background: #e2e8f0;
+
+            background:
+                var(--border);
         }
 
-        body.dark .tool:hover {
-            background: #4b5563;
+
+        .tool.active {
+
+            background:
+                var(--danger);
+
+            color:
+                #ffffff;
         }
+
 
         .send-btn {
-            margin-right: auto;
-            background: #2563eb;
-            color: white;
+
+            margin-right:
+                auto;
+
+            background:
+                var(--primary);
+
+            color:
+                #ffffff;
         }
+
 
         .send-btn:hover {
-            background: #1d4ed8;
+
+            background:
+                var(--primary-hover);
         }
 
-        .image-container {
-            display: none;
-            position: relative;
-            width: fit-content;
-            margin-bottom: 10px;
+
+        .send-btn:disabled {
+
+            opacity:
+                0.6;
+
+            cursor:
+                not-allowed;
         }
 
-        #previewImage {
-            max-width: 150px;
-            max-height: 120px;
-            border-radius: 10px;
-        }
 
-        #removeImage {
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            width: 24px;
-            height: 24px;
-            border: none;
-            border-radius: 50%;
-            background: #ef4444;
-            color: white;
-            cursor: pointer;
-            font-size: 18px;
-        }
+        /* =========================================================
+           IMAGE
+        ========================================================= */
 
         #imageInput {
-            display: none;
+
+            display:
+                none;
         }
 
-        /* =========================
-           Voice
-        ========================= */
+
+        .image-container {
+
+            display:
+                none;
+
+            position:
+                relative;
+
+            width:
+                fit-content;
+
+            margin-bottom:
+                10px;
+        }
+
+
+        .image-container.show {
+
+            display:
+                block;
+        }
+
+
+        #previewImage {
+
+            max-width:
+                150px;
+
+            max-height:
+                120px;
+
+            border-radius:
+                10px;
+
+            object-fit:
+                cover;
+        }
+
+
+        #removeImage {
+
+            position:
+                absolute;
+
+            top:
+                -8px;
+
+            left:
+                -8px;
+
+            width:
+                24px;
+
+            height:
+                24px;
+
+            border-radius:
+                50%;
+
+            background:
+                var(--danger);
+
+            color:
+                #ffffff;
+
+            cursor:
+                pointer;
+
+            font-size:
+                18px;
+
+            line-height:
+                20px;
+        }
+
+
+        /* =========================================================
+           VOICE PANEL
+        ========================================================= */
 
         .voice-panel {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, .55);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+
+            display:
+                none;
+
+            position:
+                fixed;
+
+            inset:
+                0;
+
+            z-index:
+                1000;
+
+            padding:
+                20px;
+
+            background:
+                rgba(0, 0, 0, 0.55);
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
         }
+
+
+        .voice-panel.show {
+
+            display:
+                flex;
+        }
+
 
         .voice-box {
-            background: white;
-            color: #111827;
-            width: min(420px, 90%);
-            padding: 30px;
-            border-radius: 20px;
-            text-align: center;
+
+            width:
+                min(420px, 90%);
+
+            padding:
+                30px;
+
+            border-radius:
+                20px;
+
+            background:
+                var(--surface);
+
+            color:
+                var(--text);
+
+            text-align:
+                center;
+
+            box-shadow:
+                0 20px 50px rgba(0, 0, 0, 0.2);
         }
 
-        body.dark .voice-box {
-            background: #1f2937;
-            color: white;
+
+        .voice-box h2 {
+
+            margin-bottom:
+                12px;
         }
+
+
+        .voice-box p {
+
+            color:
+                var(--muted);
+        }
+
 
         .voice-button {
-            width: 80px;
-            height: 80px;
-            border: none;
-            border-radius: 50%;
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
-            margin: 25px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
+
+            width:
+                80px;
+
+            height:
+                80px;
+
+            margin:
+                25px auto;
+
+            border-radius:
+                50%;
+
+            background:
+                var(--primary);
+
+            color:
+                #ffffff;
+
+            cursor:
+                pointer;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            font-size:
+                14px;
         }
+
+
+        .voice-button.recording {
+
+            background:
+                var(--danger);
+        }
+
 
         .voice-close {
-            border: none;
-            background: #ef4444;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            cursor: pointer;
+
+            padding:
+                8px 15px;
+
+            border-radius:
+                8px;
+
+            background:
+                var(--danger);
+
+            color:
+                #ffffff;
+
+            cursor:
+                pointer;
         }
 
-        /* =========================
-           Mobile
-        ========================= */
+
+        /* =========================================================
+           MOBILE
+        ========================================================= */
 
         @media (max-width: 750px) {
 
             .sidebar {
-                position: fixed;
-                right: -280px;
-                top: 0;
-                bottom: 0;
-                z-index: 900;
-                transition: right .25s ease;
+
+                position:
+                    fixed;
+
+                top:
+                    0;
+
+                right:
+                    -280px;
+
+                bottom:
+                    0;
+
+                box-shadow:
+                    -10px 0 30px rgba(0, 0, 0, 0.12);
             }
+
 
             .sidebar.open {
-                right: 0;
+
+                right:
+                    0;
             }
+
 
             .mobile-menu {
-                display: flex;
-                width: 38px;
-                height: 38px;
-                align-items: center;
-                justify-content: center;
+
+                display:
+                    flex;
             }
+
 
             .topbar {
-                padding: 0 12px;
+
+                padding:
+                    0 12px;
             }
+
 
             .chat {
-                padding: 20px 12px;
+
+                padding:
+                    20px 12px;
             }
+
 
             .composer-area {
-                padding: 10px;
+
+                padding:
+                    10px;
             }
+
 
             .message-bubble {
-                max-width: 90%;
+
+                max-width:
+                    92%;
             }
 
+
             .welcome h1 {
-                font-size: 22px;
+
+                font-size:
+                    22px;
             }
+
+
+            .model-subtitle {
+
+                display:
+                    none;
+            }
+
+
+            .status {
+
+                font-size:
+                    12px;
+            }
+
+
+            .tool,
+            .send-btn {
+
+                width:
+                    36px;
+
+                height:
+                    36px;
+            }
+
         }
 
     </style>
@@ -600,76 +1419,45 @@
 
 <body>
 
-<div class="app">
 
-    <!-- =========================
-         Sidebar
-    ========================= -->
-
-    <aside class="sidebar" id="sidebar">
-
-        <div class="brand">
-
-            <div class="brand-logo">
-                DA
-            </div>
-
-            <div>
-
-                <div class="brand-name">
-                    Aido AI
-                </div>
-
-                <span class="brand-version">
-                    AI Assistant
-                </span>
-
-            </div>
-
-        </div>
+    <div class="app">
 
 
-        <button
-            class="new-chat"
-            id="newChatBtn"
-            type="button"
+        <!-- =====================================================
+             SIDEBAR
+        ====================================================== -->
+
+        <aside
+            class="sidebar"
+            id="sidebar"
         >
 
-            <span class="icon">
 
-                <svg viewBox="0 0 24 24">
+            <div class="brand">
 
-                    <path d="M12 5v14"></path>
-
-                    <path d="M5 12h14"></path>
-
-                </svg>
-
-            </span>
-
-            <span>
-                محادثة جديدة
-            </span>
-
-        </button>
+                <div class="brand-logo">
+                    DA
+                </div>
 
 
-        <div class="sidebar-title">
-            المحادثات
-        </div>
+                <div>
 
+                    <div class="brand-name">
+                        Aido AI
+                    </div>
 
-        <div
-            class="history"
-            id="history"
-        ></div>
+                    <span class="brand-version">
+                        AI Assistant
+                    </span>
 
+                </div>
 
-        <div class="sidebar-bottom">
+            </div>
+
 
             <button
-                class="side-btn"
-                id="themeBtn"
+                class="new-chat"
+                id="newChatBtn"
                 type="button"
             >
 
@@ -677,67 +1465,39 @@
 
                     <svg viewBox="0 0 24 24">
 
-                        <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"></path>
+                        <path d="M12 5v14"></path>
+
+                        <path d="M5 12h14"></path>
 
                     </svg>
 
                 </span>
 
-                <span id="themeText">
-                    الوضع الليلي
-                </span>
-
-            </button>
-
-
-            <button
-                class="side-btn"
-                id="clearBtn"
-                type="button"
-            >
-
-                <span class="icon">
-
-                    <svg viewBox="0 0 24 24">
-
-                        <path d="M3 6h18"></path>
-
-                        <path d="M8 6V4h8v2"></path>
-
-                        <path d="M19 6l-1 15H6L5 6"></path>
-
-                        <path d="M10 11v6"></path>
-
-                        <path d="M14 11v6"></path>
-
-                    </svg>
-
-                </span>
 
                 <span>
-                    مسح المحادثات
+                    محادثة جديدة
                 </span>
 
             </button>
 
-        </div>
 
-    </aside>
+            <div class="sidebar-title">
+                المحادثات
+            </div>
 
 
-    <!-- =========================
-         Main
-    ========================= -->
+            <div
+                class="history"
+                id="history"
+            ></div>
 
-    <main class="main">
 
-        <header class="topbar">
+            <div class="sidebar-bottom">
 
-            <div class="topbar-right">
 
                 <button
-                    class="mobile-menu"
-                    id="mobileMenu"
+                    class="side-btn"
+                    id="themeBtn"
                     type="button"
                 >
 
@@ -745,1110 +1505,2315 @@
 
                         <svg viewBox="0 0 24 24">
 
-                            <path d="M4 6h16"></path>
-
-                            <path d="M4 12h16"></path>
-
-                            <path d="M4 18h16"></path>
+                            <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3A6.7 6.7 0 0 0 21 12.8z"></path>
 
                         </svg>
 
                     </span>
 
+
+                    <span id="themeText">
+                        الوضع الليلي
+                    </span>
+
                 </button>
 
 
-                <div class="model-logo">
-                    DA
-                </div>
-
-
-                <div class="model-info">
-
-                    <div class="model-name">
-                        Aido AI
-                    </div>
-
-                    <div class="model-subtitle">
-                        Gemini AI
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="status">
-
-                <span class="status-dot"></span>
-
-                <span>
-                    متصل
-                </span>
-
-            </div>
-
-        </header>
-
-
-        <section
-            class="chat"
-            id="chat"
-        >
-
-            <div
-                class="chat-inner"
-                id="chatInner"
-            >
-
-                <div
-                    class="welcome"
-                    id="welcome"
+                <button
+                    class="side-btn"
+                    id="clearBtn"
+                    type="button"
                 >
 
-                    <div class="welcome-logo">
+                    <span class="icon">
+
+                        <svg viewBox="0 0 24 24">
+
+                            <path d="M3 6h18"></path>
+
+                            <path d="M8 6V4h8v2"></path>
+
+                            <path d="M19 6l-1 15H6L5 6"></path>
+
+                            <path d="M10 11v6"></path>
+
+                            <path d="M14 11v6"></path>
+
+                        </svg>
+
+                    </span>
+
+
+                    <span>
+                        مسح المحادثات
+                    </span>
+
+                </button>
+
+
+            </div>
+
+
+        </aside>
+
+
+        <!-- =====================================================
+             MAIN
+        ====================================================== -->
+
+        <main class="main">
+
+
+            <!-- TOPBAR -->
+
+            <header class="topbar">
+
+
+                <div class="topbar-right">
+
+
+                    <button
+                        class="mobile-menu"
+                        id="mobileMenu"
+                        type="button"
+                        title="القائمة"
+                    >
+
+                        <span class="icon">
+
+                            <svg viewBox="0 0 24 24">
+
+                                <path d="M4 6h16"></path>
+
+                                <path d="M4 12h16"></path>
+
+                                <path d="M4 18h16"></path>
+
+                            </svg>
+
+                        </span>
+
+                    </button>
+
+
+                    <div class="model-logo">
                         DA
                     </div>
 
-                    <h1>
-                        مرحباً بك في Aido AI
-                    </h1>
 
-                    <p>
-                        كيف يمكنني مساعدتك اليوم؟
-                    </p>
+                    <div>
+
+                        <div class="model-name">
+                            Aido AI
+                        </div>
+
+
+                        <div class="model-subtitle">
+                            Gemini AI + OpenRouter + OpenAI
+                        </div>
+
+                    </div>
+
 
                 </div>
 
 
                 <div
-                    class="typing"
-                    id="typing"
+                    class="status"
+                    id="status"
                 >
 
-                    <span>
-                        Aido AI يكتب
-                    </span>
+                    <span
+                        class="status-dot"
+                        id="statusDot"
+                    ></span>
 
-                    <span class="typing-dots">
 
-                        <span></span>
-
-                        <span></span>
-
-                        <span></span>
-
+                    <span id="statusText">
+                        متصل
                     </span>
 
                 </div>
+
+
+            </header>
+
+
+            <!-- CHAT -->
+
+            <section
+                class="chat"
+                id="chat"
+            >
+
+
+                <div
+                    class="chat-inner"
+                    id="chatInner"
+                >
+
+
+                    <div
+                        class="welcome"
+                        id="welcome"
+                    >
+
+                        <div class="welcome-logo">
+                            DA
+                        </div>
+
+
+                        <h1>
+                            مرحباً بك في Aido AI
+                        </h1>
+
+
+                        <p>
+                            كيف يمكنني مساعدتك اليوم؟
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        class="typing"
+                        id="typing"
+                    >
+
+                        <span>
+                            Aido AI يكتب
+                        </span>
+
+
+                        <span class="typing-dots">
+
+                            <span></span>
+                            <span></span>
+                            <span></span>
+
+                        </span>
+
+                    </div>
+
+
+                </div>
+
+
+            </section>
+
+
+            <!-- COMPOSER -->
+
+            <div class="composer-area">
+
+
+                <form
+                    class="composer"
+                    id="chatForm"
+                >
+
+
+                    <div class="input-box">
+
+
+                        <!-- IMAGE PREVIEW -->
+
+                        <div
+                            class="image-container"
+                            id="imageContainer"
+                        >
+
+                            <img
+                                id="previewImage"
+                                src=""
+                                alt="معاينة الصورة"
+                            >
+
+
+                            <button
+                                type="button"
+                                id="removeImage"
+                                title="إزالة الصورة"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+
+
+                        <!-- IMAGE INPUT -->
+
+                        <input
+                            type="file"
+                            id="imageInput"
+                            name="image"
+                            accept="image/*"
+                        >
+
+
+                        <!-- TEXT -->
+
+                        <textarea
+                            id="question"
+                            name="question"
+                            rows="1"
+                            autocomplete="off"
+                            placeholder="اكتب رسالتك هنا..."
+                        ></textarea>
+
+
+                        <!-- TOOLS -->
+
+                        <div class="tools">
+
+
+                            <!-- IMAGE -->
+
+                            <button
+                                type="button"
+                                class="tool"
+                                id="imageBtn"
+                                title="إضافة صورة"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+
+                                    <rect
+                                        x="3"
+                                        y="4"
+                                        width="18"
+                                        height="16"
+                                        rx="2"
+                                    ></rect>
+
+                                    <circle
+                                        cx="8.5"
+                                        cy="9"
+                                        r="1.5"
+                                    ></circle>
+
+                                    <path d="M21 15l-5-5L5 20"></path>
+
+                                </svg>
+
+                            </button>
+
+
+                            <!-- MICROPHONE -->
+
+                            <button
+                                type="button"
+                                class="tool"
+                                id="micBtn"
+                                title="تحويل الكلام إلى نص"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+
+                                    <rect
+                                        x="9"
+                                        y="3"
+                                        width="6"
+                                        height="11"
+                                        rx="3"
+                                    ></rect>
+
+                                    <path d="M5 11a7 7 0 0 0 14 0"></path>
+
+                                    <path d="M12 18v3"></path>
+
+                                    <path d="M8 21h8"></path>
+
+                                </svg>
+
+                            </button>
+
+
+                            <!-- VOICE CHAT -->
+
+                            <button
+                                type="button"
+                                class="tool"
+                                id="voiceChatBtn"
+                                title="المحادثة الصوتية"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+
+                                    <path d="M12 2v20"></path>
+
+                                    <path d="M5 9v6"></path>
+
+                                    <path d="M19 9v6"></path>
+
+                                    <path d="M8 6v12"></path>
+
+                                    <path d="M16 6v12"></path>
+
+                                </svg>
+
+                            </button>
+
+
+                            <!-- READ -->
+
+                            <button
+                                type="button"
+                                class="tool"
+                                id="voiceBtn2"
+                                title="قراءة آخر إجابة"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+
+                                    <path d="M11 5L6 9H3v6h3l5 4z"></path>
+
+                                    <path d="M15 9a4 4 0 0 1 0 6"></path>
+
+                                    <path d="M18 6a8 8 0 0 1 0 12"></path>
+
+                                </svg>
+
+                            </button>
+
+
+                            <!-- SEND -->
+
+                            <button
+                                type="submit"
+                                class="send-btn"
+                                id="sendBtn"
+                                title="إرسال"
+                            >
+
+                                <svg viewBox="0 0 24 24">
+
+                                    <path d="M22 2L11 13"></path>
+
+                                    <path d="M22 2l-7 20-4-9-9-4z"></path>
+
+                                </svg>
+
+                            </button>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </form>
+
 
             </div>
 
-        </section>
 
+        </main>
 
-        <div class="composer-area">
-
-            <form
-                class="composer"
-                id="chatForm"
-                method="POST"
-                enctype="multipart/form-data"
-            >
-
-                <div class="input-box">
-
-                    <div
-                        class="image-container"
-                        id="imageContainer"
-                    >
-
-                        <img
-                            id="previewImage"
-                            src=""
-                            alt="الصورة"
-                        >
-
-                        <button
-                            type="button"
-                            id="removeImage"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-                    <input
-                        type="file"
-                        id="imageInput"
-                        name="image"
-                        accept="image/*"
-                    >
-
-
-                    <textarea
-                        id="question"
-                        name="question"
-                        placeholder="اكتب رسالتك هنا..."
-                        rows="1"
-                    ></textarea>
-
-
-                    <div class="tools">
-
-                        <button
-                            type="button"
-                            class="tool"
-                            id="imageBtn"
-                            data-tooltip="إضافة صورة"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="3"
-                                    y="4"
-                                    width="18"
-                                    height="16"
-                                    rx="2"
-                                ></rect>
-
-                                <circle
-                                    cx="8.5"
-                                    cy="9"
-                                    r="1.5"
-                                ></circle>
-
-                                <path d="M21 15l-5-5L5 20"></path>
-
-                            </svg>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="tool"
-                            id="micBtn"
-                            data-tooltip="الميكروفون"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-
-                                <rect
-                                    x="9"
-                                    y="3"
-                                    width="6"
-                                    height="11"
-                                    rx="3"
-                                ></rect>
-
-                                <path d="M5 11a7 7 0 0 0 14 0"></path>
-
-                                <path d="M12 18v3"></path>
-
-                                <path d="M8 21h8"></path>
-
-                            </svg>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="tool"
-                            id="voiceChatBtn"
-                            data-tooltip="المحادثة الصوتية"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M12 2v20"></path>
-
-                                <path d="M5 9v6"></path>
-
-                                <path d="M19 9v6"></path>
-
-                                <path d="M8 6v12"></path>
-
-                                <path d="M16 6v12"></path>
-
-                            </svg>
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="tool"
-                            id="voiceBtn2"
-                            data-tooltip="قراءة الإجابة"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M11 5L6 9H3v6h3l5 4z"></path>
-
-                                <path d="M15 9a4 4 0 0 1 0 6"></path>
-
-                                <path d="M18 6a8 8 0 0 1 0 12"></path>
-
-                            </svg>
-
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            class="send-btn"
-                            id="sendBtn"
-                        >
-
-                            <svg viewBox="0 0 24 24">
-
-                                <path d="M22 2L11 13"></path>
-
-                                <path d="M22 2l-7 20-4-9-9-4z"></path>
-
-                            </svg>
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </main>
-
-</div>
-
-
-<!-- =========================
-     Voice Panel
-========================= -->
-
-<div
-    class="voice-panel"
-    id="voicePanel"
->
-
-    <div class="voice-box">
-
-        <h2>
-            المحادثة الصوتية
-        </h2>
-
-        <p id="voiceStatus">
-            اضغط لبدء المحادثة
-        </p>
-
-
-        <button
-            class="voice-button"
-            id="voiceStart"
-            type="button"
-        >
-            بدء المحادثة
-        </button>
-
-
-        <br>
-
-
-        <button
-            class="voice-close"
-            id="voiceClose"
-            title="إغلاق"
-            type="button"
-        >
-            إغلاق
-        </button>
 
     </div>
 
-</div>
+
+    <!-- =========================================================
+         VOICE PANEL
+    ========================================================== -->
+
+    <div
+        class="voice-panel"
+        id="voicePanel"
+    >
 
 
-<script>
-
-    const chatForm =
-        document.getElementById("chatForm");
-
-    const question =
-        document.getElementById("question");
-
-    const chatInner =
-        document.getElementById("chatInner");
-
-    const welcome =
-        document.getElementById("welcome");
-
-    const typing =
-        document.getElementById("typing");
-
-    const imageInput =
-        document.getElementById("imageInput");
-
-    const imageBtn =
-        document.getElementById("imageBtn");
-
-    const imageContainer =
-        document.getElementById("imageContainer");
-
-    const previewImage =
-        document.getElementById("previewImage");
-
-    const removeImage =
-        document.getElementById("removeImage");
-
-    const newChatBtn =
-        document.getElementById("newChatBtn");
-
-    const clearBtn =
-        document.getElementById("clearBtn");
-
-    const themeBtn =
-        document.getElementById("themeBtn");
-
-    const themeText =
-        document.getElementById("themeText");
-
-    const history =
-        document.getElementById("history");
-
-    const mobileMenu =
-        document.getElementById("mobileMenu");
-
-    const sidebar =
-        document.getElementById("sidebar");
-
-    const micBtn =
-        document.getElementById("micBtn");
-
-    const voiceBtn2 =
-        document.getElementById("voiceBtn2");
-
-    const voiceChatBtn =
-        document.getElementById("voiceChatBtn");
-
-    const voicePanel =
-        document.getElementById("voicePanel");
-
-    const voiceStart =
-        document.getElementById("voiceStart");
-
-    const voiceClose =
-        document.getElementById("voiceClose");
-
-    const voiceStatus =
-        document.getElementById("voiceStatus");
+        <div class="voice-box">
 
 
-    let selectedImage = null;
-
-    let lastAnswer = "";
-
-    let messages = [];
+            <h2>
+                المحادثة الصوتية
+            </h2>
 
 
-    /* =========================
-       إضافة رسالة إلى الشاشة
-    ========================= */
-
-    function addMessage(
-        role,
-        text,
-        image
-    ) {
-
-        const message =
-            document.createElement("div");
-
-        message.className =
-            "message " +
-            (role === "user"
-                ? "message-user"
-                : "message-ai");
+            <p id="voiceStatus">
+                اضغط لبدء المحادثة
+            </p>
 
 
-        const bubble =
-            document.createElement("div");
-
-        bubble.className =
-            "message-bubble";
-
-
-        if (text) {
-
-            bubble.textContent =
-                text;
-
-        }
+            <button
+                class="voice-button"
+                id="voiceStart"
+                type="button"
+            >
+                بدء المحادثة
+            </button>
 
 
-        if (image) {
-
-            const img =
-                document.createElement("img");
-
-            img.src =
-                image;
-
-            img.className =
-                "message-image";
-
-            img.alt =
-                "الصورة";
-
-            bubble.appendChild(img);
-
-        }
+            <br>
 
 
-        message.appendChild(
-            bubble
-        );
+            <button
+                class="voice-close"
+                id="voiceClose"
+                type="button"
+            >
+                إغلاق
+            </button>
 
 
-        chatInner.insertBefore(
-            message,
-            typing
-        );
+        </div>
 
+
+    </div>
+
+
+    <!-- =========================================================
+         SERVER ANSWER
+    ========================================================== -->
+
+    <div
+        id="server-answer"
+        style="display:none;"
+    >
+        {% if answer %}
+            {{ answer }}
+        {% endif %}
+    </div>
+
+
+    <!-- =========================================================
+         JAVASCRIPT
+    ========================================================== -->
+
+    <script>
+
+        "use strict";
+
+
+        /* =========================================================
+           ELEMENTS
+        ========================================================= */
+
+        const chatForm =
+            document.getElementById("chatForm");
+
+        const questionInput =
+            document.getElementById("question");
 
         const chat =
-            document.getElementById(
-                "chat"
-            );
+            document.getElementById("chat");
 
+        const chatInner =
+            document.getElementById("chatInner");
 
-        chat.scrollTop =
-            chat.scrollHeight;
+        const welcome =
+            document.getElementById("welcome");
 
-    }
+        const typing =
+            document.getElementById("typing");
 
+        const sendBtn =
+            document.getElementById("sendBtn");
 
-    /* =========================
-       إرسال الرسالة
-    ========================= */
+        const imageBtn =
+            document.getElementById("imageBtn");
 
-    chatForm.addEventListener(
-        "submit",
-        async function(event) {
+        const imageInput =
+            document.getElementById("imageInput");
 
-            event.preventDefault();
+        const imageContainer =
+            document.getElementById("imageContainer");
 
+        const previewImage =
+            document.getElementById("previewImage");
 
-            const text =
-                question.value.trim();
+        const removeImage =
+            document.getElementById("removeImage");
 
+        const newChatBtn =
+            document.getElementById("newChatBtn");
 
-            if (!text && !selectedImage) {
-                return;
-            }
+        const themeBtn =
+            document.getElementById("themeBtn");
 
+        const themeText =
+            document.getElementById("themeText");
 
-            welcome.style.display =
-                "none";
+        const clearBtn =
+            document.getElementById("clearBtn");
 
+        const history =
+            document.getElementById("history");
 
-            let imageUrl = null;
+        const mobileMenu =
+            document.getElementById("mobileMenu");
 
+        const sidebar =
+            document.getElementById("sidebar");
 
-            if (selectedImage) {
+        const micBtn =
+            document.getElementById("micBtn");
 
-                imageUrl =
-                    URL.createObjectURL(
-                        selectedImage
-                    );
+        const voiceChatBtn =
+            document.getElementById("voiceChatBtn");
 
-            }
+        const voiceBtn2 =
+            document.getElementById("voiceBtn2");
 
+        const voicePanel =
+            document.getElementById("voicePanel");
 
-            addMessage(
-                "user",
-                text,
-                imageUrl
-            );
+        const voiceStart =
+            document.getElementById("voiceStart");
 
+        const voiceClose =
+            document.getElementById("voiceClose");
 
-            typing.style.display =
-                "flex";
+        const voiceStatus =
+            document.getElementById("voiceStatus");
 
+        const status =
+            document.getElementById("status");
 
-            const formData =
-                new FormData();
+        const statusText =
+            document.getElementById("statusText");
 
+        const statusDot =
+            document.getElementById("statusDot");
 
-            formData.append(
-                "question",
-                text
-            );
 
+        /* =========================================================
+           STATE
+        ========================================================= */
 
-            if (selectedImage) {
+        let selectedImage = null;
 
-                formData.append(
-                    "image",
-                    selectedImage
-                );
+        let lastAnswer = "";
 
-            }
+        let recognition = null;
 
+        let isRecording = false;
 
-            question.value = "";
+        let voiceMode = false;
 
-            question.style.height =
-                "45px";
 
+        /* =========================================================
+           CONVERSATIONS
+        ========================================================= */
 
-            try {
+        let conversations = [];
 
-                const response =
-                    await fetch(
-                        "/",
-                        {
-                            method: "POST",
-                            body: formData
-                        }
-                    );
 
+        try {
 
-                const html =
-                    await response.text();
-
-
-                const parser =
-                    new DOMParser();
-
-
-                const doc =
-                    parser.parseFromString(
-                        html,
-                        "text/html"
-                    );
-
-
-                /*
-                 * Flask يرسل الإجابة
-                 * داخل الصفحة.
-                 */
-
-                const answerElement =
-                    doc.getElementById(
-                        "serverAnswer"
-                    );
-
-
-                let answer = "";
-
-
-                if (answerElement) {
-
-                    answer =
-                        answerElement.textContent.trim();
-
-                }
-
-
-                /*
-                 * إذا لم نجد الإجابة،
-                 * نجرب API.
-                 */
-
-                if (!answer && text) {
-
-                    const apiResponse =
-                        await fetch(
-                            "/api/chat",
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type":
-                                        "application/json"
-                                },
-                                body:
-                                    JSON.stringify({
-                                        message: text
-                                    })
-                            }
-                        );
-
-
-                    if (apiResponse.ok) {
-
-                        const data =
-                            await apiResponse.json();
-
-
-                        answer =
-                            data.answer || "";
-
-                    }
-
-                }
-
-
-                if (!answer) {
-
-                    answer =
-                        "لم أجد إجابة حاليًا.";
-
-                }
-
-
-                lastAnswer =
-                    answer;
-
-
-                addMessage(
-                    "ai",
-                    answer,
-                    null
+            conversations =
+                JSON.parse(
+                    localStorage.getItem(
+                        "aido_conversations"
+                    ) || "[]"
                 );
 
 
-            } catch (error) {
+            if (!Array.isArray(conversations)) {
 
-                console.error(
-                    "CHAT ERROR:",
-                    error
-                );
-
-
-                addMessage(
-                    "ai",
-                    "حدث خطأ أثناء الاتصال بالخادم: " +
-                    error.message,
-                    null
-                );
+                conversations = [];
 
             }
 
+        } catch (error) {
 
-            typing.style.display =
-                "none";
-
-
-            removeSelectedImage();
+            conversations = [];
 
         }
-    );
 
 
-    /* =========================
-       رفع صورة
-    ========================= */
+        /* =========================================================
+           THEME
+        ========================================================= */
 
-    imageBtn.addEventListener(
-        "click",
-        function() {
+        function loadTheme() {
 
-            imageInput.click();
-
-        }
-    );
-
-
-    imageInput.addEventListener(
-        "change",
-        function() {
-
-            const file =
-                imageInput.files[0];
-
-
-            if (!file) {
-                return;
-            }
-
-
-            selectedImage =
-                file;
-
-
-            const reader =
-                new FileReader();
-
-
-            reader.onload =
-                function(event) {
-
-                    previewImage.src =
-                        event.target.result;
-
-                    imageContainer.style.display =
-                        "block";
-
-                };
-
-
-            reader.readAsDataURL(
-                file
-            );
-
-        }
-    );
-
-
-    removeImage.addEventListener(
-        "click",
-        function() {
-
-            removeSelectedImage();
-
-        }
-    );
-
-
-    function removeSelectedImage() {
-
-        selectedImage =
-            null;
-
-        imageInput.value =
-            "";
-
-        previewImage.src =
-            "";
-
-        imageContainer.style.display =
-            "none";
-
-    }
-
-
-    /* =========================
-       محادثة جديدة
-    ========================= */
-
-    newChatBtn.addEventListener(
-        "click",
-        function() {
-
-            document
-                .querySelectorAll(
-                    ".message"
-                )
-                .forEach(
-                    function(element) {
-
-                        element.remove();
-
-                    }
+            const savedTheme =
+                localStorage.getItem(
+                    "aido_theme"
                 );
 
 
-            welcome.style.display =
-                "flex";
+            if (savedTheme === "dark") {
 
-
-            question.value =
-                "";
-
-
-            removeSelectedImage();
-
-        }
-    );
-
-
-    /* =========================
-       مسح المحادثات
-    ========================= */
-
-    clearBtn.addEventListener(
-        "click",
-        function() {
-
-            document
-                .querySelectorAll(
-                    ".message"
-                )
-                .forEach(
-                    function(element) {
-
-                        element.remove();
-
-                    }
-                );
-
-
-            welcome.style.display =
-                "flex";
-
-
-            lastAnswer =
-                "";
-
-        }
-    );
-
-
-    /* =========================
-       الوضع الليلي
-    ========================= */
-
-    themeBtn.addEventListener(
-        "click",
-        function() {
-
-            document.body.classList.toggle(
-                "dark"
-            );
-
-
-            if (
-                document.body.classList.contains(
+                document.body.classList.add(
                     "dark"
-                )
-            ) {
+                );
 
                 themeText.textContent =
                     "الوضع النهاري";
 
             } else {
 
+                document.body.classList.remove(
+                    "dark"
+                );
+
                 themeText.textContent =
                     "الوضع الليلي";
-
             }
 
         }
-    );
 
 
-    /* =========================
-       القائمة في الهاتف
-    ========================= */
+        themeBtn.addEventListener(
+            "click",
+            function () {
 
-    mobileMenu.addEventListener(
-        "click",
-        function() {
-
-            sidebar.classList.toggle(
-                "open"
-            );
-
-        }
-    );
+                document.body.classList.toggle(
+                    "dark"
+                );
 
 
-    /* =========================
-       تكبير مربع الكتابة
-    ========================= */
-
-    question.addEventListener(
-        "input",
-        function() {
-
-            this.style.height =
-                "45px";
+                const dark =
+                    document.body.classList.contains(
+                        "dark"
+                    );
 
 
-            this.style.height =
+                localStorage.setItem(
+                    "aido_theme",
+                    dark
+                        ? "dark"
+                        : "light"
+                );
+
+
+                themeText.textContent =
+                    dark
+                        ? "الوضع النهاري"
+                        : "الوضع الليلي";
+
+            }
+        );
+
+
+        loadTheme();
+
+
+        /* =========================================================
+           MOBILE MENU
+        ========================================================= */
+
+        mobileMenu.addEventListener(
+            "click",
+            function () {
+
+                sidebar.classList.toggle(
+                    "open"
+                );
+
+            }
+        );
+
+
+        /* =========================================================
+           IMAGE
+        ========================================================= */
+
+        imageBtn.addEventListener(
+            "click",
+            function () {
+
+                imageInput.click();
+
+            }
+        );
+
+
+        imageInput.addEventListener(
+            "change",
+            function () {
+
+                const file =
+                    imageInput.files[0];
+
+
+                if (!file) {
+
+                    return;
+                }
+
+
+                if (
+                    !file.type.startsWith(
+                        "image/"
+                    )
+                ) {
+
+                    alert(
+                        "الملف المختار ليس صورة."
+                    );
+
+
+                    imageInput.value = "";
+
+                    return;
+                }
+
+
+                selectedImage = file;
+
+
+                const reader =
+                    new FileReader();
+
+
+                reader.onload =
+                    function (event) {
+
+                        previewImage.src =
+                            event.target.result;
+
+                        imageContainer.classList.add(
+                            "show"
+                        );
+
+                    };
+
+
+                reader.readAsDataURL(file);
+
+            }
+        );
+
+
+        removeImage.addEventListener(
+            "click",
+            function () {
+
+                selectedImage = null;
+
+                imageInput.value = "";
+
+                previewImage.src = "";
+
+                imageContainer.classList.remove(
+                    "show"
+                );
+
+            }
+        );
+
+
+        /* =========================================================
+           TEXTAREA
+        ========================================================= */
+
+        function resizeTextarea() {
+
+            questionInput.style.height =
+                "auto";
+
+
+            questionInput.style.height =
                 Math.min(
-                    this.scrollHeight,
+                    questionInput.scrollHeight,
                     150
                 ) + "px";
 
         }
-    );
 
 
-    /* =========================
-       Enter للإرسال
-    ========================= */
+        questionInput.addEventListener(
+            "input",
+            resizeTextarea
+        );
 
-    question.addEventListener(
-        "keydown",
-        function(event) {
 
-            if (
-                event.key === "Enter" &&
-                !event.shiftKey
-            ) {
+        /* =========================================================
+           ENTER
+        ========================================================= */
 
-                event.preventDefault();
+        questionInput.addEventListener(
+            "keydown",
+            function (event) {
 
-                chatForm.requestSubmit();
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    chatForm.requestSubmit();
+
+                }
 
             }
+        );
+
+
+        /* =========================================================
+           SCROLL
+        ========================================================= */
+
+        function scrollToBottom() {
+
+            setTimeout(
+                function () {
+
+                    chat.scrollTop =
+                        chat.scrollHeight;
+
+                },
+                50
+            );
 
         }
-    );
 
 
-    /* =========================
-       الميكروفون
-    ========================= */
+        /* =========================================================
+           MESSAGE
+        ========================================================= */
 
-    let recognition = null;
+        function addMessage(
+            text,
+            type,
+            imageUrl = null
+        ) {
 
-
-    if (
-        "webkitSpeechRecognition"
-        in window
-    ) {
-
-        recognition =
-            new webkitSpeechRecognition();
-
-
-        recognition.lang =
-            "ar-MA";
+            welcome.classList.add(
+                "hidden"
+            );
 
 
-        recognition.continuous =
-            false;
+            const message =
+                document.createElement(
+                    "div"
+                );
 
 
-        recognition.interimResults =
-            false;
+            message.className =
+                "message " +
+                (
+                    type === "user"
+                        ? "message-user"
+                        : "message-ai"
+                );
 
 
-        recognition.onresult =
-            function(event) {
-
-                const text =
-                    event.results[0][0]
-                        .transcript;
+            const label =
+                document.createElement(
+                    "div"
+                );
 
 
-                question.value =
+            label.className =
+                "message-label";
+
+
+            label.textContent =
+                type === "user"
+                    ? "أنت"
+                    : "Aido AI";
+
+
+            const bubble =
+                document.createElement(
+                    "div"
+                );
+
+
+            bubble.className =
+                "message-bubble";
+
+
+            if (text) {
+
+                bubble.textContent =
                     text;
 
-
-                question.dispatchEvent(
-                    new Event("input")
-                );
-
-            };
-
-    }
-
-
-    micBtn.addEventListener(
-        "click",
-        function() {
-
-            if (!recognition) {
-
-                alert(
-                    "المتصفح لا يدعم التعرف على الصوت."
-                );
-
-                return;
-
             }
 
 
-            recognition.start();
-
-        }
-    );
-
-
-    /* =========================
-       قراءة الإجابة
-    ========================= */
-
-    voiceBtn2.addEventListener(
-        "click",
-        function() {
-
-            if (!lastAnswer) {
-                return;
-            }
+            message.appendChild(
+                label
+            );
 
 
-            if (
-                "speechSynthesis"
-                in window
-            ) {
-
-                speechSynthesis.cancel();
+            message.appendChild(
+                bubble
+            );
 
 
-                const speech =
-                    new SpeechSynthesisUtterance(
-                        lastAnswer
+            if (imageUrl) {
+
+                const image =
+                    document.createElement(
+                        "img"
                     );
 
 
-                speech.lang =
-                    "ar-MA";
+                image.className =
+                    "message-image";
 
 
-                speech.rate =
-                    0.95;
+                image.src =
+                    imageUrl;
 
 
-                speechSynthesis.speak(
-                    speech
+                image.alt =
+                    "الصورة المرسلة";
+
+
+                message.appendChild(
+                    image
+                );
+
+            }
+
+
+            if (type === "ai") {
+
+                const actions =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                actions.className =
+                    "message-actions";
+
+
+                const copyButton =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                copyButton.className =
+                    "message-action";
+
+
+                copyButton.type =
+                    "button";
+
+
+                copyButton.title =
+                    "نسخ الإجابة";
+
+
+                copyButton.textContent =
+                    "📋";
+
+
+                copyButton.addEventListener(
+                    "click",
+                    function () {
+
+                        copyText(text);
+
+                    }
+                );
+
+
+                const speakButton =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                speakButton.className =
+                    "message-action";
+
+
+                speakButton.type =
+                    "button";
+
+
+                speakButton.title =
+                    "قراءة الإجابة";
+
+
+                speakButton.textContent =
+                    "🔊";
+
+
+                speakButton.addEventListener(
+                    "click",
+                    function () {
+
+                        speakText(text);
+
+                    }
+                );
+
+
+                actions.appendChild(
+                    copyButton
+                );
+
+
+                actions.appendChild(
+                    speakButton
+                );
+
+
+                message.appendChild(
+                    actions
+                );
+
+            }
+
+
+            chatInner.insertBefore(
+                message,
+                typing
+            );
+
+
+            scrollToBottom();
+
+        }
+
+
+        /* =========================================================
+           COPY
+        ========================================================= */
+
+        async function copyText(text) {
+
+            if (!text) {
+
+                return;
+            }
+
+
+            try {
+
+                await navigator.clipboard.writeText(
+                    text
+                );
+
+                alert(
+                    "تم نسخ الإجابة."
+                );
+
+            } catch (error) {
+
+                const textarea =
+                    document.createElement(
+                        "textarea"
+                    );
+
+
+                textarea.value =
+                    text;
+
+
+                document.body.appendChild(
+                    textarea
+                );
+
+
+                textarea.select();
+
+
+                document.execCommand(
+                    "copy"
+                );
+
+
+                textarea.remove();
+
+
+                alert(
+                    "تم نسخ الإجابة."
                 );
 
             }
 
         }
-    );
 
 
-    /* =========================
-       المحادثة الصوتية
-    ========================= */
+        /* =========================================================
+           SPEECH
+        ========================================================= */
 
-    voiceChatBtn.addEventListener(
-        "click",
-        function() {
+        function speakText(text) {
 
-            voicePanel.style.display =
-                "flex";
-
-        }
-    );
-
-
-    voiceClose.addEventListener(
-        "click",
-        function() {
-
-            voicePanel.style.display =
-                "none";
-
-        }
-    );
-
-
-    voiceStart.addEventListener(
-        "click",
-        function() {
-
-            if (!recognition) {
-
-                voiceStatus.textContent =
-                    "المتصفح لا يدعم المحادثة الصوتية.";
+            if (!text) {
 
                 return;
+            }
+
+
+            if (
+                !("speechSynthesis" in window)
+            ) {
+
+                alert(
+                    "المتصفح لا يدعم قراءة النص صوتيًا."
+                );
+
+                return;
+            }
+
+
+            window.speechSynthesis.cancel();
+
+
+            const utterance =
+                new SpeechSynthesisUtterance(
+                    text
+                );
+
+
+            utterance.lang =
+                "ar-SA";
+
+
+            utterance.rate =
+                0.95;
+
+
+            utterance.pitch =
+                1;
+
+
+            window.speechSynthesis.speak(
+                utterance
+            );
+
+        }
+
+
+        voiceBtn2.addEventListener(
+            "click",
+            function () {
+
+                if (lastAnswer) {
+
+                    speakText(
+                        lastAnswer
+                    );
+
+                } else {
+
+                    alert(
+                        "لا توجد إجابة لقراءتها."
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           TYPING
+        ========================================================= */
+
+        function setTyping(show) {
+
+            if (show) {
+
+                typing.classList.add(
+                    "show"
+                );
+
+            } else {
+
+                typing.classList.remove(
+                    "show"
+                );
 
             }
 
 
-            voiceStatus.textContent =
-                "أستمع إليك...";
-
-
-            recognition.start();
+            scrollToBottom();
 
         }
-    );
 
-</script>
+
+        /* =========================================================
+           STATUS
+        ========================================================= */
+
+        function setOnlineStatus(online) {
+
+            if (online) {
+
+                statusText.textContent =
+                    "متصل";
+
+
+                statusDot.classList.remove(
+                    "offline"
+                );
+
+
+                status.classList.remove(
+                    "offline"
+                );
+
+            } else {
+
+                statusText.textContent =
+                    "غير متصل";
+
+
+                statusDot.classList.add(
+                    "offline"
+                );
+
+
+                status.classList.add(
+                    "offline"
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           SAVE
+        ========================================================= */
+
+        function saveConversation(
+            question,
+            answer
+        ) {
+
+            if (
+                !question ||
+                !answer
+            ) {
+
+                return;
+            }
+
+
+            conversations.unshift({
+
+                question:
+                    question,
+
+                answer:
+                    answer,
+
+                date:
+                    new Date().toISOString()
+
+            });
+
+
+            if (
+                conversations.length > 30
+            ) {
+
+                conversations =
+                    conversations.slice(
+                        0,
+                        30
+                    );
+
+            }
+
+
+            localStorage.setItem(
+                "aido_conversations",
+                JSON.stringify(
+                    conversations
+                )
+            );
+
+
+            renderHistory();
+
+        }
+
+
+        /* =========================================================
+           HISTORY
+        ========================================================= */
+
+        function renderHistory() {
+
+            history.innerHTML = "";
+
+
+            if (
+                conversations.length === 0
+            ) {
+
+                const empty =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                empty.className =
+                    "history-empty";
+
+
+                empty.textContent =
+                    "لا توجد محادثات محفوظة";
+
+
+                history.appendChild(
+                    empty
+                );
+
+
+                return;
+            }
+
+
+            conversations.forEach(
+                function (
+                    conversation,
+                    index
+                ) {
+
+                    const item =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    item.className =
+                        "history-item";
+
+
+                    item.textContent =
+                        conversation.question;
+
+
+                    item.title =
+                        conversation.question;
+
+
+                    item.addEventListener(
+                        "click",
+                        function () {
+
+                            loadConversation(
+                                index
+                            );
+
+
+                            sidebar.classList.remove(
+                                "open"
+                            );
+
+                        }
+                    );
+
+
+                    history.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+        }
+
+
+        function loadConversation(index) {
+
+            const conversation =
+                conversations[index];
+
+
+            if (!conversation) {
+
+                return;
+            }
+
+
+            clearChat(false);
+
+
+            addMessage(
+                conversation.question,
+                "user"
+            );
+
+
+            addMessage(
+                conversation.answer,
+                "ai"
+            );
+
+
+            lastAnswer =
+                conversation.answer;
+
+        }
+
+
+        renderHistory();
+
+
+        /* =========================================================
+           CLEAR CHAT
+        ========================================================= */
+
+        function clearChat(
+            showWelcome = true
+        ) {
+
+            const messages =
+                chatInner.querySelectorAll(
+                    ".message"
+                );
+
+
+            messages.forEach(
+                function (message) {
+
+                    message.remove();
+
+                }
+            );
+
+
+            lastAnswer = "";
+
+
+            if (showWelcome) {
+
+                welcome.classList.remove(
+                    "hidden"
+                );
+
+            }
+
+        }
+
+
+        /* =========================================================
+           NEW CHAT
+        ========================================================= */
+
+        newChatBtn.addEventListener(
+            "click",
+            function () {
+
+                clearChat(true);
+
+
+                questionInput.value =
+                    "";
+
+
+                resizeTextarea();
+
+
+                removeImage.click();
+
+
+                questionInput.focus();
+
+
+                sidebar.classList.remove(
+                    "open"
+                );
+
+            }
+        );
+
+
+        /* =========================================================
+           CLEAR HISTORY
+        ========================================================= */
+
+        clearBtn.addEventListener(
+            "click",
+            function () {
+
+                const confirmed =
+                    confirm(
+                        "هل تريد مسح جميع المحادثات المحفوظة؟"
+                    );
+
+
+                if (!confirmed) {
+
+                    return;
+                }
+
+
+                conversations = [];
+
+
+                localStorage.removeItem(
+                    "aido_conversations"
+                );
+
+
+                clearChat(true);
+
+
+                renderHistory();
+
+            }
+        );
+
+
+        /* =========================================================
+           SEND MESSAGE
+        ========================================================= */
+
+        chatForm.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+
+                const question =
+                    questionInput.value.trim();
+
+
+                if (
+                    !question &&
+                    !selectedImage
+                ) {
+
+                    questionInput.focus();
+
+                    return;
+                }
+
+
+                const imageFile =
+                    selectedImage;
+
+
+                let imagePreview =
+                    null;
+
+
+                if (imageFile) {
+
+                    imagePreview =
+                        URL.createObjectURL(
+                            imageFile
+                        );
+
+                }
+
+
+                addMessage(
+                    question ||
+                    "حلل هذه الصورة من فضلك.",
+                    "user",
+                    imagePreview
+                );
+
+
+                questionInput.value =
+                    "";
+
+
+                resizeTextarea();
+
+
+                removeImage.click();
+
+
+                setTyping(true);
+
+
+                sendBtn.disabled =
+                    true;
+
+
+                setOnlineStatus(true);
+
+
+                try {
+
+                    let answer = "";
+
+
+                    /* =================================================
+                       IMAGE REQUEST
+                    ================================================== */
+
+                    if (imageFile) {
+
+                        const formData =
+                            new FormData();
+
+
+                        formData.append(
+                            "question",
+                            question ||
+                            "حلل هذه الصورة واشرح لي ما الذي يظهر فيها."
+                        );
+
+
+                        formData.append(
+                            "image",
+                            imageFile
+                        );
+
+
+                        const response =
+                            await fetch(
+                                "/",
+                                {
+                                    method:
+                                        "POST",
+
+                                    body:
+                                        formData
+                                }
+                            );
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "HTTP " +
+                                response.status
+                            );
+
+                        }
+
+
+                        const html =
+                            await response.text();
+
+
+                        const parser =
+                            new DOMParser();
+
+
+                        const documentData =
+                            parser.parseFromString(
+                                html,
+                                "text/html"
+                            );
+
+
+                        const answerElement =
+                            documentData.querySelector(
+                                "#server-answer"
+                            );
+
+
+                        if (answerElement) {
+
+                            answer =
+                                answerElement
+                                    .textContent
+                                    .trim();
+
+                        } else {
+
+                            answer =
+                                "تم إرسال الصورة، ولكن تعذر قراءة نتيجة التحليل.";
+
+                        }
+
+                    }
+
+
+                    /* =================================================
+                       TEXT REQUEST
+                    ================================================== */
+
+                    else {
+
+                        const response =
+                            await fetch(
+                                "/api/chat",
+                                {
+                                    method:
+                                        "POST",
+
+                                    headers: {
+                                        "Content-Type":
+                                            "application/json"
+                                    },
+
+                                    body:
+                                        JSON.stringify({
+                                            message:
+                                                question
+                                        })
+                                }
+                            );
+
+
+                        if (!response.ok) {
+
+                            throw new Error(
+                                "HTTP " +
+                                response.status
+                            );
+
+                        }
+
+
+                        const data =
+                            await response.json();
+
+
+                        answer =
+                            data.answer ||
+                            data.response ||
+                            data.message ||
+                            "لم أجد إجابة حاليًا.";
+
+                    }
+
+
+                    if (!answer) {
+
+                        answer =
+                            "أنا Aido AI ولم أجد إجابة حاليًا.";
+
+                    }
+
+
+                    lastAnswer =
+                        answer;
+
+
+                    setTyping(false);
+
+
+                    addMessage(
+                        answer,
+                        "ai"
+                    );
+
+
+                    saveConversation(
+                        question ||
+                        "تحليل صورة",
+                        answer
+                    );
+
+
+                    setOnlineStatus(true);
+
+
+                } catch (error) {
+
+                    console.error(
+                        "AIDO AI ERROR:",
+                        error
+                    );
+
+
+                    setTyping(false);
+
+
+                    setOnlineStatus(false);
+
+
+                    const errorMessage =
+                        "حدث خطأ أثناء الاتصال بـ Aido AI. تأكد من أن الخادم يعمل ثم حاول مرة أخرى.";
+
+
+                    lastAnswer =
+                        errorMessage;
+
+
+                    addMessage(
+                        errorMessage,
+                        "ai"
+                    );
+
+                } finally {
+
+                    sendBtn.disabled =
+                        false;
+
+
+                    if (imagePreview) {
+
+                        setTimeout(
+                            function () {
+
+                                URL.revokeObjectURL(
+                                    imagePreview
+                                );
+
+                            },
+                            1000
+                        );
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           SPEECH RECOGNITION
+        ========================================================= */
+
+        function setupSpeechRecognition() {
+
+            const SpeechRecognition =
+                window.SpeechRecognition ||
+                window.webkitSpeechRecognition;
+
+
+            if (!SpeechRecognition) {
+
+                return false;
+            }
+
+
+            recognition =
+                new SpeechRecognition();
+
+
+            recognition.lang =
+                "ar-MA";
+
+
+            recognition.continuous =
+                false;
+
+
+            recognition.interimResults =
+                true;
+
+
+            recognition.onstart =
+                function () {
+
+                    isRecording = true;
+
+
+                    micBtn.classList.add(
+                        "active"
+                    );
+
+                };
+
+
+            recognition.onresult =
+                function (event) {
+
+                    let transcript = "";
+
+
+                    for (
+                        let i =
+                            event.resultIndex;
+
+                        i <
+                        event.results.length;
+
+                        i++
+                    ) {
+
+                        transcript +=
+                            event.results[i][0]
+                                .transcript;
+
+                    }
+
+
+                    questionInput.value =
+                        transcript;
+
+
+                    resizeTextarea();
+
+                };
+
+
+            recognition.onerror =
+                function (event) {
+
+                    console.error(
+                        "Speech error:",
+                        event.error
+                    );
+
+
+                    isRecording =
+                        false;
+
+
+                    micBtn.classList.remove(
+                        "active"
+                    );
+
+                };
+
+
+            recognition.onend =
+                function () {
+
+                    isRecording =
+                        false;
+
+
+                    micBtn.classList.remove(
+                        "active"
+                    );
+
+                };
+
+
+            return true;
+
+        }
+
+
+        const speechAvailable =
+            setupSpeechRecognition();
+
+
+        /* =========================================================
+           MICROPHONE
+        ========================================================= */
+
+        micBtn.addEventListener(
+            "click",
+            function () {
+
+                if (!speechAvailable) {
+
+                    alert(
+                        "المتصفح لا يدعم تحويل الكلام إلى نص."
+                    );
+
+                    return;
+                }
+
+
+                if (isRecording) {
+
+                    recognition.stop();
+
+                } else {
+
+                    try {
+
+                        recognition.start();
+
+                    } catch (error) {
+
+                        console.error(
+                            error
+                        );
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           VOICE PANEL
+        ========================================================= */
+
+        voiceChatBtn.addEventListener(
+            "click",
+            function () {
+
+                voicePanel.classList.add(
+                    "show"
+                );
+
+            }
+        );
+
+
+        voiceClose.addEventListener(
+            "click",
+            function () {
+
+                stopVoiceChat();
+
+
+                voicePanel.classList.remove(
+                    "show"
+                );
+
+            }
+        );
+
+
+        voicePanel.addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target ===
+                    voicePanel
+                ) {
+
+                    stopVoiceChat();
+
+
+                    voicePanel.classList.remove(
+                        "show"
+                    );
+
+                }
+
+            }
+        );
+
+
+        voiceStart.addEventListener(
+            "click",
+            function () {
+
+                if (!speechAvailable) {
+
+                    alert(
+                        "المتصفح لا يدعم المحادثة الصوتية."
+                    );
+
+                    return;
+                }
+
+
+                if (isRecording) {
+
+                    stopVoiceChat();
+
+                    return;
+                }
+
+
+                voiceMode =
+                    true;
+
+
+                isRecording =
+                    true;
+
+
+                voiceStart.classList.add(
+                    "recording"
+                );
+
+
+                voiceStart.textContent =
+                    "إيقاف";
+
+
+                voiceStatus.textContent =
+                    "أستمع إليك الآن...";
+
+
+                try {
+
+                    recognition.start();
+
+                } catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           VOICE RESULT
+        ========================================================= */
+
+        function handleVoiceResult(event) {
+
+            let transcript = "";
+
+
+            for (
+                let i =
+                    event.resultIndex;
+
+                i <
+                event.results.length;
+
+                i++
+            ) {
+
+                transcript +=
+                    event.results[i][0]
+                        .transcript;
+
+            }
+
+
+            questionInput.value =
+                transcript;
+
+
+            resizeTextarea();
+
+        }
+
+
+        if (recognition) {
+
+            recognition.addEventListener(
+                "result",
+                function (event) {
+
+                    if (voiceMode) {
+
+                        handleVoiceResult(
+                            event
+                        );
+
+                    }
+
+                }
+            );
+
+
+            recognition.addEventListener(
+                "end",
+                function () {
+
+                    if (!voiceMode) {
+
+                        return;
+                    }
+
+
+                    isRecording =
+                        false;
+
+
+                    voiceStart.classList.remove(
+                        "recording"
+                    );
+
+
+                    voiceStart.textContent =
+                        "بدء المحادثة";
+
+
+                    voiceStatus.textContent =
+                        "تم التقاط الكلام.";
+
+
+                    voiceMode =
+                        false;
+
+
+                    if (
+                        questionInput.value.trim()
+                    ) {
+
+                        chatForm.requestSubmit();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /* =========================================================
+           STOP VOICE
+        ========================================================= */
+
+        function stopVoiceChat() {
+
+            voiceMode =
+                false;
+
+
+            isRecording =
+                false;
+
+
+            if (recognition) {
+
+                try {
+
+                    recognition.stop();
+
+                } catch (error) {}
+
+            }
+
+
+            voiceStart.classList.remove(
+                "recording"
+            );
+
+
+            voiceStart.textContent =
+                "بدء المحادثة";
+
+
+            voiceStatus.textContent =
+                "اضغط لبدء المحادثة";
+
+        }
+
+
+        /* =========================================================
+           ESC
+        ========================================================= */
+
+        document.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key === "Escape"
+                ) {
+
+                    stopVoiceChat();
+
+
+                    voicePanel.classList.remove(
+                        "show"
+                    );
+
+
+                    sidebar.classList.remove(
+                        "open"
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* =========================================================
+           INITIALIZATION
+        ========================================================= */
+
+        setOnlineStatus(true);
+
+
+        resizeTextarea();
+
+
+        renderHistory();
+
+
+        questionInput.focus();
+
+    </script>
+
 
 </body>
 
