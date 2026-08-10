@@ -478,6 +478,7 @@ JSON.parse(
 localStorage.getItem("ido_conversations") || "[]"
 );
 
+
 /* =========================
    اسم المستخدم
 ========================= */
@@ -511,6 +512,7 @@ $("welcomeText").textContent=
 
 }
 
+
 /* =========================
    الوضع الليلي
 ========================= */
@@ -543,6 +545,7 @@ dark
 
 };
 
+
 /* =========================
    القائمة في الهاتف
 ========================= */
@@ -552,6 +555,7 @@ $("mobileMenu").onclick=()=>{
 sidebar.classList.toggle("open");
 
 };
+
 
 /* =========================
    تغيير حجم الكتابة
@@ -568,6 +572,7 @@ question.scrollHeight,
 )+"px";
 
 };
+
 
 /* =========================
    إنشاء معرف للمحادثة
@@ -591,6 +596,7 @@ updated:new Date().toISOString()
 
 }
 
+
 /* =========================
    حفظ المحادثات
 ========================= */
@@ -603,6 +609,7 @@ JSON.stringify(conversations)
 );
 
 }
+
 
 /* =========================
    المحادثة الحالية
@@ -621,6 +628,7 @@ c=>c.id===currentConversationId
 );
 
 }
+
 
 /* =========================
    حفظ المحادثة الحالية
@@ -642,6 +650,7 @@ renderHistory();
 
 }
 
+
 /* =========================
    عرض رسالة
 ========================= */
@@ -661,6 +670,7 @@ message.className=
 ?"message-user"
 :"message-ai");
 
+
 const avatar=
 document.createElement("div");
 
@@ -671,11 +681,13 @@ sender==="user"
 ?"👤"
 :"🤖";
 
+
 const content=
 document.createElement("div");
 
 content.className=
 "message-content";
+
 
 const name=
 document.createElement("div");
@@ -687,6 +699,7 @@ name.textContent=
 sender==="user"
 ?"أنت"
 :"Ido AI";
+
 
 const textBox=
 document.createElement("div");
@@ -700,6 +713,7 @@ content.appendChild(name);
 
 content.appendChild(textBox);
 
+
 if(sender==="ai"){
 
 const tools=
@@ -707,6 +721,7 @@ document.createElement("div");
 
 tools.className=
 "answer-tools";
+
 
 const voice=
 document.createElement("button");
@@ -722,6 +737,7 @@ voice.onclick=()=>{
 speakText(text,voice);
 
 };
+
 
 const copy=
 document.createElement("button");
@@ -751,6 +767,7 @@ setTimeout(
 
 };
 
+
 tools.appendChild(voice);
 
 tools.appendChild(copy);
@@ -759,11 +776,13 @@ content.appendChild(tools);
 
 }
 
+
 message.appendChild(avatar);
 
 message.appendChild(content);
 
 chat.appendChild(message);
+
 
 if(save){
 
@@ -789,10 +808,12 @@ saveConversations();
 
 }
 
+
 chat.scrollTop=
 chat.scrollHeight;
 
 }
+
 
 /* =========================
    عرض محادثة
@@ -825,6 +846,7 @@ chat.scrollHeight;
 
 }
 
+
 /* =========================
    رسالة الترحيب
 ========================= */
@@ -850,6 +872,7 @@ chat.innerHTML=`
 `;
 
 }
+
 
 /* =========================
    قائمة المحادثات
@@ -878,6 +901,7 @@ item.textContent=
 conversation.title ||
 "محادثة جديدة";
 
+
 item.onclick=()=>{
 
 currentConversationId=
@@ -902,11 +926,13 @@ sidebar.classList.remove(
 
 };
 
+
 historyBox.appendChild(item);
 
 });
 
 }
+
 
 /* =========================
    فتح المحادثة الحالية
@@ -930,6 +956,7 @@ showWelcome();
 }
 
 }
+
 
 /* =========================
    زر محادثة جديدة
@@ -972,6 +999,7 @@ sidebar.classList.remove(
 
 };
 
+
 /* =========================
    مسح المحادثات
 ========================= */
@@ -1001,6 +1029,7 @@ showWelcome();
 renderHistory();
 
 };
+
 
 /* =========================
    إرسال الرسالة
@@ -1037,6 +1066,9 @@ currentConversationId
 
 }
 
+
+/* عنوان المحادثة */
+
 if(!conversation.messages.length){
 
 conversation.title=
@@ -1045,6 +1077,9 @@ text.length>35
 :text;
 
 }
+
+
+/* إظهار سؤال المستخدم */
 
 addMessage(
 "user",
@@ -1059,6 +1094,9 @@ typing.style.display="block";
 
 chat.scrollTop=
 chat.scrollHeight;
+
+
+/* إرسال السؤال إلى Flask */
 
 try{
 
@@ -1089,6 +1127,9 @@ throw new Error(
 const html=
 await response.text();
 
+
+/* استخراج answer من رد Flask */
+
 const parser=
 new DOMParser();
 
@@ -1100,6 +1141,7 @@ html,
 
 const answerElement=
 doc.querySelector("#answer");
+
 
 let answerText="";
 
@@ -1117,6 +1159,9 @@ answerText=
 
 }
 
+
+/* إظهار الإجابة */
+
 typing.style.display="none";
 
 addMessage(
@@ -1125,6 +1170,7 @@ answerText
 );
 
 saveCurrentConversation();
+
 
 }catch(error){
 
@@ -1145,56 +1191,151 @@ error.message
 
 };
 
-/* =========================
-   تنظيف النص للصوت
-========================= */
 
-function cleanForVoice(text){
-
-return text
-
-.replace(
-/https?:\/\/\S+/gi,
-""
-)
-
-.replace(
-/[🤖👤😊😄😂🤣😍🥰😘😎👍❤️💬🔊📋🎤🧮🌍🇲🇦🇫🇷⏰☀️🌙🗑️＋↑]/gu,
-""
-)
-
-.replace(
-/[\/\\|*_#~`]/g,
-" "
-)
-
-.replace(
-/\s+/g,
-" "
-)
-
-.trim();
-
-}
-
-/* =========================
-   الصوت العربي
-========================= */
+/* =====================================================
+   قراءة الإجابات بالصوت العربي
+   هذا هو الجزء المعدل فقط
+===================================================== */
 
 let speaking=false;
+
+
+/* =========================
+   اختيار صوت عربي
+========================= */
 
 function getArabicVoice(){
 
 const voices=
 window.speechSynthesis.getVoices();
 
-return voices.find(
-v=>
-v.lang &&
-v.lang.toLowerCase().startsWith("ar")
-) || null;
+if(!voices.length){
+
+return null;
 
 }
+
+
+/* البحث عن صوت عربي مغربي */
+
+let voice=
+voices.find(v=>
+v.lang &&
+v.lang.toLowerCase()==="ar-ma"
+);
+
+if(voice){
+
+return voice;
+
+}
+
+
+/* البحث عن أي صوت عربي */
+
+voice=
+voices.find(v=>
+v.lang &&
+v.lang.toLowerCase().startsWith("ar")
+);
+
+if(voice){
+
+return voice;
+
+}
+
+
+/* البحث عن أصوات عربية بأسماء شائعة */
+
+voice=
+voices.find(v=>
+v.name &&
+(
+v.name.toLowerCase().includes("arabic") ||
+v.name.toLowerCase().includes("arabe") ||
+v.name.includes("العربية") ||
+v.name.includes("عربي")
+)
+);
+
+return voice || null;
+
+}
+
+
+/* =========================
+   تجهيز النص للقراءة
+========================= */
+
+function cleanForVoice(text){
+
+let result=text;
+
+
+/* إزالة الروابط */
+
+result=result.replace(
+/https?:\/\/\S+/gi,
+" "
+);
+
+
+/* تحويل الأرقام العشرية
+   مثل 36.8 إلى:
+   36 فاصلة 8
+*/
+
+result=result.replace(
+/(\d+)\.(\d+)/g,
+"$1 فاصلة $2"
+);
+
+
+/* إضافة مسافة بين الرقم والكلمات */
+
+result=result.replace(
+/(\d)([^\d\s])/g,
+"$1 $2"
+);
+
+result=result.replace(
+/([^\d\s])(\d)/g,
+"$1 $2"
+);
+
+
+/* إزالة الرموز التعبيرية */
+
+result=result.replace(
+/[🤖👤😊😄😂🤣😍🥰😘😎👍❤️💬🔊📋🎤🧮🌍🇲🇦🇫🇷⏰☀️🌙🗑️＋↑]/gu,
+" "
+);
+
+
+/* إزالة رموز البرمجة */
+
+result=result.replace(
+/[*_#~`\\|]/g,
+" "
+);
+
+
+/* إزالة المسافات الزائدة */
+
+result=result.replace(
+/\s+/g,
+" "
+);
+
+return result.trim();
+
+}
+
+
+/* =========================
+   قراءة النص
+========================= */
 
 function speakText(text,button){
 
@@ -1208,9 +1349,13 @@ return;
 
 }
 
+
+/* إذا كان الصوت يعمل
+   أوقفه */
+
 if(speaking){
 
-speechSynthesis.cancel();
+window.speechSynthesis.cancel();
 
 speaking=false;
 
@@ -1225,25 +1370,43 @@ return;
 
 }
 
+
 const cleanText=
 cleanForVoice(text);
 
-if(!cleanText)return;
+if(!cleanText){
 
-speechSynthesis.cancel();
+return;
+
+}
+
+
+/* إيقاف أي قراءة قديمة */
+
+window.speechSynthesis.cancel();
+
+
+/* الحصول على الصوت العربي */
 
 const voice=
 getArabicVoice();
+
+
+/* إنشاء القراءة */
 
 const utterance=
 new SpeechSynthesisUtterance(
 cleanText
 );
 
+
+/* تحديد العربية */
+
 utterance.lang=
 voice
 ?voice.lang
 :"ar-SA";
+
 
 if(voice){
 
@@ -1251,9 +1414,23 @@ utterance.voice=voice;
 
 }
 
-utterance.rate=.9;
+
+/* سرعة القراءة */
+
+utterance.rate=0.85;
+
+
+/* نبرة الصوت */
+
 utterance.pitch=1;
+
+
+/* مستوى الصوت */
+
 utterance.volume=1;
+
+
+/* بدء القراءة */
 
 utterance.onstart=()=>{
 
@@ -1268,6 +1445,9 @@ button.textContent=
 
 };
 
+
+/* انتهاء القراءة */
+
 utterance.onend=()=>{
 
 speaking=false;
@@ -1280,6 +1460,9 @@ button.textContent=
 }
 
 };
+
+
+/* حدوث خطأ */
 
 utterance.onerror=()=>{
 
@@ -1294,11 +1477,15 @@ button.textContent=
 
 };
 
-speechSynthesis.speak(
+
+/* تشغيل الصوت */
+
+window.speechSynthesis.speak(
 utterance
 );
 
 }
+
 
 /* =========================
    زر الصوت السفلي
@@ -1335,6 +1522,7 @@ $("voiceBtn2")
 
 };
 
+
 /* =========================
    تحميل الأصوات
 ========================= */
@@ -1351,6 +1539,7 @@ getArabicVoice();
 };
 
 }
+
 
 /* =========================
    الميكروفون
@@ -1371,6 +1560,7 @@ recognition.continuous=false;
 
 recognition.interimResults=false;
 
+
 $("micBtn").onclick=()=>{
 
 try{
@@ -1384,6 +1574,7 @@ $("micBtn").textContent=
 
 };
 
+
 recognition.onresult=e=>{
 
 question.value=
@@ -1395,12 +1586,14 @@ new Event("input")
 
 };
 
+
 recognition.onend=()=>{
 
 $("micBtn").textContent=
 "🎤";
 
 };
+
 
 recognition.onerror=()=>{
 
@@ -1411,6 +1604,7 @@ $("micBtn").textContent=
 
 }
 
+
 /* =========================
    تشغيل البداية
 ========================= */
@@ -1418,6 +1612,7 @@ $("micBtn").textContent=
 renderHistory();
 
 loadCurrentConversation();
+
 
 window.onbeforeunload=()=>{
 
