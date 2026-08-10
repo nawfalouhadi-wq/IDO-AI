@@ -14,7 +14,7 @@ def chat_api():
             "error": "No data received"
         }), 400
 
-    message = data.get("message", "")
+    message = data.get("message", "").strip()
 
     if not message:
         return jsonify({

@@ -103,6 +103,8 @@ def ai_response(question):
 
     except Exception as e:
 
+        print("AI RESPONSE ERROR:", e)
+
         return f"خطأ: {e}"
 
 

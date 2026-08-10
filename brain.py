@@ -4,10 +4,8 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-
 # تحميل ملف .env
 load_dotenv()
-
 
 # =========================================================
 # Gemini
@@ -58,7 +56,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-3.5-flash",
             contents=message
         )
 
@@ -93,7 +91,7 @@ def ask_gemini_image(message, image_bytes, mime_type):
         )
 
         response = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-3.5-flash",
             contents=[
                 message,
                 image_part
