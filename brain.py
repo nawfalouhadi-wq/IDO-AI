@@ -4,8 +4,8 @@ from dotenv import load_dotenv
 from google import genai
 
 # تحميل ملف .env
-load_dotenv()
 
+load_dotenv()
 
 # =========================
 # Gemini
@@ -24,7 +24,6 @@ if GEMINI_API_KEY:
 else:
     print("GEMINI_API_KEY: NOT FOUND")
 
-
 # =========================
 # Ollama
 # =========================
@@ -35,7 +34,6 @@ OLLAMA_URL = os.getenv(
 )
 
 print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
-
 
 # =========================
 # Gemini
@@ -50,7 +48,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=message
         )
 
