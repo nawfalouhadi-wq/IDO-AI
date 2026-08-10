@@ -195,13 +195,16 @@ font-weight:bold;
 margin-bottom:4px
 }
 
-.answer-tools{
+.answer-tools,
+.tools{
 display:flex;
-gap:5px;
-margin-top:8px
+gap:5px
 }
 
-.answer-btn,.tool{
+.answer-tools{margin-top:8px}
+
+.answer-btn,
+.tool{
 border:0;
 background:transparent;
 color:#666;
@@ -266,11 +269,6 @@ padding:10px
 display:flex;
 justify-content:space-between;
 align-items:center
-}
-
-.tools{
-display:flex;
-gap:5px
 }
 
 .send-btn{
@@ -360,7 +358,6 @@ padding:25px 12px 170px
 </button>
 
 </div>
-
 </aside>
 
 <main class="main">
@@ -381,23 +378,7 @@ Ido AI 🤖
 
 </header>
 
-<section class="chat" id="chat">
-
-<div class="welcome" id="welcome">
-
-<div class="welcome-icon">🤖</div>
-
-<h1 id="welcomeText">
-مرحبًا بك في Ido AI
-</h1>
-
-<p>
-كيف يمكنني مساعدتك اليوم؟
-</p>
-
-</div>
-
-</section>
+<section class="chat" id="chat"></section>
 
 <div id="typing">
 🤖 Ido AI يكتب...
@@ -405,7 +386,7 @@ Ido AI 🤖
 
 <div class="composer-area">
 
-<form method="POST" id="chatForm" class="composer">
+<form id="chatForm" class="composer">
 
 <textarea
 id="question"
@@ -437,26 +418,23 @@ title="قراءة الإجابة">
 
 <button
 type="submit"
-class="send-btn"
-title="إرسال">
+class="send-btn">
 ↑
 </button>
 
 </div>
 
 </form>
-
 </div>
 
 </main>
-
 </div>
 
 <div id="copyMessage">
 ✅ تم نسخ الرد
 </div>
 
-<!-- مهم: Flask يضع الإجابة هنا -->
+<!-- إجابة Flask -->
 <div id="answer" style="display:none;">{{ answer }}</div>
 
 <script>
@@ -475,13 +453,8 @@ localStorage.getItem("ido_current_conversation");
 
 let conversations=
 JSON.parse(
-localStorage.getItem("ido_conversations") || "[]"
+localStorage.getItem("ido_conversations")||"[]"
 );
-
-
-/* =========================
-   اسم المستخدم
-========================= */
 
 let userName=
 localStorage.getItem("ido_user_name");
@@ -492,7 +465,7 @@ userName=prompt(
 "السلام عليكم ورحمة الله وبركاته\nما اسمك؟"
 );
 
-if(userName && userName.trim()){
+if(userName&&userName.trim()){
 
 userName=userName.trim();
 
@@ -502,22 +475,15 @@ userName
 );
 
 }
-
 }
-
-if(userName){
-
-$("welcomeText").textContent=
-"مرحبًا يا "+userName+" 👋";
-
-}
-
 
 /* =========================
    الوضع الليلي
 ========================= */
 
-if(localStorage.getItem("ido_theme")==="dark"){
+if(
+localStorage.getItem("ido_theme")==="dark"
+){
 
 body.classList.add("dark");
 
@@ -545,9 +511,8 @@ dark
 
 };
 
-
 /* =========================
-   القائمة في الهاتف
+   القائمة
 ========================= */
 
 $("mobileMenu").onclick=()=>{
@@ -556,31 +521,13 @@ sidebar.classList.toggle("open");
 
 };
 
-
 /* =========================
-   تغيير حجم الكتابة
-========================= */
-
-question.oninput=()=>{
-
-question.style.height="auto";
-
-question.style.height=
-Math.min(
-question.scrollHeight,
-180
-)+"px";
-
-};
-
-
-/* =========================
-   إنشاء معرف للمحادثة
+   المحادثات
 ========================= */
 
 function createConversation(){
 
-return {
+return{
 
 id:Date.now().toString(),
 
@@ -596,11 +543,6 @@ updated:new Date().toISOString()
 
 }
 
-
-/* =========================
-   حفظ المحادثات
-========================= */
-
 function saveConversations(){
 
 localStorage.setItem(
@@ -610,49 +552,44 @@ JSON.stringify(conversations)
 
 }
 
-
-/* =========================
-   المحادثة الحالية
-========================= */
-
 function getCurrentConversation(){
-
-if(!currentConversationId){
-
-return null;
-
-}
 
 return conversations.find(
 c=>c.id===currentConversationId
-);
+)||null;
 
 }
 
-
 /* =========================
-   حفظ المحادثة الحالية
+   رسالة الترحيب
 ========================= */
 
-function saveCurrentConversation(){
+function showWelcome(){
 
-const conversation=
-getCurrentConversation();
+chat.innerHTML=`
 
-if(!conversation)return;
+<div class="welcome">
 
-conversation.updated=
-new Date().toISOString();
+<div class="welcome-icon">
+🤖
+</div>
 
-saveConversations();
+<h1>
+مرحبًا${userName?" يا "+userName:""} 👋
+</h1>
 
-renderHistory();
+<p>
+كيف يمكنني مساعدتك اليوم؟
+</p>
+
+</div>
+
+`;
 
 }
 
-
 /* =========================
-   عرض رسالة
+   إضافة رسالة
 ========================= */
 
 function addMessage(
@@ -666,10 +603,11 @@ document.createElement("div");
 
 message.className=
 "message "+
-(sender==="user"
+(
+sender==="user"
 ?"message-user"
-:"message-ai");
-
+:"message-ai"
+);
 
 const avatar=
 document.createElement("div");
@@ -681,13 +619,11 @@ sender==="user"
 ?"👤"
 :"🤖";
 
-
 const content=
 document.createElement("div");
 
 content.className=
 "message-content";
-
 
 const name=
 document.createElement("div");
@@ -700,7 +636,6 @@ sender==="user"
 ?"أنت"
 :"Ido AI";
 
-
 const textBox=
 document.createElement("div");
 
@@ -710,9 +645,7 @@ textBox.className=
 textBox.textContent=text;
 
 content.appendChild(name);
-
 content.appendChild(textBox);
-
 
 if(sender==="ai"){
 
@@ -722,14 +655,11 @@ document.createElement("div");
 tools.className=
 "answer-tools";
 
-
 const voice=
 document.createElement("button");
 
 voice.className="answer-btn";
-
 voice.type="button";
-
 voice.textContent="🔊 قراءة";
 
 voice.onclick=()=>{
@@ -738,14 +668,11 @@ speakText(text,voice);
 
 };
 
-
 const copy=
 document.createElement("button");
 
 copy.className="answer-btn";
-
 copy.type="button";
-
 copy.textContent="📋 نسخ";
 
 copy.onclick=async()=>{
@@ -754,12 +681,11 @@ try{
 
 await navigator.clipboard.writeText(text);
 
-const msg=$("copyMessage");
-
-msg.style.display="block";
+$("copyMessage").style.display=
+"block";
 
 setTimeout(
-()=>msg.style.display="none",
+()=>$("copyMessage").style.display="none",
 1800
 );
 
@@ -767,22 +693,17 @@ setTimeout(
 
 };
 
-
 tools.appendChild(voice);
-
 tools.appendChild(copy);
 
 content.appendChild(tools);
 
 }
 
-
 message.appendChild(avatar);
-
 message.appendChild(content);
 
 chat.appendChild(message);
-
 
 if(save){
 
@@ -792,11 +713,8 @@ getCurrentConversation();
 if(conversation){
 
 conversation.messages.push({
-
 sender:sender,
-
 text:text
-
 });
 
 conversation.updated=
@@ -805,18 +723,17 @@ new Date().toISOString();
 }
 
 saveConversations();
+renderHistory();
 
 }
-
 
 chat.scrollTop=
 chat.scrollHeight;
 
 }
 
-
 /* =========================
-   عرض محادثة
+   عرض المحادثة
 ========================= */
 
 function showConversation(conversation){
@@ -831,7 +748,8 @@ return;
 
 }
 
-conversation.messages.forEach(message=>{
+conversation.messages.forEach(
+message=>{
 
 addMessage(
 message.sender,
@@ -846,50 +764,17 @@ chat.scrollHeight;
 
 }
 
-
-/* =========================
-   رسالة الترحيب
-========================= */
-
-function showWelcome(){
-
-chat.innerHTML=`
-
-<div class="welcome" id="welcome">
-
-<div class="welcome-icon">🤖</div>
-
-<h1 id="welcomeText">
-مرحبًا${userName?" يا "+userName:""} 👋
-</h1>
-
-<p>
-كيف يمكنني مساعدتك اليوم؟
-</p>
-
-</div>
-
-`;
-
-}
-
-
-/* =========================
-   قائمة المحادثات
-========================= */
-
 function renderHistory(){
 
 historyBox.innerHTML="";
 
-const sorted=
-[...conversations].sort(
+[...conversations]
+.sort(
 (a,b)=>
 new Date(b.updated)-
 new Date(a.updated)
-);
-
-sorted.forEach(conversation=>{
+)
+.forEach(conversation=>{
 
 const item=
 document.createElement("div");
@@ -898,9 +783,8 @@ item.className=
 "history-item";
 
 item.textContent=
-conversation.title ||
+conversation.title||
 "محادثة جديدة";
-
 
 item.onclick=()=>{
 
@@ -926,17 +810,11 @@ sidebar.classList.remove(
 
 };
 
-
 historyBox.appendChild(item);
 
 });
 
 }
-
-
-/* =========================
-   فتح المحادثة الحالية
-========================= */
 
 function loadCurrentConversation(){
 
@@ -957,9 +835,8 @@ showWelcome();
 
 }
 
-
 /* =========================
-   زر محادثة جديدة
+   محادثة جديدة
 ========================= */
 
 $("newChatBtn").onclick=()=>{
@@ -989,16 +866,7 @@ question.value="";
 
 question.style.height="55px";
 
-if(innerWidth<=800){
-
-sidebar.classList.remove(
-"open"
-);
-
-}
-
 };
-
 
 /* =========================
    مسح المحادثات
@@ -1008,11 +876,7 @@ $("clearBtn").onclick=()=>{
 
 if(!confirm(
 "هل تريد حذف جميع المحادثات؟"
-)){
-
-return;
-
-}
+))return;
 
 conversations=[];
 
@@ -1030,12 +894,27 @@ renderHistory();
 
 };
 
-
 /* =========================
-   إرسال الرسالة
+   حجم مربع الكتابة
 ========================= */
 
-$("chatForm").onsubmit=async(e)=>{
+question.oninput=()=>{
+
+question.style.height="auto";
+
+question.style.height=
+Math.min(
+question.scrollHeight,
+180
+)+"px";
+
+};
+
+/* =========================
+   إرسال السؤال
+========================= */
+
+$("chatForm").onsubmit=async e=>{
 
 e.preventDefault();
 
@@ -1066,9 +945,6 @@ currentConversationId
 
 }
 
-
-/* عنوان المحادثة */
-
 if(!conversation.messages.length){
 
 conversation.title=
@@ -1077,9 +953,6 @@ text.length>35
 :text;
 
 }
-
-
-/* إظهار سؤال المستخدم */
 
 addMessage(
 "user",
@@ -1092,12 +965,6 @@ question.style.height="55px";
 
 typing.style.display="block";
 
-chat.scrollTop=
-chat.scrollHeight;
-
-
-/* إرسال السؤال إلى Flask */
-
 try{
 
 const response=
@@ -1105,14 +972,16 @@ await fetch(
 "/",
 {
 method:"POST",
+
 headers:{
 "Content-Type":
 "application/x-www-form-urlencoded"
 },
-body:
-new URLSearchParams({
+
+body:new URLSearchParams({
 question:text
 })
+
 }
 );
 
@@ -1127,14 +996,8 @@ throw new Error(
 const html=
 await response.text();
 
-
-/* استخراج answer من رد Flask */
-
-const parser=
-new DOMParser();
-
 const doc=
-parser.parseFromString(
+new DOMParser().parseFromString(
 html,
 "text/html"
 );
@@ -1142,42 +1005,20 @@ html,
 const answerElement=
 doc.querySelector("#answer");
 
-
-let answerText="";
-
-if(answerElement){
-
-answerText=
-answerElement.textContent.trim();
-
-}
-
-if(!answerText){
-
-answerText=
-"حدث خطأ: لم تصل إجابة من الخادم.";
-
-}
-
-
-/* إظهار الإجابة */
+const answerText=
+answerElement
+?answerElement.textContent.trim()
+:"";
 
 typing.style.display="none";
 
 addMessage(
 "ai",
-answerText
+answerText||
+"حدث خطأ: لم تصل إجابة من الخادم."
 );
-
-saveCurrentConversation();
-
 
 }catch(error){
-
-console.error(
-"Chat error:",
-error
-);
 
 typing.style.display="none";
 
@@ -1191,153 +1032,106 @@ error.message
 
 };
 
-
-/* =====================================================
-   قراءة الإجابات بالصوت العربي
-   هذا هو الجزء المعدل فقط
-===================================================== */
+/* =================================================
+   قراءة الإجابات
+================================================= */
 
 let speaking=false;
 
+/* اكتشاف لغة النص */
 
-/* =========================
-   اختيار صوت عربي
-========================= */
+function detectLanguage(text){
 
-function getArabicVoice(){
+const arabic=
+(text.match(/[\u0600-\u06FF]/g)||[]).length;
+
+const latin=
+(text.match(/[A-Za-z]/g)||[]).length;
+
+if(arabic>latin){
+
+return"ar-SA";
+
+}
+
+if(latin>0){
+
+return"en-US";
+
+}
+
+return"ar-SA";
+
+}
+
+/* تنظيف النص */
+
+function cleanForVoice(text){
+
+return text
+
+.replace(
+/https?:\/\/\S+/gi,
+" "
+)
+
+.replace(
+/[🤖👤😊😄😂🤣😍🥰😘😎👍❤️💬🔊📋🎤🧮🌍🇲🇦🇫🇷⏰☀️🌙🗑️＋↑]/gu,
+" "
+)
+
+.replace(
+/[*_#~`|\\]/g,
+" "
+)
+
+.replace(
+/\s+/g,
+" "
+)
+
+.trim();
+
+}
+
+/* الحصول على الصوت المناسب */
+
+function getVoice(language){
 
 const voices=
 window.speechSynthesis.getVoices();
 
-if(!voices.length){
+if(!voices.length)return null;
 
-return null;
-
-}
-
-
-/* البحث عن صوت عربي مغربي */
+const lang=
+language.toLowerCase();
 
 let voice=
-voices.find(v=>
-v.lang &&
-v.lang.toLowerCase()==="ar-ma"
+voices.find(
+v=>v.lang.toLowerCase()===lang
 );
 
-if(voice){
-
-return voice;
-
-}
-
-
-/* البحث عن أي صوت عربي */
+if(voice)return voice;
 
 voice=
-voices.find(v=>
-v.lang &&
-v.lang.toLowerCase().startsWith("ar")
-);
-
-if(voice){
-
-return voice;
-
-}
-
-
-/* البحث عن أصوات عربية بأسماء شائعة */
-
-voice=
-voices.find(v=>
-v.name &&
-(
-v.name.toLowerCase().includes("arabic") ||
-v.name.toLowerCase().includes("arabe") ||
-v.name.includes("العربية") ||
-v.name.includes("عربي")
+voices.find(
+v=>
+v.lang.toLowerCase()
+.startsWith(
+lang.substring(0,2)
 )
 );
 
-return voice || null;
+return voice||null;
 
 }
 
+/* قراءة النص */
 
-/* =========================
-   تجهيز النص للقراءة
-========================= */
-
-function cleanForVoice(text){
-
-let result=text;
-
-
-/* إزالة الروابط */
-
-result=result.replace(
-/https?:\/\/\S+/gi,
-" "
-);
-
-
-/* تحويل الأرقام العشرية
-   مثل 36.8 إلى:
-   36 فاصلة 8
-*/
-
-result=result.replace(
-/(\d+)\.(\d+)/g,
-"$1 فاصلة $2"
-);
-
-
-/* إضافة مسافة بين الرقم والكلمات */
-
-result=result.replace(
-/(\d)([^\d\s])/g,
-"$1 $2"
-);
-
-result=result.replace(
-/([^\d\s])(\d)/g,
-"$1 $2"
-);
-
-
-/* إزالة الرموز التعبيرية */
-
-result=result.replace(
-/[🤖👤😊😄😂🤣😍🥰😘😎👍❤️💬🔊📋🎤🧮🌍🇲🇦🇫🇷⏰☀️🌙🗑️＋↑]/gu,
-" "
-);
-
-
-/* إزالة رموز البرمجة */
-
-result=result.replace(
-/[*_#~`\\|]/g,
-" "
-);
-
-
-/* إزالة المسافات الزائدة */
-
-result=result.replace(
-/\s+/g,
-" "
-);
-
-return result.trim();
-
-}
-
-
-/* =========================
-   قراءة النص
-========================= */
-
-function speakText(text,button){
+function speakText(
+text,
+button
+){
 
 if(!("speechSynthesis" in window)){
 
@@ -1348,10 +1142,6 @@ alert(
 return;
 
 }
-
-
-/* إذا كان الصوت يعمل
-   أوقفه */
 
 if(speaking){
 
@@ -1370,67 +1160,37 @@ return;
 
 }
 
-
 const cleanText=
 cleanForVoice(text);
 
-if(!cleanText){
-
-return;
-
-}
-
-
-/* إيقاف أي قراءة قديمة */
+if(!cleanText)return;
 
 window.speechSynthesis.cancel();
 
-
-/* الحصول على الصوت العربي */
+const language=
+detectLanguage(cleanText);
 
 const voice=
-getArabicVoice();
-
-
-/* إنشاء القراءة */
+getVoice(language);
 
 const utterance=
 new SpeechSynthesisUtterance(
 cleanText
 );
 
-
-/* تحديد العربية */
-
 utterance.lang=
-voice
-?voice.lang
-:"ar-SA";
-
+language;
 
 if(voice){
 
-utterance.voice=voice;
+utterance.voice=
+voice;
 
 }
 
-
-/* سرعة القراءة */
-
-utterance.rate=0.85;
-
-
-/* نبرة الصوت */
-
+utterance.rate=.85;
 utterance.pitch=1;
-
-
-/* مستوى الصوت */
-
 utterance.volume=1;
-
-
-/* بدء القراءة */
 
 utterance.onstart=()=>{
 
@@ -1445,9 +1205,6 @@ button.textContent=
 
 };
 
-
-/* انتهاء القراءة */
-
 utterance.onend=()=>{
 
 speaking=false;
@@ -1461,10 +1218,12 @@ button.textContent=
 
 };
 
+utterance.onerror=e=>{
 
-/* حدوث خطأ */
-
-utterance.onerror=()=>{
+console.error(
+"Speech error:",
+e
+);
 
 speaking=false;
 
@@ -1477,18 +1236,14 @@ button.textContent=
 
 };
 
-
-/* تشغيل الصوت */
-
 window.speechSynthesis.speak(
 utterance
 );
 
 }
 
-
 /* =========================
-   زر الصوت السفلي
+   زر قراءة آخر إجابة
 ========================= */
 
 $("voiceBtn2").onclick=()=>{
@@ -1496,13 +1251,7 @@ $("voiceBtn2").onclick=()=>{
 const conversation=
 getCurrentConversation();
 
-if(!conversation ||
-!conversation.messages.length
-){
-
-return;
-
-}
+if(!conversation)return;
 
 const lastAI=
 [...conversation.messages]
@@ -1522,7 +1271,6 @@ $("voiceBtn2")
 
 };
 
-
 /* =========================
    تحميل الأصوات
 ========================= */
@@ -1531,22 +1279,20 @@ if(
 "speechSynthesis" in window
 ){
 
-speechSynthesis.onvoiceschanged=
-()=>{
+speechSynthesis.onvoiceschanged=()=>{
 
-getArabicVoice();
+speechSynthesis.getVoices();
 
 };
 
 }
-
 
 /* =========================
    الميكروفون
 ========================= */
 
 const SpeechRecognition=
-window.SpeechRecognition ||
+window.SpeechRecognition||
 window.webkitSpeechRecognition;
 
 if(SpeechRecognition){
@@ -1559,7 +1305,6 @@ recognition.lang="ar-SA";
 recognition.continuous=false;
 
 recognition.interimResults=false;
-
 
 $("micBtn").onclick=()=>{
 
@@ -1574,7 +1319,6 @@ $("micBtn").textContent=
 
 };
 
-
 recognition.onresult=e=>{
 
 question.value=
@@ -1586,14 +1330,12 @@ new Event("input")
 
 };
 
-
 recognition.onend=()=>{
 
 $("micBtn").textContent=
 "🎤";
 
 };
-
 
 recognition.onerror=()=>{
 
@@ -1604,7 +1346,6 @@ $("micBtn").textContent=
 
 }
 
-
 /* =========================
    تشغيل البداية
 ========================= */
@@ -1613,10 +1354,11 @@ renderHistory();
 
 loadCurrentConversation();
 
-
 window.onbeforeunload=()=>{
 
-if("speechSynthesis" in window){
+if(
+"speechSynthesis" in window
+){
 
 speechSynthesis.cancel();
 
