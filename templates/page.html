@@ -1,1152 +1,1289 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Aido AI</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        :root {
-            --accent: #2563eb;
-            --accent-dark: #1d4ed8;
-            --bg: #ffffff;
-            --sidebar: #f7f8fa;
-            --border: #e5e7eb;
-            --text: #202123;
-            --muted: #6b7280;
-            --hover: #eef2f7;
-            --input: #ffffff;
-        }
-
-        body.dark {
-            --bg: #171717;
-            --sidebar: #111111;
-            --border: #303030;
-            --text: #f5f5f5;
-            --muted: #a1a1aa;
-            --hover: #262626;
-            --input: #242424;
-        }
-
-        body {
-            font-family: Arial, "Segoe UI", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            transition: background .2s, color .2s;
-        }
-
-        button,
-        textarea,
-        input {
-            font-family: inherit;
-        }
-
-        button {
-            border: none;
-        }
-
-        .app {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-        }
-
-        /* =========================
-           SIDEBAR
-        ========================= */
-
-        .sidebar {
-            width: 270px;
-            background: var(--sidebar);
-            border-left: 1px solid var(--border);
-            padding: 14px;
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 6px 18px;
-        }
-
-        .brand-logo,
-        .model-logo,
-        .welcome-logo,
-        .avatar {
-            background: linear-gradient(135deg, #2563eb, #0ea5e9);
-            color: white;
-        }
-
-        .brand-logo {
-            width: 38px;
-            height: 38px;
-            border-radius: 11px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            font-weight: 800;
-            box-shadow: 0 5px 16px rgba(37,99,235,.25);
-        }
-
-        .brand-name {
-            font-size: 19px;
-            font-weight: 700;
-        }
-
-        .brand-version {
-            display: block;
-            color: var(--muted);
-            font-size: 11px;
-            margin-top: 2px;
-        }
-
-        .new-chat {
-            width: 100%;
-            min-height: 44px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            background: var(--bg);
-            color: var(--text);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0 13px;
-            font-size: 14px;
-        }
-
-        .new-chat:hover,
-        .side-btn:hover,
-        .tool:hover,
-        .answer-btn:hover {
-            background: var(--hover);
-        }
-
-        .sidebar-title {
-            color: var(--muted);
-            font-size: 12px;
-            margin: 20px 8px 8px;
-        }
-
-        .history {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .history-item {
-            padding: 10px 11px;
-            border-radius: 8px;
-            cursor: pointer;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 14px;
-        }
-
-        .history-item:hover {
-            background: var(--hover);
-        }
-
-        .sidebar-bottom {
-            border-top: 1px solid var(--border);
-            padding-top: 9px;
-            margin-top: 10px;
-        }
-
-        .side-btn {
-            width: 100%;
-            height: 42px;
-            border-radius: 9px;
-            background: transparent;
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 0 11px;
-            cursor: pointer;
-            font-size: 14px;
-            text-align: right;
-        }
-
-        .icon {
-            width: 19px;
-            height: 19px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .icon svg {
-            width: 19px;
-            height: 19px;
-            stroke: currentColor;
-            fill: none;
-            stroke-width: 1.8;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* =========================
-           MAIN
-        ========================= */
-
-        .main {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-        }
-
-        .topbar {
-            height: 60px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            background: var(--bg);
-        }
-
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: 11px;
-        }
-
-        .mobile-menu {
-            display: none;
-            width: 38px;
-            height: 38px;
-            border-radius: 9px;
-            background: transparent;
-            color: var(--text);
-            cursor: pointer;
-        }
-
-        .model-logo {
-            width: 32px;
-            height: 32px;
-            border-radius: 9px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 12px;
-        }
-
-        .model-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .model-name {
-            font-size: 15px;
-            font-weight: 700;
-        }
-
-        .model-subtitle {
-            color: var(--muted);
-            font-size: 11px;
-            margin-top: 2px;
-        }
-
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            color: #16a34a;
-            font-size: 12px;
-        }
-
-        .status-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 0 3px rgba(34,197,94,.12);
-        }
-
-        /* =========================
-           CHAT
-        ========================= */
-
-        .chat {
-            flex: 1;
-            overflow-y: auto;
-            padding: 35px 20px 175px;
-            scroll-behavior: smooth;
-        }
-
-        .welcome {
-            max-width: 720px;
-            margin: 100px auto 0;
-            text-align: center;
-        }
-
-        .welcome-logo {
-            width: 74px;
-            height: 74px;
-            border-radius: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            font-size: 23px;
-            font-weight: 800;
-            box-shadow: 0 12px 35px rgba(37,99,235,.25);
-        }
-
-        .welcome h1 {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
-
-        .welcome p {
-            color: var(--muted);
-            font-size: 15px;
-        }
-
-        .message {
-            max-width: 850px;
-            margin: 0 auto 28px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-        .avatar {
-            width: 36px;
-            height: 36px;
-            min-width: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            font-weight: 800;
-        }
-
-        .message-user .avatar {
-            background: #555;
-        }
-
-        .message-content {
-            flex: 1;
-            min-width: 0;
-            line-height: 1.85;
-        }
-
-        .message-name {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .message-text {
-            white-space: pre-wrap;
-            word-break: break-word;
-            font-size: 15px;
-        }
-
-        .answer-tools {
-            display: flex;
-            gap: 4px;
-            margin-top: 8px;
-        }
-
-        .answer-btn {
-            height: 32px;
-            padding: 0 9px;
-            border-radius: 7px;
-            background: transparent;
-            color: var(--muted);
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-        }
-
-        /* =========================
-           TYPING
-        ========================= */
-
-        #typing {
-            display: none;
-            max-width: 850px;
-            margin: 0 auto;
-            width: 100%;
-            padding: 5px 20px;
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .typing-dots {
-            display: inline-flex;
-            gap: 4px;
-            margin-left: 5px;
-        }
-
-        .typing-dots span {
-            width: 5px;
-            height: 5px;
-            background: var(--muted);
-            border-radius: 50%;
-            animation: typing 1s infinite alternate;
-        }
-
-        .typing-dots span:nth-child(2) {
-            animation-delay: .2s;
-        }
-
-        .typing-dots span:nth-child(3) {
-            animation-delay: .4s;
-        }
-
-        @keyframes typing {
-            from {
-                opacity: .25;
-                transform: translateY(0);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(-3px);
-            }
-        }
-
-        /* =========================
-           COMPOSER
-        ========================= */
-
-        .composer-area {
-            position: fixed;
-            bottom: 0;
-            right: 270px;
-            left: 0;
-            padding: 30px 20px 18px;
-            background: linear-gradient(
-                transparent,
-                rgba(255,255,255,.97) 28%
-            );
-            z-index: 20;
-        }
-
-        body.dark .composer-area {
-            background: linear-gradient(
-                transparent,
-                rgba(23,23,23,.98) 28%
-            );
-        }
-
-        .composer {
-            max-width: 850px;
-            margin: auto;
-            background: var(--input);
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            box-shadow: 0 5px 25px rgba(0,0,0,.07);
-            padding: 9px;
-        }
-
-        .composer:focus-within {
-            border-color: #93c5fd;
-            box-shadow: 0 5px 25px rgba(37,99,235,.10);
-        }
-
-        .composer textarea {
-            width: 100%;
-            min-height: 52px;
-            max-height: 180px;
-            resize: none;
-            border: 0;
-            outline: 0;
-            background: transparent;
-            color: var(--text);
-            font-size: 15px;
-            line-height: 1.6;
-            padding: 9px 10px;
-        }
-
-        .composer textarea::placeholder {
-            color: #9ca3af;
-        }
-
-        .composer-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 2px 3px;
-        }
-
-        .tools {
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .tool {
-            position: relative;
-            width: 38px;
-            height: 38px;
-            border-radius: 9px;
-            background: transparent;
-            color: var(--muted);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .tool[data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 46px;
-            right: 50%;
-            transform: translateX(50%);
-            background: #111;
-            color: white;
-            padding: 6px 9px;
-            border-radius: 6px;
-            font-size: 11px;
-            white-space: nowrap;
-            opacity: 0;
-            pointer-events: none;
-            transition: .15s;
-        }
-
-        .tool[data-tooltip]:hover::after {
-            opacity: 1;
-        }
-
-        .send-btn {
-            width: 39px;
-            height: 39px;
-            border-radius: 10px;
-            background: var(--accent);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .send-btn:hover {
-            background: var(--accent-dark);
-        }
-
-        /* =========================
-           IMAGE
-        ========================= */
-
-        #imageInput {
-            display: none;
-        }
-
-        #imagePreview {
-            display: none;
-            margin: 5px 8px 10px;
-            position: relative;
-            width: fit-content;
-        }
-
-        #imagePreview img {
-            max-width: 180px;
-            max-height: 120px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-        }
-
-        #removeImage {
-            position: absolute;
-            top: -7px;
-            left: -7px;
-            width: 23px;
-            height: 23px;
-            border-radius: 50%;
-            background: #dc2626;
-            color: white;
-            cursor: pointer;
-        }
-
-        /* =========================
-           COPY
-        ========================= */
-
-        #copyMessage {
-            display: none;
-            position: fixed;
-            bottom: 125px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #111827;
-            color: white;
-            padding: 9px 15px;
-            border-radius: 8px;
-            z-index: 100;
-            font-size: 13px;
-        }
-
-        /* =========================
-           VOICE CHAT
-        ========================= */
-
-        #voiceChat {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: var(--bg);
-            color: var(--text);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .voice-close {
-            position: absolute;
-            top: 22px;
-            right: 25px;
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            background: var(--hover);
-            color: var(--text);
-            cursor: pointer;
-        }
-
-        .voice-title {
-            position: absolute;
-            top: 27px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 20px;
-            font-weight: 700;
-        }
-
-        .voice-status {
-            position: absolute;
-            top: 65px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .voice-orb-area {
-            position: relative;
-            width: 330px;
-            height: 330px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .voice-ring {
-            position: absolute;
-            width: 270px;
-            height: 270px;
-            border-radius: 50%;
-            border: 2px solid #2563eb;
-            opacity: .25;
-        }
-
-        .voice-ring.two {
-            width: 310px;
-            height: 310px;
-            opacity: .12;
-        }
-
-        .voice-orb {
-            width: 190px;
-            height: 190px;
-            border-radius: 50%;
-            background: linear-gradient(145deg,#2563eb,#0756d8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 25px;
-            font-weight: 800;
-            box-shadow:
-                0 0 35px rgba(37,99,235,.35),
-                inset 0 0 25px rgba(255,255,255,.15);
-            position: relative;
-            z-index: 2;
-        }
-
-        .voice-bars {
-            position: absolute;
-            bottom: 28px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            height: 55px;
-            opacity: 0;
-            z-index: 3;
-        }
-
-        .voice-bars span {
-            width: 4px;
-            height: 12px;
-            background: #fff;
-            border-radius: 5px;
-        }
-
-        .voice-active .voice-ring {
-            animation: ringPulse 1.5s infinite;
-        }
-
-        .voice-active .voice-ring.two {
-            animation: ringPulse 1.5s infinite .3s;
-        }
-
-        .voice-active .voice-bars {
-            opacity: 1;
-        }
-
-        .voice-active .voice-bars span {
-            animation: voiceBar .7s infinite alternate;
-        }
-
-        .voice-active .voice-bars span:nth-child(2) {
-            animation-delay: .1s;
-        }
-
-        .voice-active .voice-bars span:nth-child(3) {
-            animation-delay: .2s;
-        }
-
-        .voice-active .voice-bars span:nth-child(4) {
-            animation-delay: .3s;
-        }
-
-        .voice-active .voice-bars span:nth-child(5) {
-            animation-delay: .15s;
-        }
-
-        @keyframes ringPulse {
-            0%,100% {
-                transform: scale(1);
-                opacity: .2;
-            }
-
-            50% {
-                transform: scale(1.08);
-                opacity: .55;
-            }
-        }
-
-        @keyframes voiceBar {
-            from {
-                height: 8px;
-            }
-
-            to {
-                height: 42px;
-            }
-        }
-
-        .voice-message {
-            position: absolute;
-            bottom: 125px;
-            width: 90%;
-            max-width: 650px;
-            text-align: center;
-            font-size: 19px;
-            line-height: 1.7;
-            min-height: 35px;
-        }
-
-        .voice-button {
-            position: absolute;
-            bottom: 35px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 30px;
-            padding: 13px 25px;
-            background: var(--accent);
-            color: white;
-            font-size: 15px;
-            cursor: pointer;
-        }
-
-        .voice-button.stop {
-            background: #dc2626;
-        }
-
-        .voice-hint {
-            position: absolute;
-            bottom: 8px;
-            color: var(--muted);
-            font-size: 11px;
-        }
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width:800px) {
-
-            .sidebar {
-                position: fixed;
-                right: -280px;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                box-shadow: -5px 0 25px rgba(0,0,0,.18);
-                transition: .25s;
-            }
-
-            .sidebar.open {
-                right: 0;
-            }
-
-            .mobile-menu {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .composer-area {
-                right: 0;
-            }
-
-            .chat {
-                padding: 25px 12px 175px;
-            }
-
-            .message {
-                gap: 9px;
-            }
-
-            .welcome {
-                margin-top: 70px;
-            }
-
-            .welcome h1 {
-                font-size: 25px;
-            }
-
-            .voice-orb-area {
-                transform: scale(.85);
-            }
-
-            .voice-message {
-                bottom: 115px;
-                font-size: 17px;
-            }
-        }
-    </style>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Aido AI</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --accent: #16a34a;
+    --accent-dark: #15803d;
+    --bg: #ffffff;
+    --sidebar: #f7f8fa;
+    --border: #e5e7eb;
+    --text: #202123;
+    --muted: #6b7280;
+    --hover: #ecfdf3;
+    --input: #ffffff;
+}
+
+body.dark {
+    --bg: #171717;
+    --sidebar: #111111;
+    --border: #303030;
+    --text: #f5f5f5;
+    --muted: #a1a1aa;
+    --hover: #1f3b2a;
+    --input: #242424;
+}
+
+body {
+    font-family: Arial, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    transition: background .2s, color .2s;
+}
+
+button,
+textarea,
+input {
+    font-family: inherit;
+}
+
+button {
+    border: none;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* =========================
+   SIDEBAR
+========================= */
+
+.sidebar {
+    width: 270px;
+    background: var(--sidebar);
+    border-left: 1px solid var(--border);
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 6px 18px;
+}
+
+.brand-logo,
+.model-logo,
+.welcome-logo,
+.avatar {
+    background: linear-gradient(
+        135deg,
+        #16a34a,
+        #22c55e
+    );
+    color: white;
+}
+
+.brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 800;
+    box-shadow: 0 5px 16px rgba(22,163,74,.25);
+}
+
+.brand-name {
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.brand-version {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.new-chat {
+    width: 100%;
+    min-height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 13px;
+    font-size: 14px;
+}
+
+.new-chat:hover,
+.side-btn:hover,
+.tool:hover,
+.answer-btn:hover {
+    background: var(--hover);
+}
+
+.sidebar-title {
+    color: var(--muted);
+    font-size: 12px;
+    margin: 20px 8px 8px;
+}
+
+.history {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.history-item {
+    padding: 10px 11px;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+}
+
+.history-item:hover {
+    background: var(--hover);
+}
+
+.sidebar-bottom {
+    border-top: 1px solid var(--border);
+    padding-top: 9px;
+    margin-top: 10px;
+}
+
+.side-btn {
+    width: 100%;
+    height: 42px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 11px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: right;
+}
+
+.icon {
+    width: 19px;
+    height: 19px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.icon svg {
+    width: 19px;
+    height: 19px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* =========================
+   MAIN
+========================= */
+
+.main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.topbar {
+    height: 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background: var(--bg);
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+}
+
+.mobile-menu {
+    display: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.model-logo {
+    width: 32px;
+    height: 32px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.model-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.model-name {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.model-subtitle {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #16a34a;
+    font-size: 12px;
+}
+
+.status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.12);
+}
+
+/* =========================
+   CHAT
+========================= */
+
+.chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 35px 20px 175px;
+    scroll-behavior: smooth;
+}
+
+.welcome {
+    max-width: 720px;
+    margin: 100px auto 0;
+    text-align: center;
+}
+
+.welcome-logo {
+    width: 74px;
+    height: 74px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    font-size: 23px;
+    font-weight: 800;
+    box-shadow: 0 12px 35px rgba(22,163,74,.25);
+}
+
+.welcome h1 {
+    font-size: 30px;
+    margin-bottom: 10px;
+}
+
+.welcome p {
+    color: var(--muted);
+    font-size: 15px;
+}
+
+.message {
+    max-width: 850px;
+    margin: 0 auto 28px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.message-user .avatar {
+    background: #555;
+}
+
+.message-content {
+    flex: 1;
+    min-width: 0;
+    line-height: 1.85;
+}
+
+.message-name {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.message-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 15px;
+}
+
+.answer-tools {
+    display: flex;
+    gap: 4px;
+    margin-top: 8px;
+}
+
+.answer-btn {
+    height: 32px;
+    padding: 0 9px;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+/* =========================
+   TYPING
+========================= */
+
+#typing {
+    display: none;
+    max-width: 850px;
+    margin: 0 auto;
+    width: 100%;
+    padding: 5px 20px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.typing-dots {
+    display: inline-flex;
+    gap: 4px;
+    margin-left: 5px;
+}
+
+.typing-dots span {
+    width: 5px;
+    height: 5px;
+    background: var(--muted);
+    border-radius: 50%;
+    animation: typing 1s infinite alternate;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: .2s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: .4s;
+}
+
+@keyframes typing {
+
+    from {
+        opacity: .25;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(-3px);
+    }
+
+}
+
+/* =========================
+   COMPOSER
+========================= */
+
+.composer-area {
+    position: fixed;
+    bottom: 0;
+    right: 270px;
+    left: 0;
+    padding: 30px 20px 18px;
+    background: linear-gradient(
+        transparent,
+        rgba(255,255,255,.97) 28%
+    );
+    z-index: 20;
+}
+
+body.dark .composer-area {
+    background: linear-gradient(
+        transparent,
+        rgba(23,23,23,.98) 28%
+    );
+}
+
+.composer {
+    max-width: 850px;
+    margin: auto;
+    background: var(--input);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    box-shadow: 0 5px 25px rgba(0,0,0,.07);
+    padding: 9px;
+}
+
+.composer:focus-within {
+    border-color: #86efac;
+    box-shadow: 0 5px 25px rgba(22,163,74,.10);
+}
+
+.composer textarea {
+    width: 100%;
+    min-height: 52px;
+    max-height: 180px;
+    resize: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 9px 10px;
+}
+
+.composer textarea::placeholder {
+    color: #9ca3af;
+}
+
+.composer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px 3px;
+}
+
+.tools {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.tool {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tool[data-tooltip]::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 46px;
+    right: 50%;
+    transform: translateX(50%);
+    background: #111;
+    color: white;
+    padding: 6px 9px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: .15s;
+}
+
+.tool[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+.send-btn {
+    width: 39px;
+    height: 39px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.send-btn:hover {
+    background: var(--accent-dark);
+}
+
+/* =========================
+   IMAGE
+========================= */
+
+#imageInput {
+    display: none;
+}
+
+#imagePreview {
+    display: none;
+    margin: 5px 8px 10px;
+    position: relative;
+    width: fit-content;
+}
+
+#imagePreview img {
+    max-width: 180px;
+    max-height: 120px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+#removeImage {
+    position: absolute;
+    top: -7px;
+    left: -7px;
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    background: #dc2626;
+    color: white;
+    cursor: pointer;
+}
+
+/* =========================
+   COPY
+========================= */
+
+#copyMessage {
+    display: none;
+    position: fixed;
+    bottom: 125px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #111827;
+    color: white;
+    padding: 9px 15px;
+    border-radius: 8px;
+    z-index: 100;
+    font-size: 13px;
+}
+
+/* =========================
+   VOICE CHAT
+========================= */
+
+#voiceChat {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: var(--bg);
+    color: var(--text);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.voice-close {
+    position: absolute;
+    top: 22px;
+    right: 25px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--hover);
+    color: var(--text);
+    cursor: pointer;
+}
+
+.voice-title {
+    position: absolute;
+    top: 27px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.voice-status {
+    position: absolute;
+    top: 65px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.voice-orb-area {
+    position: relative;
+    width: 330px;
+    height: 330px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.voice-ring {
+    position: absolute;
+    width: 270px;
+    height: 270px;
+    border-radius: 50%;
+    border: 2px solid #16a34a;
+    opacity: .25;
+}
+
+.voice-ring.two {
+    width: 310px;
+    height: 310px;
+    opacity: .12;
+}
+
+.voice-orb {
+    width: 190px;
+    height: 190px;
+    border-radius: 50%;
+    background: linear-gradient(
+        145deg,
+        #16a34a,
+        #15803d
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 25px;
+    font-weight: 800;
+    box-shadow:
+        0 0 35px rgba(22,163,74,.35),
+        inset 0 0 25px rgba(255,255,255,.15);
+    position: relative;
+    z-index: 2;
+}
+
+.voice-bars {
+    position: absolute;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 55px;
+    opacity: 0;
+    z-index: 3;
+}
+
+.voice-bars span {
+    width: 4px;
+    height: 12px;
+    background: #fff;
+    border-radius: 5px;
+}
+
+.voice-active .voice-ring {
+    animation: ringPulse 1.5s infinite;
+}
+
+.voice-active .voice-ring.two {
+    animation: ringPulse 1.5s infinite .3s;
+}
+
+.voice-active .voice-bars {
+    opacity: 1;
+}
+
+.voice-active .voice-bars span {
+    animation: voiceBar .7s infinite alternate;
+}
+
+.voice-active .voice-bars span:nth-child(2) {
+    animation-delay: .1s;
+}
+
+.voice-active .voice-bars span:nth-child(3) {
+    animation-delay: .2s;
+}
+
+.voice-active .voice-bars span:nth-child(4) {
+    animation-delay: .3s;
+}
+
+.voice-active .voice-bars span:nth-child(5) {
+    animation-delay: .15s;
+}
+
+@keyframes ringPulse {
+
+    0%,100% {
+        transform: scale(1);
+        opacity: .2;
+    }
+
+    50% {
+        transform: scale(1.08);
+        opacity: .55;
+    }
+
+}
+
+@keyframes voiceBar {
+
+    from {
+        height: 8px;
+    }
+
+    to {
+        height: 42px;
+    }
+
+}
+
+.voice-message {
+    position: absolute;
+    bottom: 125px;
+    width: 90%;
+    max-width: 650px;
+    text-align: center;
+    font-size: 19px;
+    line-height: 1.7;
+    min-height: 35px;
+}
+
+.voice-button {
+    position: absolute;
+    bottom: 35px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 30px;
+    padding: 13px 25px;
+    background: var(--accent);
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.voice-button.stop {
+    background: #dc2626;
+}
+
+.voice-hint {
+    position: absolute;
+    bottom: 8px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width:800px) {
+
+    .sidebar {
+        position: fixed;
+        right: -280px;
+        top: 0;
+        bottom: 0;
+        z-index: 100;
+        box-shadow: -5px 0 25px rgba(0,0,0,.18);
+        transition: .25s;
+    }
+
+    .sidebar.open {
+        right: 0;
+    }
+
+    .mobile-menu {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .composer-area {
+        right: 0;
+    }
+
+    .chat {
+        padding: 25px 12px 175px;
+    }
+
+    .message {
+        gap: 9px;
+    }
+
+    .welcome {
+        margin-top: 70px;
+    }
+
+    .welcome h1 {
+        font-size: 25px;
+    }
+
+    .voice-orb-area {
+        transform: scale(.85);
+    }
+
+    .voice-message {
+        bottom: 115px;
+        font-size: 17px;
+    }
+
+}
+
+</style>
+
 </head>
 
 <body>
 
 <div class="app">
 
-    <!-- =========================
-         SIDEBAR
-    ========================= -->
+<!-- =========================
+     SIDEBAR
+========================= -->
 
-    <aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar">
 
-        <div class="brand">
-            <div class="brand-logo">DA</div>
+    <div class="brand">
 
-            <div>
-                <div class="brand-name">Aido AI</div>
-                <span class="brand-version">AI Assistant</span>
-            </div>
+        <div class="brand-logo">
+            DA
         </div>
 
-        <button class="new-chat" id="newChatBtn">
+        <div>
+            <div class="brand-name">
+                Aido AI
+            </div>
+
+            <span class="brand-version">
+                AI Assistant
+            </span>
+        </div>
+
+    </div>
+
+    <button
+        class="new-chat"
+        id="newChatBtn"
+        type="button"
+    >
+
+        <span class="icon">
+
+            <svg viewBox="0 0 24 24">
+
+                <path d="M12 5v14"></path>
+                <path d="M5 12h14"></path>
+
+            </svg>
+
+        </span>
+
+        <span>
+            محادثة جديدة
+        </span>
+
+    </button>
+
+    <div class="sidebar-title">
+        المحادثات
+    </div>
+
+    <div
+        class="history"
+        id="history"
+    ></div>
+
+    <div class="sidebar-bottom">
+
+        <button
+            class="side-btn"
+            id="themeBtn"
+            type="button"
+        >
+
             <span class="icon">
+
                 <svg viewBox="0 0 24 24">
-                    <path d="M12 5v14"></path>
-                    <path d="M5 12h14"></path>
+
+                    <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"></path>
+
                 </svg>
+
             </span>
 
-            <span>محادثة جديدة</span>
+            <span id="themeText">
+                الوضع الليلي
+            </span>
+
         </button>
 
-        <div class="sidebar-title">
-            المحادثات
-        </div>
+        <button
+            class="side-btn"
+            id="clearBtn"
+            type="button"
+        >
 
-        <div class="history" id="history"></div>
+            <span class="icon">
 
-        <div class="sidebar-bottom">
+                <svg viewBox="0 0 24 24">
 
-            <button class="side-btn" id="themeBtn">
-                <span class="icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3 6.7 6.7 0 0 0 21 12.8z"></path>
-                    </svg>
-                </span>
+                    <path d="M3 6h18"></path>
+                    <path d="M8 6V4h8v2"></path>
+                    <path d="M19 6l-1 15H6L5 6"></path>
+                    <path d="M10 11v6"></path>
+                    <path d="M14 11v6"></path>
 
-                <span id="themeText">الوضع الليلي</span>
-            </button>
+                </svg>
 
-            <button class="side-btn" id="clearBtn">
-                <span class="icon">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M3 6h18"></path>
-                        <path d="M8 6V4h8v2"></path>
-                        <path d="M19 6l-1 15H6L5 6"></path>
-                        <path d="M10 11v6"></path>
-                        <path d="M14 11v6"></path>
-                    </svg>
-                </span>
-
-                <span>مسح المحادثات</span>
-            </button>
-
-        </div>
-
-    </aside>
-
-    <!-- =========================
-         MAIN
-    ========================= -->
-
-    <main class="main">
-
-        <header class="topbar">
-
-            <div class="topbar-right">
-
-                <button class="mobile-menu" id="mobileMenu">
-                    <span class="icon">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M4 6h16"></path>
-                            <path d="M4 12h16"></path>
-                            <path d="M4 18h16"></path>
-                        </svg>
-                    </span>
-                </button>
-
-                <div class="model-logo">
-                    DA
-                </div>
-
-                <div class="model-info">
-                    <div class="model-name">
-                        Aido AI
-                    </div>
-
-                    <div class="model-subtitle">
-                        Gemini AI
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="status">
-                <span class="status-dot"></span>
-                <span>متصل</span>
-            </div>
-
-        </header>
-
-        <!-- =========================
-             CHAT
-        ========================= -->
-
-        <section class="chat" id="chat">
-
-            <div class="welcome" id="welcome">
-
-                <div class="welcome-logo">
-                    DA
-                </div>
-
-                <h1>مرحباً بك في Aido AI</h1>
-
-                <p>
-                    كيف يمكنني مساعدتك اليوم؟
-                </p>
-
-            </div>
-
-        </section>
-
-        <div id="typing">
-
-            Aido AI يكتب
-
-            <span class="typing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
             </span>
 
+            <span>
+                مسح المحادثات
+            </span>
+
+        </button>
+
+    </div>
+
+</aside>
+
+<!-- =========================
+     MAIN
+========================= -->
+
+<main class="main">
+
+<header class="topbar">
+
+    <div class="topbar-right">
+
+        <button
+            class="mobile-menu"
+            id="mobileMenu"
+            type="button"
+        >
+
+            <span class="icon">
+
+                <svg viewBox="0 0 24 24">
+
+                    <path d="M4 6h16"></path>
+                    <path d="M4 12h16"></path>
+                    <path d="M4 18h16"></path>
+
+                </svg>
+
+            </span>
+
+        </button>
+
+        <div class="model-logo">
+            DA
         </div>
 
-        <!-- =========================
-             COMPOSER
-        ========================= -->
+        <div class="model-info">
 
-        <div class="composer-area">
+            <div class="model-name">
+                Aido AI
+            </div>
 
-            <form
-                id="chatForm"
-                class="composer"
-                method="POST"
-                action="/"
-                enctype="multipart/form-data"
-            >
-
-                <!-- صورة -->
-                <input
-                    type="file"
-                    id="imageInput"
-                    name="image"
-                    accept="image/*"
-                >
-
-                <div id="imagePreview">
-
-                    <img
-                        id="previewImage"
-                        src=""
-                        alt="الصورة"
-                    >
-
-                    <button
-                        type="button"
-                        id="removeImage"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-                <textarea
-                    id="question"
-                    name="question"
-                    placeholder="اكتب رسالتك إلى Aido AI..."
-                    required
-                ></textarea>
-
-                <div class="composer-bottom">
-
-                    <div class="tools">
-
-                        <!-- رفع صورة -->
-                        <button
-                            type="button"
-                            class="tool"
-                            id="imageBtn"
-                            data-tooltip="إضافة صورة"
-                        >
-                            <span class="icon">
-                                <svg viewBox="0 0 24 24">
-                                    <rect x="3" y="4" width="18" height="16" rx="2"></rect>
-                                    <circle cx="8.5" cy="9" r="1.5"></circle>
-                                    <path d="M21 15l-5-5L5 20"></path>
-                                </svg>
-                            </span>
-                        </button>
-
-                        <!-- ميكروفون -->
-                        <button
-                            type="button"
-                            class="tool"
-                            id="micBtn"
-                            data-tooltip="الميكروفون"
-                        >
-                            <span class="icon">
-                                <svg viewBox="0 0 24 24">
-                                    <rect x="9" y="3" width="6" height="11" rx="3"></rect>
-                                    <path d="M5 11a7 7 0 0 0 14 0"></path>
-                                    <path d="M12 18v3"></path>
-                                    <path d="M8 21h8"></path>
-                                </svg>
-                            </span>
-                        </button>
-
-                        <!-- محادثة صوتية -->
-                        <button
-                            type="button"
-                            class="tool"
-                            id="voiceChatBtn"
-                            data-tooltip="المحادثة الصوتية"
-                        >
-                            <span class="icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-                                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                    <path d="M12 19v3"></path>
-                                    <path d="M8 22h8"></path>
-                                </svg>
-                            </span>
-                        </button>
-
-                        <!-- قراءة الإجابة -->
-                        <button
-                            type="button"
-                            class="tool"
-                            id="voiceBtn2"
-                            data-tooltip="قراءة الإجابة"
-                        >
-                            <span class="icon">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M11 5L6 9H3v6h3l5 4V5z"></path>
-                                    <path d="M15 9a5 5 0 0 1 0 6"></path>
-                                    <path d="M18 6a9 9 0 0 1 0 12"></path>
-                                </svg>
-                            </span>
-                        </button>
-
-                    </div>
-
-                    <button
-                        type="submit"
-                        class="send-btn"
-                        id="sendBtn"
-                    >
-                        <span class="icon">
-                            <svg viewBox="0 0 24 24">
-                                <path d="M5 12h14"></path>
-                                <path d="M13 6l6 6-6 6"></path>
-                            </svg>
-                        </span>
-                    </button>
-
-                </div>
-
-            </form>
+            <div class="model-subtitle">
+                Gemini AI
+            </div>
 
         </div>
 
-    </main>
+    </div>
+
+    <div class="status">
+
+        <span class="status-dot"></span>
+
+        <span>
+            متصل
+        </span>
+
+    </div>
+
+</header>
+
+<!-- =========================
+     CHAT
+========================= -->
+
+<section
+    class="chat"
+    id="chat"
+>
+
+    <div
+        class="welcome"
+        id="welcome"
+    >
+
+        <div class="welcome-logo">
+            DA
+        </div>
+
+        <h1>
+            مرحباً بك في Aido AI
+        </h1>
+
+        <p>
+            كيف يمكنني مساعدتك اليوم؟
+        </p>
+
+    </div>
+
+</section>
+
+<div id="typing">
+
+    Aido AI يكتب
+
+    <span class="typing-dots">
+
+        <span></span>
+        <span></span>
+        <span></span>
+
+    </span>
 
 </div>
 
 <!-- =========================
-     COPY MESSAGE
+     COMPOSER
 ========================= -->
 
-<div id="copyMessage">
-    تم نسخ الإجابة
+<div class="composer-area">
+
+<form
+    id="chatForm"
+    class="composer"
+    method="POST"
+    action="/"
+    enctype="multipart/form-data"
+>
+
+<input
+    type="file"
+    id="imageInput"
+    name="image"
+    accept="image/*"
+>
+
+<div id="imagePreview">
+
+    <img
+        id="previewImage"
+        src=""
+        alt="الصورة"
+    >
+
+    <button
+        type="button"
+        id="removeImage"
+    >
+        ×
+    </button>
+
+</div>
+
+<textarea
+    id="question"
+    name="question"
+    placeholder="اكتب رسالتك إلى Aido AI..."
+></textarea>
+
+<div class="composer-bottom">
+
+<div class="tools">
+
+<button
+    type="button"
+    class="tool"
+    id="imageBtn"
+    data-tooltip="إضافة صورة"
+>
+
+<span class="icon">
+
+<svg viewBox="0 0 24 24">
+
+<rect
+    x="3"
+    y="4"
+    width="18"
+    height="16"
+    rx="2"
+></rect>
+
+<circle
+    cx="8.5"
+    cy="9"
+    r="1.5"
+></circle>
+
+<path d="M21 15l-5-5L5 20"></path>
+
+</svg>
+
+</span>
+
+</button>
+
+<button
+    type="button"
+    class="tool"
+    id="micBtn"
+    data-tooltip="الميكروفون"
+>
+
+<span class="icon">
+
+<svg viewBox="0 0 24 24">
+
+<rect
+    x="9"
+    y="3"
+    width="6"
+    height="11"
+    rx="3"
+></rect>
+
+<path d="M5 11a7 7 0 0 0 14 0"></path>
+
+<path d="M12 18v3"></path>
+
+<path d="M8 21h8"></path>
+
+</svg>
+
+</span>
+
+</button>
+
+<button
+    type="button"
+    class="tool"
+    id="voiceChatBtn"
+    data-tooltip="المحادثة الصوتية"
+>
+
+<span class="icon">
+
+<svg viewBox="0 0 24 24">
+
+<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+
+<path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+
+<path d="M12 19v3"></path>
+
+<path d="M8 22h8"></path>
+
+</svg>
+
+</span>
+
+</button>
+
+<button
+    type="button"
+    class="tool"
+    id="voiceBtn2"
+    data-tooltip="قراءة الإجابة"
+>
+
+<span class="icon">
+
+<svg viewBox="0 0 24 24">
+
+<path d="M11 5L6 9H3v6h3l5 4V5z"></path>
+
+<path d="M15 9a5 5 0 0 1 0 6"></path>
+
+<path d="M18 6a9 9 0 0 1 0 12"></path>
+
+</svg>
+
+</span>
+
+</button>
+
+</div>
+
+<button
+    type="submit"
+    class="send-btn"
+    id="sendBtn"
+>
+
+<span class="icon">
+
+<svg viewBox="0 0 24 24">
+
+<path d="M5 12h14"></path>
+
+<path d="M13 6l6 6-6 6"></path>
+
+</svg>
+
+</span>
+
+</button>
+
+</div>
+
+</form>
+
+</div>
+
+</main>
+
 </div>
 
 <!-- =========================
@@ -1155,174 +1292,192 @@
 
 <div id="voiceChat">
 
-    <button
-        class="voice-close"
-        id="voiceClose"
-        title="إغلاق"
-    >
-        <span class="icon">
-            <svg viewBox="0 0 24 24">
-                <path d="M6 6l12 12"></path>
-                <path d="M18 6L6 18"></path>
-            </svg>
-        </span>
-    </button>
+<button
+    class="voice-close"
+    id="voiceClose"
+    title="إغلاق"
+    type="button"
+>
 
-    <div class="voice-title">
-        Aido AI
-    </div>
+<span class="icon">
 
-    <div class="voice-status" id="voiceStatus">
-        اضغط بدء المحادثة
-    </div>
+<svg viewBox="0 0 24 24">
 
-    <div class="voice-orb-area" id="voiceOrbArea">
+<path d="M6 6l12 12"></path>
 
-        <div class="voice-ring"></div>
-        <div class="voice-ring two"></div>
+<path d="M18 6L6 18"></path>
 
-        <div class="voice-orb">
-            DA
-        </div>
+</svg>
 
-        <div class="voice-bars">
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
+</span>
 
-    </div>
+</button>
 
-    <div class="voice-message" id="voiceMessage"></div>
+<div class="voice-title">
+    Aido AI
+</div>
 
-    <button
-        class="voice-button"
-        id="voiceStart"
-    >
-        بدء المحادثة
-    </button>
+<div
+    class="voice-status"
+    id="voiceStatus"
+>
+    اضغط بدء المحادثة
+</div>
 
-    <div class="voice-hint">
-        تحدث بشكل طبيعي، وسيجيبك Aido AI تلقائيًا
-    </div>
+<div
+    class="voice-orb-area"
+    id="voiceOrbArea"
+>
+
+<div class="voice-ring"></div>
+
+<div class="voice-ring two"></div>
+
+<div class="voice-orb">
+    DA
+</div>
+
+<div class="voice-bars">
+
+<span></span>
+<span></span>
+<span></span>
+<span></span>
+<span></span>
 
 </div>
 
+</div>
+
+<div
+    class="voice-message"
+    id="voiceMessage"
+></div>
+
+<button
+    class="voice-button"
+    id="voiceStart"
+    type="button"
+>
+    بدء المحادثة
+</button>
+
+<div class="voice-hint">
+    تحدث بشكل طبيعي، وسيجيبك Aido AI تلقائيًا
+</div>
+
+</div>
+
+<div id="copyMessage">
+    تم نسخ الإجابة
+</div>
+
 <script>
+
 /* =========================
    ELEMENTS
 ========================= */
 
-const chat = document.getElementById("chat");
-const welcome = document.getElementById("welcome");
-const chatForm = document.getElementById("chatForm");
-const question = document.getElementById("question");
-const typing = document.getElementById("typing");
+const chatForm =
+    document.getElementById("chatForm");
 
-const history = document.getElementById("history");
-const newChatBtn = document.getElementById("newChatBtn");
-const clearBtn = document.getElementById("clearBtn");
+const question =
+    document.getElementById("question");
 
-const themeBtn = document.getElementById("themeBtn");
-const themeText = document.getElementById("themeText");
+const chat =
+    document.getElementById("chat");
 
-const mobileMenu = document.getElementById("mobileMenu");
-const sidebar = document.getElementById("sidebar");
+const typing =
+    document.getElementById("typing");
 
-const micBtn = document.getElementById("micBtn");
-const voiceBtn2 = document.getElementById("voiceBtn2");
-const voiceChatBtn = document.getElementById("voiceChatBtn");
+const imageBtn =
+    document.getElementById("imageBtn");
 
-const imageBtn = document.getElementById("imageBtn");
-const imageInput = document.getElementById("imageInput");
-const imagePreview = document.getElementById("imagePreview");
-const previewImage = document.getElementById("previewImage");
-const removeImage = document.getElementById("removeImage");
+const imageInput =
+    document.getElementById("imageInput");
 
-const copyMessage = document.getElementById("copyMessage");
+const imagePreview =
+    document.getElementById("imagePreview");
 
-const voiceChat = document.getElementById("voiceChat");
-const voiceClose = document.getElementById("voiceClose");
-const voiceStart = document.getElementById("voiceStart");
-const voiceStatus = document.getElementById("voiceStatus");
-const voiceMessage = document.getElementById("voiceMessage");
-const voiceOrbArea = document.getElementById("voiceOrbArea");
+const previewImage =
+    document.getElementById("previewImage");
 
-/* =========================
-   VARIABLES
-========================= */
+const removeImage =
+    document.getElementById("removeImage");
 
-let messages = [];
-let voiceMode = false;
-let recognition = null;
+const micBtn =
+    document.getElementById("micBtn");
+
+const voiceBtn2 =
+    document.getElementById("voiceBtn2");
+
+const voiceChatBtn =
+    document.getElementById("voiceChatBtn");
+
+const voiceChat =
+    document.getElementById("voiceChat");
+
+const voiceClose =
+    document.getElementById("voiceClose");
+
+const voiceStart =
+    document.getElementById("voiceStart");
+
+const voiceStatus =
+    document.getElementById("voiceStatus");
+
+const voiceMessage =
+    document.getElementById("voiceMessage");
+
+const voiceOrbArea =
+    document.getElementById("voiceOrbArea");
+
+const newChatBtn =
+    document.getElementById("newChatBtn");
+
+const clearBtn =
+    document.getElementById("clearBtn");
+
+const history =
+    document.getElementById("history");
+
+const themeBtn =
+    document.getElementById("themeBtn");
+
+const themeText =
+    document.getElementById("themeText");
+
+const mobileMenu =
+    document.getElementById("mobileMenu");
+
+const sidebar =
+    document.getElementById("sidebar");
+
 let lastAnswer = "";
 
-/* =========================
-   STORAGE
-========================= */
-
-function saveCurrentConversation() {
-    localStorage.setItem(
-        "aido_current_conversation",
-        JSON.stringify(messages)
-    );
-}
-
-function loadCurrentConversation() {
-
-    try {
-
-        const saved =
-            localStorage.getItem(
-                "aido_current_conversation"
-            );
-
-        if (!saved) {
-            return;
-        }
-
-        messages = JSON.parse(saved);
-
-        messages.forEach(item => {
-            addMessage(
-                item.role,
-                item.text,
-                false
-            );
-        });
-
-    } catch (error) {
-
-        console.error(
-            "Conversation load error:",
-            error
-        );
-    }
-}
 
 /* =========================
    ADD MESSAGE
 ========================= */
 
-function addMessage(
-    role,
-    text,
-    save = true
-) {
+function addMessage(type, text) {
+
+    if (!text) {
+        return;
+    }
+
+    const welcome =
+        document.getElementById("welcome");
 
     if (welcome) {
         welcome.style.display = "none";
     }
 
-    const message = document.createElement("div");
+    const message =
+        document.createElement("div");
 
     message.className =
-        "message " +
-        (role === "user"
-            ? "message-user"
-            : "message-ai");
+        "message message-" + type;
 
     const avatar =
         document.createElement("div");
@@ -1330,7 +1485,7 @@ function addMessage(
     avatar.className = "avatar";
 
     avatar.textContent =
-        role === "user"
+        type === "user"
             ? "أنت"
             : "DA";
 
@@ -1347,22 +1502,25 @@ function addMessage(
         "message-name";
 
     name.textContent =
-        role === "user"
+        type === "user"
             ? "أنت"
             : "Aido AI";
 
-    const textElement =
+    const messageText =
         document.createElement("div");
 
-    textElement.className =
+    messageText.className =
         "message-text";
 
-    textElement.textContent = text;
+    messageText.textContent =
+        text;
 
     content.appendChild(name);
-    content.appendChild(textElement);
+    content.appendChild(messageText);
 
-    if (role !== "user") {
+    if (type === "assistant") {
+
+        lastAnswer = text;
 
         const tools =
             document.createElement("div");
@@ -1373,32 +1531,41 @@ function addMessage(
         const copyBtn =
             document.createElement("button");
 
-        copyBtn.className =
-            "answer-btn";
-
-        copyBtn.textContent =
-            "نسخ";
+        copyBtn.type = "button";
+        copyBtn.className = "answer-btn";
+        copyBtn.textContent = "نسخ";
 
         copyBtn.onclick = () => {
-            navigator.clipboard.writeText(text);
 
-            copyMessage.style.display =
-                "block";
+            navigator.clipboard
+                .writeText(text)
+                .then(() => {
 
-            setTimeout(() => {
-                copyMessage.style.display =
-                    "none";
-            }, 1500);
+                    const copyMessage =
+                        document.getElementById(
+                            "copyMessage"
+                        );
+
+                    copyMessage.style.display =
+                        "block";
+
+                    setTimeout(() => {
+
+                        copyMessage.style.display =
+                            "none";
+
+                    }, 1500);
+
+                });
+
         };
 
         const speakBtn =
             document.createElement("button");
 
-        speakBtn.className =
-            "answer-btn";
-
-        speakBtn.textContent =
-            "🔊 قراءة";
+        speakBtn.type = "button";
+        speakBtn.className = "answer-btn";
+        speakBtn.textContent = "🔊 قراءة";
 
         speakBtn.onclick = () => {
             speakText(text);
@@ -1408,8 +1575,6 @@ function addMessage(
         tools.appendChild(speakBtn);
 
         content.appendChild(tools);
-
-        lastAnswer = text;
     }
 
     message.appendChild(avatar);
@@ -1419,17 +1584,8 @@ function addMessage(
 
     chat.scrollTop =
         chat.scrollHeight;
-
-    if (save) {
-
-        messages.push({
-            role: role,
-            text: text
-        });
-
-        saveCurrentConversation();
-    }
 }
+
 
 /* =========================
    SEND MESSAGE
@@ -1482,6 +1638,7 @@ chatForm.addEventListener(
                     "image",
                     image
                 );
+
             }
 
             const response =
@@ -1513,25 +1670,45 @@ chatForm.addEventListener(
                 );
 
             if (possible) {
+
                 answer =
                     possible.textContent.trim();
+
             }
+
+            /*
+             * محاولة استخراج الإجابة
+             * من النصوص الموجودة في الصفحة
+             */
 
             if (!answer) {
 
-                const scripts =
-                    doc.querySelectorAll(
-                        "script"
-                    );
+                const selectors = [
+                    ".message-text",
+                    "#answer",
+                    ".answer",
+                    "[id*='answer']"
+                ];
 
-                for (const script of scripts) {
+                for (
+                    const selector
+                    of selectors
+                ) {
+
+                    const element =
+                        doc.querySelector(
+                            selector
+                        );
 
                     if (
-                        script.textContent.includes(
-                            "answer"
-                        )
+                        element &&
+                        element.textContent.trim()
                     ) {
-                        continue;
+
+                        answer =
+                            element.textContent.trim();
+
+                        break;
                     }
                 }
             }
@@ -1542,34 +1719,53 @@ chatForm.addEventListener(
 
             if (!answer) {
 
-                const apiResponse =
-                    await fetch(
-                        "/api/chat",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            body: JSON.stringify({
-                                message: text
-                            })
-                        }
+                try {
+
+                    const apiResponse =
+                        await fetch(
+                            "/api/chat",
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+                                body:
+                                    JSON.stringify({
+                                        message: text
+                                    })
+                            }
+                        );
+
+                    if (apiResponse.ok) {
+
+                        const data =
+                            await apiResponse.json();
+
+                        answer =
+                            data.answer ||
+                            data.response ||
+                            data.message ||
+                            "";
+
+                    }
+
+                } catch (apiError) {
+
+                    console.error(
+                        "API Error:",
+                        apiError
                     );
 
-                if (apiResponse.ok) {
-
-                    const data =
-                        await apiResponse.json();
-
-                    answer =
-                        data.answer || "";
                 }
+
             }
 
             if (!answer) {
+
                 answer =
                     "لم أجد إجابة حاليًا.";
+
             }
 
             addMessage(
@@ -1595,16 +1791,21 @@ chatForm.addEventListener(
 
             chat.scrollTop =
                 chat.scrollHeight;
+
         }
+
     }
 );
+
 
 /* =========================
    IMAGE
 ========================= */
 
 imageBtn.onclick = () => {
+
     imageInput.click();
+
 };
 
 imageInput.addEventListener(
@@ -1618,7 +1819,11 @@ imageInput.addEventListener(
             return;
         }
 
-        if (!file.type.startsWith("image/")) {
+        if (
+            !file.type.startsWith(
+                "image/"
+            )
+        ) {
 
             imageInput.value = "";
 
@@ -1628,18 +1833,22 @@ imageInput.addEventListener(
         const reader =
             new FileReader();
 
-        reader.onload = event => {
+        reader.onload =
+            event => {
 
-            previewImage.src =
-                event.target.result;
+                previewImage.src =
+                    event.target.result;
 
-            imagePreview.style.display =
-                "block";
-        };
+                imagePreview.style.display =
+                    "block";
+
+            };
 
         reader.readAsDataURL(file);
+
     }
 );
+
 
 function clearImage() {
 
@@ -1649,9 +1858,12 @@ function clearImage() {
 
     imagePreview.style.display =
         "none";
+
 }
 
-removeImage.onclick = clearImage;
+removeImage.onclick =
+    clearImage;
+
 
 /* =========================
    TEXT TO SPEECH
@@ -1659,7 +1871,9 @@ removeImage.onclick = clearImage;
 
 function speakText(text) {
 
-    if (!("speechSynthesis" in window)) {
+    if (
+        !("speechSynthesis" in window)
+    ) {
 
         alert(
             "المتصفح لا يدعم قراءة النص."
@@ -1671,23 +1885,37 @@ function speakText(text) {
     speechSynthesis.cancel();
 
     const utterance =
-        new SpeechSynthesisUtterance(text);
+        new SpeechSynthesisUtterance(
+            text
+        );
 
-    utterance.lang = "ar-SA";
-    utterance.rate = 1;
-    utterance.pitch = 1;
+    utterance.lang =
+        "ar-SA";
+
+    utterance.rate =
+        1;
+
+    utterance.pitch =
+        1;
 
     speechSynthesis.speak(
         utterance
     );
+
 }
 
 voiceBtn2.onclick = () => {
 
     if (lastAnswer) {
-        speakText(lastAnswer);
+
+        speakText(
+            lastAnswer
+        );
+
     }
+
 };
+
 
 /* =========================
    MICROPHONE
@@ -1696,6 +1924,8 @@ voiceBtn2.onclick = () => {
 const SpeechRecognition =
     window.SpeechRecognition ||
     window.webkitSpeechRecognition;
+
+let recognition = null;
 
 if (SpeechRecognition) {
 
@@ -1715,18 +1945,21 @@ if (SpeechRecognition) {
 
         micBtn.style.color =
             "#dc2626";
+
     };
 
     recognition.onresult =
         event => {
 
             const result =
-                event.results[0][0].transcript;
+                event.results[0][0]
+                    .transcript;
 
             question.value =
                 result;
 
             question.focus();
+
         };
 
     recognition.onerror =
@@ -1736,21 +1969,28 @@ if (SpeechRecognition) {
                 "Speech recognition:",
                 error
             );
+
         };
 
     recognition.onend = () => {
 
         micBtn.style.color =
             "";
+
     };
 
     micBtn.onclick = () => {
 
         try {
+
             recognition.start();
+
         } catch (error) {
-            console.log(error);
+
+            console.error(error);
+
         }
+
     };
 
 } else {
@@ -1758,60 +1998,169 @@ if (SpeechRecognition) {
     micBtn.onclick = () => {
 
         alert(
-            "المتصفح لا يدعم التعرف على الصوت."
+            "المتصفح لا يدعم الميكروفون."
         );
+
     };
+
 }
+
 
 /* =========================
    VOICE CHAT
 ========================= */
 
-function openVoiceChat() {
+voiceChatBtn.onclick = () => {
 
     voiceChat.style.display =
         "flex";
 
-    voiceStatus.textContent =
-        "اضغط بدء المحادثة";
+};
 
-    voiceMessage.textContent =
-        "";
+voiceClose.onclick = () => {
 
-    voiceMode = false;
-
-    voiceStart.textContent =
-        "بدء المحادثة";
-
-    voiceStart.classList.remove(
-        "stop"
-    );
-
-    voiceOrbArea.classList.remove(
-        "voice-active"
-    );
-}
-
-function closeVoiceChat() {
-
-    voiceMode = false;
-
-    if (recognition) {
-
-        try {
-            recognition.stop();
-        } catch (error) {}
-    }
-
-    speechSynthesis.cancel();
-
-    voiceOrbArea.classList.remove(
-        "voice-active"
-    );
+    stopVoiceChat();
 
     voiceChat.style.display =
         "none";
 
+};
+
+let voiceRecognition = null;
+let voiceActive = false;
+
+if (SpeechRecognition) {
+
+    voiceRecognition =
+        new SpeechRecognition();
+
+    voiceRecognition.lang =
+        "ar-SA";
+
+    voiceRecognition.continuous =
+        false;
+
+    voiceRecognition.interimResults =
+        false;
+
+    voiceRecognition.onstart =
+        () => {
+
+            voiceActive = true;
+
+            voiceOrbArea.classList.add(
+                "voice-active"
+            );
+
+            voiceStatus.textContent =
+                "استمع إليك الآن...";
+
+            voiceStart.textContent =
+                "إيقاف المحادثة";
+
+            voiceStart.classList.add(
+                "stop"
+            );
+
+        };
+
+    voiceRecognition.onresult =
+        async event => {
+
+            const text =
+                event.results[0][0]
+                    .transcript;
+
+            voiceMessage.textContent =
+                text;
+
+            question.value =
+                text;
+
+            await sendVoiceMessage(
+                text
+            );
+
+        };
+
+    voiceRecognition.onend =
+        () => {
+
+            if (voiceActive) {
+
+                voiceActive = false;
+
+                voiceOrbArea.classList.remove(
+                    "voice-active"
+                );
+
+                voiceStatus.textContent =
+                    "اضغط بدء المحادثة";
+
+                voiceStart.textContent =
+                    "بدء المحادثة";
+
+                voiceStart.classList.remove(
+                    "stop"
+                );
+
+            }
+
+        };
+
+}
+
+voiceStart.onclick = () => {
+
+    if (!voiceRecognition) {
+
+        alert(
+            "المتصفح لا يدعم المحادثة الصوتية."
+        );
+
+        return;
+    }
+
+    if (voiceActive) {
+
+        stopVoiceChat();
+
+    } else {
+
+        try {
+
+            voiceRecognition.start();
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    }
+
+};
+
+
+function stopVoiceChat() {
+
+    voiceActive = false;
+
+    if (voiceRecognition) {
+
+        try {
+            voiceRecognition.stop();
+        } catch (error) {}
+
+    }
+
+    voiceOrbArea.classList.remove(
+        "voice-active"
+    );
+
+    voiceStatus.textContent =
+        "اضغط بدء المحادثة";
+
     voiceStart.textContent =
         "بدء المحادثة";
 
@@ -1819,189 +2168,72 @@ function closeVoiceChat() {
         "stop"
     );
 
-    voiceStatus.textContent =
-        "اضغط بدء المحادثة";
 }
 
-voiceChatBtn.onclick =
-    openVoiceChat;
 
-voiceClose.onclick =
-    closeVoiceChat;
-
-/* =========================
-   VOICE START / STOP
-========================= */
-
-voiceStart.onclick = () => {
-
-    if (!voiceMode) {
-
-        voiceMode = true;
-
-        voiceStart.textContent =
-            "إنهاء المحادثة";
-
-        voiceStart.classList.add(
-            "stop"
-        );
-
-        voiceStatus.textContent =
-            "جاهز للاستماع إليك";
-
-        voiceOrbArea.classList.add(
-            "voice-active"
-        );
-
-        startVoiceListening();
-
-    } else {
-
-        closeVoiceChat();
-    }
-};
-
-/* =========================
-   VOICE LISTENING
-========================= */
-
-function startVoiceListening() {
-
-    if (!recognition) {
-
-        voiceStatus.textContent =
-            "التعرف على الصوت غير مدعوم";
-
-        return;
-    }
-
-    recognition.lang =
-        "ar-SA";
-
-    recognition.continuous =
-        false;
-
-    recognition.interimResults =
-        false;
-
-    recognition.onstart = () => {
-
-        voiceStatus.textContent =
-            "أستمع إليك...";
-
-        voiceOrbArea.classList.add(
-            "voice-active"
-        );
-    };
-
-    recognition.onresult =
-        async event => {
-
-            const text =
-                event.results[0][0].transcript;
-
-            voiceMessage.textContent =
-                text;
-
-            voiceStatus.textContent =
-                "أفكر...";
-
-            try {
-
-                const response =
-                    await fetch(
-                        "/api/chat",
-                        {
-                            method: "POST",
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
-                            body: JSON.stringify({
-                                message: text
-                            })
-                        }
-                    );
-
-                const data =
-                    await response.json();
-
-                const answer =
-                    data.answer ||
-                    "لم أجد إجابة حاليًا.";
-
-                voiceMessage.textContent =
-                    answer;
-
-                addMessage(
-                    "user",
-                    text
-                );
-
-                addMessage(
-                    "assistant",
-                    answer
-                );
-
-                speakText(answer);
-
-                voiceStatus.textContent =
-                    "جاهز للاستماع إليك";
-
-                if (voiceMode) {
-                    setTimeout(
-                        startVoiceListening,
-                        1000
-                    );
-                }
-
-            } catch (error) {
-
-                console.error(error);
-
-                voiceStatus.textContent =
-                    "حدث خطأ في الاتصال";
-
-            }
-        };
-
-    recognition.onerror =
-        error => {
-
-            console.error(
-                "Voice error:",
-                error
-            );
-
-            if (voiceMode) {
-
-                voiceStatus.textContent =
-                    "حاول التحدث مرة أخرى";
-            }
-        };
-
-    recognition.onend = () => {
-
-        if (
-            voiceMode &&
-            voiceStatus.textContent ===
-                "أستمع إليك..."
-        ) {
-
-            voiceStatus.textContent =
-                "جاهز للاستماع إليك";
-        }
-    };
+async function sendVoiceMessage(text) {
 
     try {
 
-        recognition.start();
+        const response =
+            await fetch(
+                "/api/chat",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+                    body:
+                        JSON.stringify({
+                            message: text
+                        })
+                }
+            );
+
+        if (!response.ok) {
+            throw new Error(
+                "API error"
+            );
+        }
+
+        const data =
+            await response.json();
+
+        const answer =
+            data.answer ||
+            data.response ||
+            data.message ||
+            "لم أجد إجابة حاليًا.";
+
+        voiceMessage.textContent =
+            answer;
+
+        addMessage(
+            "user",
+            text
+        );
+
+        addMessage(
+            "assistant",
+            answer
+        );
+
+        speakText(
+            answer
+        );
 
     } catch (error) {
 
-        console.log(error);
+        console.error(error);
+
+        voiceMessage.textContent =
+            "حدث خطأ أثناء الاتصال بـ Aido AI.";
+
     }
+
 }
+
 
 /* =========================
    NEW CHAT
@@ -2009,76 +2241,9 @@ function startVoiceListening() {
 
 newChatBtn.onclick = () => {
 
-    messages = [];
+    chat.innerHTML = `
+        <div class="welcome" id="welcome">
 
-    localStorage.removeItem(
-        "aido_current_conversation"
-    );
-
-    chat.innerHTML = "";
-
-    const newWelcome =
-        document.createElement("div");
-
-    newWelcome.className =
-        "welcome";
-
-    newWelcome.innerHTML = `
-        <div class="welcome-logo">
-            DA
-        </div>
-
-        <h1>
-            مرحباً بك في Aido AI
-        </h1>
-
-        <p>
-            كيف يمكنني مساعدتك اليوم؟
-        </p>
-    `;
-
-    chat.appendChild(
-        newWelcome
-    );
-
-    sidebar.classList.remove(
-        "open"
-    );
-};
-
-/* =========================
-   CLEAR
-========================= */
-
-clearBtn.onclick = () => {
-
-    if (
-        confirm(
-            "هل تريد مسح المحادثات؟"
-        )
-    ) {
-
-        localStorage.removeItem(
-            "aido_current_conversation"
-        );
-
-        localStorage.removeItem(
-            "aido_history"
-        );
-
-        messages = [];
-
-        chat.innerHTML = "";
-
-        history.innerHTML = "";
-
-        const newWelcome =
-            document.createElement("div");
-
-        newWelcome.className =
-            "welcome";
-
-        newWelcome.innerHTML = `
             <div class="welcome-logo">
                 DA
             </div>
@@ -2090,21 +2255,55 @@ clearBtn.onclick = () => {
             <p>
                 كيف يمكنني مساعدتك اليوم؟
             </p>
-        `;
 
-        chat.appendChild(
-            newWelcome
-        );
-    }
+        </div>
+    `;
+
+    lastAnswer = "";
+
+    clearImage();
+
 };
 
+
 /* =========================
-   THEME
+   CLEAR CHAT
+========================= */
+
+clearBtn.onclick = () => {
+
+    chat.innerHTML = `
+        <div class="welcome" id="welcome">
+
+            <div class="welcome-logo">
+                DA
+            </div>
+
+            <h1>
+                مرحباً بك في Aido AI
+            </h1>
+
+            <p>
+                كيف يمكنني مساعدتك اليوم؟
+            </p>
+
+        </div>
+    `;
+
+    history.innerHTML = "";
+
+    lastAnswer = "";
+
+};
+
+
+/* =========================
+   DARK MODE
 ========================= */
 
 const savedTheme =
     localStorage.getItem(
-        "aido_theme"
+        "aido-theme"
     );
 
 if (savedTheme === "dark") {
@@ -2115,6 +2314,7 @@ if (savedTheme === "dark") {
 
     themeText.textContent =
         "الوضع النهاري";
+
 }
 
 themeBtn.onclick = () => {
@@ -2129,15 +2329,19 @@ themeBtn.onclick = () => {
         );
 
     localStorage.setItem(
-        "aido_theme",
-        dark ? "dark" : "light"
+        "aido-theme",
+        dark
+            ? "dark"
+            : "light"
     );
 
     themeText.textContent =
         dark
             ? "الوضع النهاري"
             : "الوضع الليلي";
+
 };
+
 
 /* =========================
    MOBILE MENU
@@ -2148,7 +2352,9 @@ mobileMenu.onclick = () => {
     sidebar.classList.toggle(
         "open"
     );
+
 };
+
 
 /* =========================
    ENTER TO SEND
@@ -2166,33 +2372,11 @@ question.addEventListener(
             event.preventDefault();
 
             chatForm.requestSubmit();
+
         }
+
     }
 );
-
-/* =========================
-   VOICES
-========================= */
-
-if ("speechSynthesis" in window) {
-
-    speechSynthesis.onvoiceschanged =
-        () => {
-
-            speechSynthesis.getVoices();
-        };
-}
-
-/* =========================
-   START
-========================= */
-
-loadCurrentConversation();
-
-window.onbeforeunload = () => {
-
-    speechSynthesis.cancel();
-};
 
 </script>
 
