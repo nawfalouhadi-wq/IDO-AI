@@ -8,7 +8,6 @@ from openai import OpenAI
 # تحميل ملف .env
 load_dotenv()
 
-
 # =========================================================
 # Gemini
 # =========================================================
@@ -56,6 +55,20 @@ else:
 
 
 # =========================================================
+# OpenRouter
+# =========================================================
+
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+if OPENROUTER_API_KEY:
+    print("OPENROUTER CLIENT: READY")
+else:
+    print("OPENROUTER_API_KEY: NOT FOUND")
+
+
+# =========================================================
 # Ollama
 # =========================================================
 
@@ -64,7 +77,7 @@ OLLAMA_URL = os.getenv(
     "http://localhost:11434"
 )
 
-print("BRAIN.PY LOADED - GEMINI + OPENAI + OLLAMA READY")
+print("BRAIN.PY LOADED - GEMINI + OPENAI + OPENROUTER + OLLAMA READY")
 
 
 # =========================================================
@@ -124,6 +137,64 @@ def ask_openai(message):
 
     except Exception as e:
         print("OpenAI ERROR:", e)
+        return None
+
+
+# =========================================================
+# OpenRouter - نص
+# =========================================================
+
+def ask_openrouter(message):
+
+    if not OPENROUTER_API_KEY:
+        print("OpenRouter ERROR: API key غير موجود.")
+        return None
+
+    try:
+        print("Trying OpenRouter...")
+
+        response = requests.post(
+            OPENROUTER_URL,
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "Content-Type": "application/json",
+                "X-Title": "Aido AI"
+            },
+            json={
+                "model": "openai/gpt-5-chat",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": message
+                    }
+                ]
+            },
+            timeout=60
+        )
+
+        print("OpenRouter Status:", response.status_code)
+
+        if response.status_code != 200:
+            print("OpenRouter Response:", response.text)
+            return None
+
+        data = response.json()
+
+        choices = data.get("choices")
+
+        if choices:
+            message_data = choices[0].get("message", {})
+            answer = message_data.get("content")
+
+            if answer:
+                print("OpenRouter response received.")
+                return answer.strip()
+
+        print("OpenRouter returned empty response.")
+        return None
+
+    except Exception as e:
+        print("OpenRouter ERROR:", e)
         return None
 
 
@@ -366,10 +437,22 @@ def get_response(message):
 
 
     # =====================================================
-    # Ollama ثالثًا
+    # OpenRouter ثالثًا
     # =====================================================
 
-    print("OpenAI failed. Trying Ollama...")
+    print("OpenAI failed. Trying OpenRouter...")
+
+    answer = ask_openrouter(original_message)
+
+    if answer:
+        return answer
+
+
+    # =====================================================
+    # Ollama رابعًا
+    # =====================================================
+
+    print("OpenRouter failed. Trying Ollama...")
 
     answer = ask_ollama(original_message)
 
