@@ -8,5 +8,5 @@ def calculate(expression):
 
         return eval(expression)
 
-    except:
+    except Exception:
         return None

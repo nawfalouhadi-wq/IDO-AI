@@ -10,7 +10,9 @@ translations = {
     "food": "nourriture"
 }
 
-reverse_translations = {v: k for k, v in translations.items()}
+reverse_translations = {
+    v: k for k, v in translations.items()
+}
 
 
 def translate(text):
@@ -20,8 +22,10 @@ def translate(text):
     for word in words:
         if word in translations:
             result.append(translations[word])
+
         elif word in reverse_translations:
             result.append(reverse_translations[word])
+
         else:
             result.append(word)
 

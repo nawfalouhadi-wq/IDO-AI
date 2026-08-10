@@ -1,15 +1,19 @@
 import json
 import os
 
-
 MEMORY_FILE = "memory.json"
 
 
 def load_memory():
     if os.path.exists(MEMORY_FILE):
         try:
-            with open(MEMORY_FILE, "r", encoding="utf-8") as file:
+            with open(
+                MEMORY_FILE,
+                "r",
+                encoding="utf-8"
+            ) as file:
                 return json.load(file)
+
         except Exception:
             return {}
 
@@ -17,7 +21,12 @@ def load_memory():
 
 
 def save_memory(data):
-    with open(MEMORY_FILE, "w", encoding="utf-8") as file:
+    with open(
+        MEMORY_FILE,
+        "w",
+        encoding="utf-8"
+    ) as file:
+
         json.dump(
             data,
             file,
@@ -40,9 +49,14 @@ def learn(question, answer):
 def get_answer(question):
     memory = load_memory()
 
-    questions = memory.get("questions", {})
+    questions = memory.get(
+        "questions",
+        {}
+    )
 
-    return questions.get(question.lower())
+    return questions.get(
+        question.lower()
+    )
 
 
 # =========================
@@ -60,7 +74,9 @@ def save_user_name(name):
 def get_user_name():
     memory = load_memory()
 
-    return memory.get("user_name")
+    return memory.get(
+        "user_name"
+    )
 
 
 # =========================
@@ -78,7 +94,9 @@ def save_conversation(title, messages):
         "messages": messages
     }
 
-    memory["conversations"].append(conversation)
+    memory["conversations"].append(
+        conversation
+    )
 
     save_memory(memory)
 
@@ -86,7 +104,10 @@ def save_conversation(title, messages):
 def get_conversations():
     memory = load_memory()
 
-    return memory.get("conversations", [])
+    return memory.get(
+        "conversations",
+        []
+    )
 
 
 # =========================

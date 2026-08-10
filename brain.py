@@ -2,9 +2,9 @@ import os
 import requests
 from dotenv import load_dotenv
 from google import genai
+from google.genai import types
 
 # تحميل ملف .env
-
 load_dotenv()
 
 # =========================
@@ -17,12 +17,17 @@ gemini_client = None
 
 if GEMINI_API_KEY:
     try:
-        gemini_client = genai.Client(api_key=GEMINI_API_KEY)
+        gemini_client = genai.Client(
+            api_key=GEMINI_API_KEY
+        )
         print("GEMINI CLIENT: READY")
+
     except Exception as e:
         print("GEMINI CLIENT ERROR:", e)
+
 else:
     print("GEMINI_API_KEY: NOT FOUND")
+
 
 # =========================
 # Ollama
@@ -35,11 +40,13 @@ OLLAMA_URL = os.getenv(
 
 print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
 
+
 # =========================
-# Gemini
+# Gemini - نص
 # =========================
 
 def ask_gemini(message):
+
     if gemini_client is None:
         print("Gemini ERROR: client غير جاهز.")
         return None
@@ -65,10 +72,49 @@ def ask_gemini(message):
 
 
 # =========================
+# Gemini - صورة
+# =========================
+
+def ask_gemini_image(message, image_bytes, mime_type):
+
+    if gemini_client is None:
+        print("Gemini ERROR: client غير جاهز.")
+        return None
+
+    try:
+        print("Trying Gemini with image...")
+
+        image_part = types.Part.from_bytes(
+            data=image_bytes,
+            mime_type=mime_type
+        )
+
+        response = gemini_client.models.generate_content(
+            model="gemini-3.5-flash",
+            contents=[
+                message,
+                image_part
+            ]
+        )
+
+        if response and response.text:
+            print("Gemini image response received.")
+            return response.text.strip()
+
+        print("Gemini returned empty image response.")
+        return None
+
+    except Exception as e:
+        print("Gemini IMAGE ERROR:", e)
+        return None
+
+
+# =========================
 # Ollama
 # =========================
 
 def ask_ollama(message):
+
     try:
         print("Trying Ollama...")
 
@@ -132,10 +178,10 @@ def get_response(message):
             "وعليكم السلام ورحمة الله وبركاته. كيف يمكنني مساعدتك؟",
 
         "اسمك":
-            "أنا Ido AI 🤖",
+            "أنا Ido AI.",
 
         "ما اسمك":
-            "أنا Ido AI 🤖",
+            "أنا Ido AI.",
 
         "كيف حالك":
             "أنا بخير، شكرًا لسؤالك. كيف يمكنني مساعدتك؟",
@@ -145,78 +191,78 @@ def get_response(message):
         # =========================
 
         "من صنعك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من طورك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من بناك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من هو مطورك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من برمجك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من اخترعك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من انشاك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من أنشأك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من صممك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من صاحبك":
-            "أنا Ido AI، وقد تم تطويري وبنائي بواسطة Noufal Ouhadi 🤖",
+            "أنا Ido AI، وقد تم تطويري وبنائي بواسطة Noufal Ouhadi.",
 
         "من وراءك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI 🤖",
+            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
 
         "من صنع ido ai":
-            "تم تطوير Ido AI وبناؤه بواسطة Noufal Ouhadi 🤖",
+            "تم تطوير Ido AI وبناؤه بواسطة Noufal Ouhadi.",
 
         "من طور ido ai":
-            "تم تطوير Ido AI بواسطة Noufal Ouhadi 🤖",
+            "تم تطوير Ido AI بواسطة Noufal Ouhadi.",
 
         # =========================
         # معلومات عامة
         # =========================
 
         "الوقت":
-            "يمكنك معرفة الوقت من النظام ⏰",
+            "يمكنك معرفة الوقت من النظام.",
 
         "كم عدد الناس في العالم":
-            "يبلغ عدد سكان العالم حوالي 8 مليارات نسمة 🌍",
+            "يبلغ عدد سكان العالم أكثر من 8 مليارات نسمة.",
 
         "ما هو الذكاء الاصطناعي":
-            "الذكاء الاصطناعي هو مجال من علوم الحاسوب يهدف إلى تطوير أنظمة قادرة على فهم المعلومات والتعلم منها وتنفيذ مهام تحتاج عادةً إلى قدر من الذكاء البشري 🤖",
+            "الذكاء الاصطناعي هو مجال من علوم الحاسوب يهدف إلى تطوير أنظمة قادرة على فهم المعلومات والتعلم منها وتنفيذ مهام تحتاج عادةً إلى قدر من الذكاء البشري.",
 
         "ما هي بايثون":
-            "Python هي لغة برمجة قوية وسهلة الاستخدام، وتُستخدم في تطوير البرامج والذكاء الاصطناعي وتحليل البيانات 🐍",
+            "Python هي لغة برمجة قوية وسهلة الاستخدام، وتُستخدم في تطوير البرامج والذكاء الاصطناعي وتحليل البيانات.",
 
         "ما هي عاصمة المغرب":
-            "عاصمة المغرب هي الرباط 🇲🇦",
+            "عاصمة المغرب هي الرباط.",
 
         "ما هي عاصمة فرنسا":
-            "عاصمة فرنسا هي باريس 🇫🇷",
+            "عاصمة فرنسا هي باريس.",
 
         # =========================
         # المجاملات
         # =========================
 
         "شكرا":
-            "على الرحب والسعة 😊",
+            "على الرحب والسعة.",
 
         "شكراً":
-            "العفو، يسعدني مساعدتك 😊",
+            "العفو، يسعدني مساعدتك.",
 
         "وداعا":
-            "إلى اللقاء! أتمنى لك يومًا سعيدًا 😊",
+            "إلى اللقاء! أتمنى لك يومًا سعيدًا."
     }
 
     # =========================
@@ -252,4 +298,33 @@ def get_response(message):
     # فشل الاثنين
     # =========================
 
-    return "أنا Ido AI 🤖 لم أجد إجابة حاليًا."
+    return "أنا Ido AI ولم أجد إجابة حاليًا."
+
+
+# =========================
+# تحليل صورة
+# =========================
+
+def get_image_response(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not message or not message.strip():
+        message = (
+            "حلل هذه الصورة واشرح لي "
+            "ما الذي يظهر فيها."
+        )
+
+    # Gemini مع الصورة
+    answer = ask_gemini_image(
+        message.strip(),
+        image_bytes,
+        mime_type
+    )
+
+    if answer:
+        return answer
+
+    return "تعذر تحليل الصورة حاليًا."
