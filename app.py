@@ -7,8 +7,8 @@ from calculator import calculate
 from translator import translate
 from memory import get_answer
 
-
 # استيراد API
+
 try:
     from api import api
     api_available = True
@@ -18,6 +18,7 @@ except Exception as e:
 
 
 # إنشاء تطبيق Flask
+
 app = Flask(
     __name__,
     template_folder="templates"
@@ -25,6 +26,7 @@ app = Flask(
 
 
 # تسجيل API
+
 if api_available:
     app.register_blueprint(api)
 
@@ -38,7 +40,10 @@ def ai_response(question):
             return "اكتب سؤالاً أولاً"
 
 
+        # =========================
         # الحاسبة
+        # =========================
+
         try:
             result = calculate(question)
 
@@ -49,7 +54,10 @@ def ai_response(question):
             pass
 
 
+        # =========================
         # الترجمة
+        # =========================
+
         try:
             translated = translate(question)
 
@@ -60,7 +68,10 @@ def ai_response(question):
             pass
 
 
+        # =========================
         # الذاكرة
+        # =========================
+
         try:
             memory_answer = get_answer(question)
 
@@ -71,7 +82,10 @@ def ai_response(question):
             pass
 
 
+        # =========================
         # عقل Ido AI
+        # =========================
+
         answer = get_response(question)
 
 
@@ -84,7 +98,6 @@ def ai_response(question):
 
     except Exception as e:
         return f"⚠️ خطأ: {e}"
-
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -108,7 +121,6 @@ def home():
         answer=answer,
         time=current_time
     )
-
 
 
 if __name__ == "__main__":

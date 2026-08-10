@@ -3,507 +3,1405 @@
 
 <head>
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
 
-<title>IDO AI</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
+    <title>IDO AI</title>
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,sans-serif;
-}
+    <style>
 
-body{
-    background:#202123;
-    color:#fff;
-    transition:0.3s;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-body.light{
-    background:#f4f4f4;
-    color:#222;
-}
+        body {
+            font-family: Arial, sans-serif;
+            background: #ffffff;
+            color: #202123;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-.header{
-    position:fixed;
-    top:20px;
-    right:20px;
-    z-index:1000;
-}
+        body.dark {
+            background: #212121;
+            color: #ececec;
+        }
 
-.panel{
-    width:220px;
-    background:#343541;
-    border-radius:18px;
-    padding:15px;
-    box-shadow:0 8px 25px rgba(0,0,0,.35);
-}
+        /* =========================
+           التطبيق
+        ========================= */
 
-body.light .panel{
-    background:#ffffff;
-}
+        .app {
+            display: flex;
+            height: 100vh;
+            width: 100%;
+        }
 
-.logo{
-    text-align:center;
-    font-size:28px;
-    font-weight:bold;
-    margin-bottom:15px;
-}
 
-.status{
-    text-align:center;
-    color:#00d26a;
-    margin-bottom:15px;
-}
+        /* =========================
+           الشريط الجانبي
+        ========================= */
 
-.menu-btn{
-    width:100%;
-    padding:12px;
-    margin-top:10px;
-    border:none;
-    border-radius:12px;
-    cursor:pointer;
-    background:#444654;
-    color:white;
-    font-size:16px;
-    transition:.25s;
-}
+        .sidebar {
+            width: 280px;
+            background: #f7f7f8;
+            border-left: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            padding: 14px;
+            transition: 0.3s;
+            overflow: hidden;
+        }
 
-.menu-btn:hover{
-    background:#10a37f;
-}
+        body.dark .sidebar {
+            background: #171717;
+            border-color: #303030;
+        }
 
-body.light .menu-btn{
-    background:#e8e8e8;
-    color:#222;
-}
 
-.container{
-    max-width:850px;
-    margin:auto;
-    padding:120px 20px 40px;
-}
+        .logo {
+            font-size: 21px;
+            font-weight: bold;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
 
-.box{
-    background:#343541;
-    border-radius:20px;
-    padding:25px;
-}
 
-body.light .box{
-    background:white;
-}
+        .new-chat {
+            border: 1px solid #d9d9d9;
+            background: white;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            text-align: right;
+            margin-bottom: 15px;
+        }
 
-.answer{
-    background:#202123;
-    border-radius:15px;
-    padding:20px;
-    min-height:120px;
-    margin-bottom:20px;
-    line-height:1.8;
-    font-size:19px;
-}
+        .new-chat:hover {
+            background: #eeeeee;
+        }
 
-body.light .answer{
-    background:#f2f2f2;
-    color:#222;
-}
+        body.dark .new-chat {
+            background: #212121;
+            color: white;
+            border-color: #444;
+        }
 
-form{
-    display:flex;
-    gap:10px;
-}
 
-textarea{
-    flex:1;
-    height:100px;
-    border:none;
-    outline:none;
-    resize:none;
-    border-radius:15px;
-    padding:15px;
-    font-size:18px;
-}
+        .history-title {
+            font-size: 13px;
+            color: #777;
+            margin: 8px 10px;
+        }
 
-button{
-    width:120px;
-    border:none;
-    border-radius:15px;
-    background:#10a37f;
-    color:white;
-    cursor:pointer;
-    font-size:18px;
-}
 
-button:hover{
-    background:#14c796;
-}
+        .history {
+            flex: 1;
+            overflow-y: auto;
+        }
 
-.tools{
-    margin-top:20px;
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-}
 
-.tool-btn{
-    background:#444654;
-    padding:10px 16px;
-    border-radius:12px;
-    cursor:pointer;
-}
+        .history-item {
+            padding: 11px;
+            border-radius: 7px;
+            cursor: pointer;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 14px;
+        }
 
-.tool-btn:hover{
-    background:#565869;
-}
+        .history-item:hover {
+            background: #e8e8e8;
+        }
 
-.time{
-    margin-top:20px;
-    text-align:center;
-    color:#999;
-}
+        body.dark .history-item:hover {
+            background: #2f2f2f;
+        }
 
-#typing{
-    display:none;
-    color:#10a37f;
-    margin-top:10px;
-}
 
-@media(max-width:768px){
+        .sidebar-bottom {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
 
-.header{
-    position:static;
-    margin:20px;
-}
+        body.dark .sidebar-bottom {
+            border-color: #333;
+        }
 
-.panel{
-    width:100%;
-}
 
-form{
-    flex-direction:column;
-}
+        .side-btn {
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 11px;
+            border-radius: 7px;
+            cursor: pointer;
+            text-align: right;
+            font-size: 14px;
+            color: inherit;
+        }
 
-button{
-    width:100%;
-}
+        .side-btn:hover {
+            background: #e8e8e8;
+        }
 
-}
+        body.dark .side-btn:hover {
+            background: #2f2f2f;
+        }
 
-</style>
+
+        /* =========================
+           المنطقة الرئيسية
+        ========================= */
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+
+        .topbar {
+            height: 60px;
+            border-bottom: 1px solid #e5e5e5;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        body.dark .topbar {
+            border-color: #333;
+        }
+
+
+        .mobile-menu {
+            display: none;
+            border: none;
+            background: transparent;
+            font-size: 24px;
+            cursor: pointer;
+            color: inherit;
+        }
+
+
+        .model-name {
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+
+        .status {
+            font-size: 13px;
+            color: #10a37f;
+        }
+
+
+        /* =========================
+           المحادثة
+        ========================= */
+
+        .chat {
+            flex: 1;
+            overflow-y: auto;
+            padding: 35px 20px 170px;
+        }
+
+
+        .welcome {
+            max-width: 760px;
+            margin: 80px auto 40px;
+            text-align: center;
+        }
+
+
+        .welcome-icon {
+            font-size: 52px;
+            margin-bottom: 15px;
+        }
+
+
+        .welcome h1 {
+            font-size: 30px;
+            margin-bottom: 12px;
+        }
+
+
+        .welcome p {
+            color: #777;
+            font-size: 16px;
+        }
+
+        body.dark .welcome p {
+            color: #aaa;
+        }
+
+
+        /* =========================
+           الرسائل
+        ========================= */
+
+        .message {
+            max-width: 850px;
+            margin: 0 auto 25px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            min-width: 35px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #10a37f;
+            color: white;
+            font-size: 17px;
+        }
+
+
+        .message-content {
+            line-height: 1.8;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            flex: 1;
+        }
+
+
+        .message-user .avatar {
+            background: #555;
+        }
+
+
+        .message-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+
+        /* =========================
+           صندوق الكتابة
+        ========================= */
+
+        .composer-area {
+            position: fixed;
+            bottom: 0;
+            right: 280px;
+            left: 0;
+            background: linear-gradient(
+                transparent,
+                rgba(255,255,255,0.95) 25%
+            );
+            padding: 30px 20px 18px;
+        }
+
+        body.dark .composer-area {
+            background: linear-gradient(
+                transparent,
+                rgba(33,33,33,0.96) 25%
+            );
+        }
+
+
+        .composer {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            border: 1px solid #d9d9d9;
+            border-radius: 14px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            padding: 10px;
+        }
+
+        body.dark .composer {
+            background: #2f2f2f;
+            border-color: #555;
+        }
+
+
+        .composer textarea {
+            width: 100%;
+            min-height: 55px;
+            max-height: 180px;
+            resize: none;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: inherit;
+            font-size: 16px;
+            padding: 10px;
+            font-family: inherit;
+        }
+
+
+        .composer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px;
+        }
+
+
+        .tools {
+            display: flex;
+            gap: 6px;
+        }
+
+
+        .tool {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            border-radius: 8px;
+            padding: 8px 10px;
+            font-size: 15px;
+            color: inherit;
+        }
+
+        .tool:hover {
+            background: #eeeeee;
+        }
+
+        body.dark .tool:hover {
+            background: #444;
+        }
+
+
+        .send-btn {
+            border: none;
+            background: #10a37f;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 9px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .send-btn:hover {
+            opacity: 0.85;
+        }
+
+
+        /* =========================
+           أزرار الإجابة
+        ========================= */
+
+        .answer-tools {
+            display: flex;
+            gap: 7px;
+            margin-top: 10px;
+        }
+
+
+        .answer-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            padding: 6px 9px;
+            border-radius: 7px;
+            color: #666;
+        }
+
+        .answer-btn:hover {
+            background: #eeeeee;
+        }
+
+        body.dark .answer-btn:hover {
+            background: #333;
+            color: white;
+        }
+
+
+        /* =========================
+           الكتابة
+        ========================= */
+
+        #typing {
+            display: none;
+            max-width: 850px;
+            margin: auto;
+            color: #777;
+            font-size: 14px;
+            padding: 8px;
+        }
+
+
+        /* =========================
+           رسالة النسخ
+        ========================= */
+
+        #copyMessage {
+            display: none;
+            position: fixed;
+            bottom: 125px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10a37f;
+            color: white;
+            padding: 9px 15px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+
+
+        /* =========================
+           الهاتف
+        ========================= */
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+                position: fixed;
+                right: -290px;
+                top: 0;
+                bottom: 0;
+                z-index: 1000;
+                box-shadow: -5px 0 20px rgba(0,0,0,0.15);
+            }
+
+            .sidebar.open {
+                right: 0;
+            }
+
+            .mobile-menu {
+                display: block;
+            }
+
+            .composer-area {
+                right: 0;
+            }
+
+            .chat {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .welcome h1 {
+                font-size: 25px;
+            }
+
+        }
+
+    </style>
 
 </head>
 
+
 <body>
 
-<div class="header">
+<div class="app">
 
-    <div class="panel">
+
+    <!-- =========================
+         القائمة الجانبية
+    ========================= -->
+
+    <aside class="sidebar" id="sidebar">
 
         <div class="logo">
             🤖 IDO AI
         </div>
 
-        <div class="status" id="status">
-            🟢 متصل
-        </div>
 
-        <button class="menu-btn" id="themeBtn">
-            🌙 الوضع الليلي
+        <button class="new-chat" id="newChatBtn">
+            ＋ محادثة جديدة
         </button>
 
-        <button class="menu-btn" id="newChatBtn">
-            💬 محادثة جديدة
-        </button>
 
-        <button class="menu-btn" id="clearBtn">
-            🗑️ مسح الرسالة
-        </button>
-
-        <button class="menu-btn" id="settingsBtn">
-            ⚙️ الإعدادات
-        </button>
-
-    </div>
-
-</div>
-
-<div class="container">
-
-    <div class="box">
-
-        <div class="answer" id="answer">
-
-            {% if answer %}
-                {{ answer }}
-            {% else %}
-                <b>مرحبًا بك في IDO AI 🤖</b>
-                <br><br>
-                اكتب سؤالك وسأجيبك.
-            {% endif %}
-
+        <div class="history-title">
+            المحادثات
         </div>
 
-        <div id="typing">
-            🤖 IDO AI يكتب...
-        </div>
 
-        <div id="copyMessage" style="display:none;color:#10a37f;margin-top:10px;">
-            ✅ تم نسخ الرد.
-        </div>
+        <div class="history" id="history"></div>
 
-        <form method="POST" id="chatForm">
 
-            <textarea
-                id="question"
-                name="question"
-                placeholder="اكتب رسالتك هنا..."
-                required></textarea>
+        <div class="sidebar-bottom">
 
-            <button type="submit">
-                إرسال
+            <button class="side-btn" id="themeBtn">
+                🌙 الوضع الليلي
             </button>
 
-        </form>
+            <button class="side-btn" id="clearBtn">
+                🗑️ مسح المحادثات
+            </button>
 
-        <div class="tools">
+        </div>
 
-            <div class="tool-btn" id="micBtn">
-                🎤 الميكروفون
+    </aside>
+
+
+    <!-- =========================
+         المنطقة الرئيسية
+    ========================= -->
+
+    <main class="main">
+
+
+        <header class="topbar">
+
+            <button class="mobile-menu" id="mobileMenu">
+                ☰
+            </button>
+
+
+            <div class="model-name">
+                Ido AI 🤖
             </div>
 
-            <div class="tool-btn" id="copyBtn">
-                📋 نسخ الرد
+
+            <div class="status">
+                🟢 متصل
             </div>
 
+        </header>
+
+
+        <!-- =========================
+             المحادثة
+        ========================= -->
+
+        <section class="chat" id="chat">
+
+
+            {% if not answer %}
+
+            <div class="welcome" id="welcome">
+
+                <div class="welcome-icon">
+                    🤖
+                </div>
+
+                <h1 id="welcomeText">
+                    مرحبًا بك في Ido AI
+                </h1>
+
+                <p>
+                    كيف يمكنني مساعدتك اليوم؟
+                </p>
+
+            </div>
+
+            {% endif %}
+
+
+            {% if answer %}
+
+            <div class="message message-user">
+
+                <div class="avatar">
+                    👤
+                </div>
+
+                <div class="message-content">
+
+                    <div class="message-name">
+                        أنت
+                    </div>
+
+                    <div>
+                        {{ request.form.get("question", "") }}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="message message-ai">
+
+                <div class="avatar">
+                    🤖
+                </div>
+
+                <div class="message-content">
+
+                    <div class="message-name">
+                        Ido AI
+                    </div>
+
+                    <div id="answer">
+                        {{ answer }}
+                    </div>
+
+
+                    <div class="answer-tools">
+
+                        <button
+                            class="answer-btn"
+                            id="voiceBtn"
+                            type="button"
+                            title="قراءة الإجابة">
+
+                            🔊 قراءة
+
+                        </button>
+
+
+                        <button
+                            class="answer-btn"
+                            id="copyBtn"
+                            type="button"
+                            title="نسخ الإجابة">
+
+                            📋 نسخ
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% endif %}
+
+
+            <div id="typing">
+                🤖 Ido AI يكتب...
+            </div>
+
+
+        </section>
+
+
+        <!-- =========================
+             صندوق الكتابة
+        ========================= -->
+
+        <div class="composer-area">
+
+            <form
+                method="POST"
+                id="chatForm"
+                class="composer">
+
+
+                <textarea
+                    id="question"
+                    name="question"
+                    placeholder="اكتب رسالتك إلى Ido AI..."
+                    required></textarea>
+
+
+                <div class="composer-bottom">
+
+
+                    <div class="tools">
+
+                        <button
+                            type="button"
+                            class="tool"
+                            id="micBtn"
+                            title="الميكروفون">
+
+                            🎤
+
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="tool"
+                            id="voiceBtn2"
+                            title="قراءة الإجابة">
+
+                            🔊
+
+                        </button>
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="send-btn"
+                        title="إرسال">
+
+                        ↑
+
+                    </button>
+
+                </div>
+
+            </form>
+
         </div>
 
-        <div id="micStatus">
-            الميكروفون مغلق
-        </div>
 
-        <div class="time">
-            🕒 {{ time }}
-        </div>
-
-    </div>
+    </main>
 
 </div>
 
-<script>
 
-const body = document.body;
+<!-- رسالة النسخ -->
 
-const themeBtn = document.getElementById("themeBtn");
-const newChatBtn = document.getElementById("newChatBtn");
-const clearBtn = document.getElementById("clearBtn");
-const copyBtn = document.getElementById("copyBtn");
-
-const textarea = document.getElementById("question");
-const answer = document.getElementById("answer");
-const typing = document.getElementById("typing");
-const copyMessage = document.getElementById("copyMessage");
-
-
-// الوضع الليلي
-
-if(localStorage.getItem("theme") === "light"){
-
-    body.classList.add("light");
-    themeBtn.innerHTML = "☀️ الوضع النهاري";
-
-}
-
-themeBtn.onclick = function(){
-
-    body.classList.toggle("light");
-
-    if(body.classList.contains("light")){
-
-        localStorage.setItem("theme","light");
-        themeBtn.innerHTML = "☀️ الوضع النهاري";
-
-    }else{
-
-        localStorage.setItem("theme","dark");
-        themeBtn.innerHTML = "🌙 الوضع الليلي";
-
-    }
-
-};
-
-
-// نسخ الرد
-
-copyBtn.onclick = function(){
-
-    navigator.clipboard.writeText(answer.innerText);
-
-    copyMessage.style.display = "block";
-
-    setTimeout(function(){
-
-        copyMessage.style.display = "none";
-
-    },2000);
-
-};
-
-
-// محادثة جديدة
-
-newChatBtn.onclick = function(){
-
-    textarea.value = "";
-
-    textarea.focus();
-
-};
-
-
-// مسح الرسالة
-
-clearBtn.onclick = function(){
-
-    textarea.value = "";
-
-    answer.innerHTML = "✅ تم حذف الرسالة";
-
-};
-
-// مؤشر الكتابة
-
-document.getElementById("chatForm").onsubmit = function(){
-
-    typing.style.display = "block";
-
-};
-// تشغيل الميكروفون
-
-const micBtn = document.getElementById("micBtn");
-const micStatus = document.getElementById("micStatus");
-
-let recognition;
-let active = false;
-
-if ("webkitSpeechRecognition" in window) {
-
-    recognition = new webkitSpeechRecognition();
-
-    recognition.lang = "ar-SA";
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = function(event){
-
-        textarea.value += event.results[0][0].transcript;
-
-    };
-
-    recognition.onstart = function(){
-
-        micStatus.innerHTML = "🎤 تحدث الآن...";
-        micBtn.innerHTML = "🔴 إيقاف الميكروفون";
-
-    };
-
-    recognition.onend = function(){
-
-        active = false;
-
-        micStatus.innerHTML = "الميكروفون مغلق";
-        micBtn.innerHTML = "🎤 الميكروفون";
-
-    };
-
-}
-
-micBtn.onclick = function(){
-
-    if(!recognition){
-
-        alert("هذا المتصفح لا يدعم التعرف على الصوت.");
-        return;
-
-    }
-
-    if(active){
-
-        recognition.stop();
-        active = false;
-
-    }else{
-
-        recognition.start();
-        active = true;
-
-    }
-
-};</script>
-<div id="settingsBox" style="
-display:none;
-position:fixed;
-top:90px;
-right:20px;
-width:260px;
-background:#343541;
-padding:15px;
-border-radius:15px;
-box-shadow:0 10px 25px rgba(0,0,0,.4);
-z-index:9999;
-">
-
-<h3>⚙️ الإعدادات</h3>
-
-<hr>
-
-<p>🌙 الوضع الليلي يعمل من الزر الرئيسي.</p>
-
-<p>🎤 الميكروفون يعمل.</p>
-
+<div id="copyMessage">
+    ✅ تم نسخ الرد
 </div>
 
 
 <script>
 
-const settingsBtn = document.getElementById("settingsBtn");
-const settingsBox = document.getElementById("settingsBox");
+    /* =========================
+       العناصر
+    ========================= */
 
-settingsBtn.onclick = function(){
+    const body = document.body;
 
-    if(settingsBox.style.display === "block"){
+    const sidebar = document.getElementById("sidebar");
 
-        settingsBox.style.display = "none";
+    const mobileMenu = document.getElementById("mobileMenu");
 
-    }else{
+    const themeBtn = document.getElementById("themeBtn");
 
-        settingsBox.style.display = "block";
+    const newChatBtn = document.getElementById("newChatBtn");
+
+    const clearBtn = document.getElementById("clearBtn");
+
+    const history = document.getElementById("history");
+
+    const chatForm = document.getElementById("chatForm");
+
+    const question = document.getElementById("question");
+
+    const typing = document.getElementById("typing");
+
+    const answerElement = document.getElementById("answer");
+
+    const copyBtn = document.getElementById("copyBtn");
+
+    const voiceBtn = document.getElementById("voiceBtn");
+
+    const voiceBtn2 = document.getElementById("voiceBtn2");
+
+
+    /* =========================
+       الاسم
+    ========================= */
+
+    let userName = localStorage.getItem("ido_user_name");
+
+
+    if (!userName) {
+
+        userName = prompt(
+            "مرحبًا! ما اسمك؟"
+        );
+
+        if (userName && userName.trim()) {
+
+            userName = userName.trim();
+
+            localStorage.setItem(
+                "ido_user_name",
+                userName
+            );
+
+        }
 
     }
 
-};
+
+    const welcomeText =
+        document.getElementById("welcomeText");
 
 
-// إخفاء الإعدادات عند الضغط خارجها
+    if (welcomeText && userName) {
 
-document.addEventListener("click", function(event){
-
-    if(
-        event.target.id !== "settingsBtn" &&
-        !event.target.closest("#settingsBox")
-    ){
-
-        settingsBox.style.display = "none";
+        welcomeText.textContent =
+            "مرحبًا يا " + userName + " 👋";
 
     }
 
-});
+
+    /* =========================
+       الوضع الليلي
+    ========================= */
+
+    const savedTheme =
+        localStorage.getItem("ido_theme");
+
+
+    if (savedTheme === "dark") {
+
+        body.classList.add("dark");
+
+        themeBtn.textContent =
+            "☀️ الوضع النهاري";
+
+    }
+
+
+    themeBtn.addEventListener("click", function () {
+
+        body.classList.toggle("dark");
+
+
+        if (body.classList.contains("dark")) {
+
+            localStorage.setItem(
+                "ido_theme",
+                "dark"
+            );
+
+            themeBtn.textContent =
+                "☀️ الوضع النهاري";
+
+        } else {
+
+            localStorage.setItem(
+                "ido_theme",
+                "light"
+            );
+
+            themeBtn.textContent =
+                "🌙 الوضع الليلي";
+
+        }
+
+    });
+
+
+    /* =========================
+       القائمة في الهاتف
+    ========================= */
+
+    mobileMenu.addEventListener("click", function () {
+
+        sidebar.classList.toggle("open");
+
+    });
+
+
+    /* =========================
+       الكتابة
+    ========================= */
+
+    question.addEventListener("input", function () {
+
+        this.style.height = "auto";
+
+        this.style.height =
+            Math.min(this.scrollHeight, 180) + "px";
+
+    });
+
+
+    /* =========================
+       إرسال الرسالة
+    ========================= */
+
+    chatForm.addEventListener("submit", function () {
+
+        typing.style.display = "block";
+
+    });
+
+
+    /* =========================
+       نسخ الإجابة
+    ========================= */
+
+    function copyAnswer() {
+
+        if (!answerElement) {
+            return;
+        }
+
+
+        const text =
+            answerElement.innerText;
+
+
+        navigator.clipboard.writeText(text)
+            .then(function () {
+
+                const copyMessage =
+                    document.getElementById(
+                        "copyMessage"
+                    );
+
+                copyMessage.style.display =
+                    "block";
+
+
+                setTimeout(function () {
+
+                    copyMessage.style.display =
+                        "none";
+
+                }, 2000);
+
+            });
+
+    }
+
+
+    if (copyBtn) {
+
+        copyBtn.addEventListener(
+            "click",
+            copyAnswer
+        );
+
+    }
+
+
+    /* =========================
+       Voice / Text To Speech
+    ========================= */
+
+    let speaking = false;
+
+
+    function speakAnswer() {
+
+        if (!answerElement) {
+
+            return;
+
+        }
+
+
+        const text =
+            answerElement.innerText.trim();
+
+
+        if (!text) {
+
+            return;
+
+        }
+
+
+        if (!("speechSynthesis" in window)) {
+
+            alert(
+                "المتصفح لا يدعم ميزة قراءة النص."
+            );
+
+            return;
+
+        }
+
+
+        if (speaking) {
+
+            window.speechSynthesis.cancel();
+
+            speaking = false;
+
+            updateVoiceButtons(false);
+
+            return;
+
+        }
+
+
+        window.speechSynthesis.cancel();
+
+
+        const speech =
+            new SpeechSynthesisUtterance(text);
+
+
+        speech.lang = "ar-SA";
+
+        speech.rate = 0.95;
+
+        speech.pitch = 1;
+
+
+        speech.onstart = function () {
+
+            speaking = true;
+
+            updateVoiceButtons(true);
+
+        };
+
+
+        speech.onend = function () {
+
+            speaking = false;
+
+            updateVoiceButtons(false);
+
+        };
+
+
+        speech.onerror = function () {
+
+            speaking = false;
+
+            updateVoiceButtons(false);
+
+        };
+
+
+        window.speechSynthesis.speak(
+            speech
+        );
+
+    }
+
+
+    function updateVoiceButtons(active) {
+
+        if (voiceBtn) {
+
+            voiceBtn.textContent =
+                active
+                ? "⏹ إيقاف"
+                : "🔊 قراءة";
+
+        }
+
+
+        if (voiceBtn2) {
+
+            voiceBtn2.textContent =
+                active
+                ? "⏹"
+                : "🔊";
+
+        }
+
+    }
+
+
+    if (voiceBtn) {
+
+        voiceBtn.addEventListener(
+            "click",
+            speakAnswer
+        );
+
+    }
+
+
+    if (voiceBtn2) {
+
+        voiceBtn2.addEventListener(
+            "click",
+            speakAnswer
+        );
+
+    }
+
+
+    /* =========================
+       الميكروفون
+    ========================= */
+
+    const micBtn =
+        document.getElementById("micBtn");
+
+
+    if (
+        micBtn &&
+        (
+            "webkitSpeechRecognition" in window ||
+            "SpeechRecognition" in window
+        )
+    ) {
+
+        const SpeechRecognition =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+
+        const recognition =
+            new SpeechRecognition();
+
+
+        recognition.lang = "ar-SA";
+
+        recognition.continuous = false;
+
+        recognition.interimResults = false;
+
+
+        micBtn.addEventListener(
+            "click",
+            function () {
+
+                recognition.start();
+
+                micBtn.textContent =
+                    "🔴";
+
+            }
+        );
+
+
+        recognition.onresult =
+            function (event) {
+
+                question.value =
+                    event.results[0][0].transcript;
+
+            };
+
+
+        recognition.onend =
+            function () {
+
+                micBtn.textContent =
+                    "🎤";
+
+            };
+
+
+        recognition.onerror =
+            function () {
+
+                micBtn.textContent =
+                    "🎤";
+
+            };
+
+    }
+
+
+    /* =========================
+       المحادثات
+    ========================= */
+
+    let conversations =
+        JSON.parse(
+            localStorage.getItem(
+                "ido_conversations"
+            ) || "[]"
+        );
+
+
+    function saveConversations() {
+
+        localStorage.setItem(
+            "ido_conversations",
+            JSON.stringify(conversations)
+        );
+
+    }
+
+
+    function renderHistory() {
+
+        history.innerHTML = "";
+
+
+        conversations.forEach(
+            function (conversation, index) {
+
+                const item =
+                    document.createElement("div");
+
+
+                item.className =
+                    "history-item";
+
+
+                item.textContent =
+                    conversation.title ||
+                    "محادثة جديدة";
+
+
+                item.addEventListener(
+                    "click",
+                    function () {
+
+                        loadConversation(index);
+
+                    }
+                );
+
+
+                history.appendChild(item);
+
+            }
+        );
+
+    }
+
+
+    function loadConversation(index) {
+
+        const conversation =
+            conversations[index];
+
+
+        if (!conversation) {
+
+            return;
+
+        }
+
+
+        if (conversation.html) {
+
+            document.getElementById(
+                "chat"
+            ).innerHTML =
+                conversation.html;
+
+        }
+
+
+        if (window.innerWidth <= 800) {
+
+            sidebar.classList.remove(
+                "open"
+            );
+
+        }
+
+    }
+
+
+    function createConversation() {
+
+        const title =
+            question.value.trim();
+
+
+        conversations.unshift({
+
+            title:
+                title ||
+                "محادثة جديدة",
+
+            html:
+                document.getElementById(
+                    "chat"
+                ).innerHTML,
+
+            date:
+                new Date().toISOString()
+
+        });
+
+
+        if (conversations.length > 30) {
+
+            conversations =
+                conversations.slice(0, 30);
+
+        }
+
+
+        saveConversations();
+
+        renderHistory();
+
+    }
+
+
+    /* =========================
+       محادثة جديدة
+    ========================= */
+
+    newChatBtn.addEventListener(
+        "click",
+        function () {
+
+            window.location.href = "/";
+
+        }
+    );
+
+
+    /* =========================
+       مسح المحادثات
+    ========================= */
+
+    clearBtn.addEventListener(
+        "click",
+        function () {
+
+            const confirmed =
+                confirm(
+                    "هل تريد حذف جميع المحادثات المحفوظة؟"
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            conversations = [];
+
+            saveConversations();
+
+            renderHistory();
+
+        }
+    );
+
+
+    /* =========================
+       حفظ المحادثة بعد الإجابة
+    ========================= */
+
+    if (answerElement) {
+
+        setTimeout(
+            function () {
+
+                createConversation();
+
+            },
+            300
+        );
+
+    }
+
+
+    /* =========================
+       عرض المحادثات
+    ========================= */
+
+    renderHistory();
+
+
+    /* =========================
+       إغلاق الصوت عند مغادرة الصفحة
+    ========================= */
+
+    window.addEventListener(
+        "beforeunload",
+        function () {
+
+            if (
+                "speechSynthesis" in window
+            ) {
+
+                window.speechSynthesis.cancel();
+
+            }
+
+        }
+    );
 
 </script>
 
+
 </body>
+
 </html>
