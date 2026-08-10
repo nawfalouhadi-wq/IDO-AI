@@ -111,36 +111,6 @@ def ask_gemini(message):
 
 
 # =========================================================
-# OpenAI - نص
-# =========================================================
-
-def ask_openai(message):
-
-    if openai_client is None:
-        print("OpenAI ERROR: client غير جاهز.")
-        return None
-
-    try:
-        print("Trying OpenAI...")
-
-        response = openai_client.responses.create(
-            model="gpt-5",
-            input=message
-        )
-
-        if response and response.output_text:
-            print("OpenAI response received.")
-            return response.output_text.strip()
-
-        print("OpenAI returned empty response.")
-        return None
-
-    except Exception as e:
-        print("OpenAI ERROR:", e)
-        return None
-
-
-# =========================================================
 # OpenRouter - نص
 # =========================================================
 
@@ -195,6 +165,36 @@ def ask_openrouter(message):
 
     except Exception as e:
         print("OpenRouter ERROR:", e)
+        return None
+
+
+# =========================================================
+# OpenAI - نص
+# =========================================================
+
+def ask_openai(message):
+
+    if openai_client is None:
+        print("OpenAI ERROR: client غير جاهز.")
+        return None
+
+    try:
+        print("Trying OpenAI...")
+
+        response = openai_client.responses.create(
+            model="gpt-5",
+            input=message
+        )
+
+        if response and response.output_text:
+            print("OpenAI response received.")
+            return response.output_text.strip()
+
+        print("OpenAI returned empty response.")
+        return None
+
+    except Exception as e:
+        print("OpenAI ERROR:", e)
         return None
 
 
@@ -425,24 +425,24 @@ def get_response(message):
 
 
     # =====================================================
-    # OpenAI ثانيًا
+    # OpenRouter ثانيًا
     # =====================================================
 
-    print("Gemini failed. Trying OpenAI...")
+    print("Gemini failed. Trying OpenRouter...")
 
-    answer = ask_openai(original_message)
+    answer = ask_openrouter(original_message)
 
     if answer:
         return answer
 
 
     # =====================================================
-    # OpenRouter ثالثًا
+    # OpenAI ثالثًا
     # =====================================================
 
-    print("OpenAI failed. Trying OpenRouter...")
+    print("OpenRouter failed. Trying OpenAI...")
 
-    answer = ask_openrouter(original_message)
+    answer = ask_openai(original_message)
 
     if answer:
         return answer
@@ -452,7 +452,7 @@ def get_response(message):
     # Ollama رابعًا
     # =====================================================
 
-    print("OpenRouter failed. Trying Ollama...")
+    print("OpenAI failed. Trying Ollama...")
 
     answer = ask_ollama(original_message)
 
