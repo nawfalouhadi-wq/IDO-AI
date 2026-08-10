@@ -3,9 +3,11 @@ import requests
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from openai import OpenAI
 
 # تحميل ملف .env
 load_dotenv()
+
 
 # =========================================================
 # Gemini
@@ -31,6 +33,29 @@ else:
 
 
 # =========================================================
+# OpenAI
+# =========================================================
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+openai_client = None
+
+if OPENAI_API_KEY:
+    try:
+        openai_client = OpenAI(
+            api_key=OPENAI_API_KEY
+        )
+
+        print("OPENAI CLIENT: READY")
+
+    except Exception as e:
+        print("OPENAI CLIENT ERROR:", e)
+
+else:
+    print("OPENAI_API_KEY: NOT FOUND")
+
+
+# =========================================================
 # Ollama
 # =========================================================
 
@@ -39,7 +64,7 @@ OLLAMA_URL = os.getenv(
     "http://localhost:11434"
 )
 
-print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
+print("BRAIN.PY LOADED - GEMINI + OPENAI + OLLAMA READY")
 
 
 # =========================================================
@@ -73,10 +98,44 @@ def ask_gemini(message):
 
 
 # =========================================================
+# OpenAI - نص
+# =========================================================
+
+def ask_openai(message):
+
+    if openai_client is None:
+        print("OpenAI ERROR: client غير جاهز.")
+        return None
+
+    try:
+        print("Trying OpenAI...")
+
+        response = openai_client.responses.create(
+            model="gpt-5",
+            input=message
+        )
+
+        if response and response.output_text:
+            print("OpenAI response received.")
+            return response.output_text.strip()
+
+        print("OpenAI returned empty response.")
+        return None
+
+    except Exception as e:
+        print("OpenAI ERROR:", e)
+        return None
+
+
+# =========================================================
 # Gemini - صورة
 # =========================================================
 
-def ask_gemini_image(message, image_bytes, mime_type):
+def ask_gemini_image(
+    message,
+    image_bytes,
+    mime_type
+):
 
     if gemini_client is None:
         print("Gemini ERROR: client غير جاهز.")
@@ -163,6 +222,7 @@ def get_response(message):
     original_message = message.strip()
     message_lower = original_message.lower()
 
+
     # =====================================================
     # الردود السريعة والثابتة
     # =====================================================
@@ -189,6 +249,7 @@ def get_response(message):
 
         "كيف حالك":
             "أنا بخير، شكرًا لسؤالك. كيف يمكنني مساعدتك؟",
+
 
         # =================================================
         # هوية Ido AI
@@ -233,6 +294,7 @@ def get_response(message):
         "من طور ido ai":
             "تم تطوير Ido AI بواسطة Noufal Ouhadi.",
 
+
         # =================================================
         # معلومات عامة
         # =================================================
@@ -255,6 +317,7 @@ def get_response(message):
         "ما هي عاصمة فرنسا":
             "عاصمة فرنسا هي باريس.",
 
+
         # =================================================
         # المجاملات
         # =================================================
@@ -269,6 +332,7 @@ def get_response(message):
             "إلى اللقاء! أتمنى لك يومًا سعيدًا."
     }
 
+
     # =====================================================
     # البحث في الردود الجاهزة
     # =====================================================
@@ -277,6 +341,7 @@ def get_response(message):
 
         if key in message_lower:
             return value
+
 
     # =====================================================
     # Gemini أولًا
@@ -287,19 +352,33 @@ def get_response(message):
     if answer:
         return answer
 
+
     # =====================================================
-    # Ollama ثانيًا
+    # OpenAI ثانيًا
     # =====================================================
 
-    print("Gemini failed. Trying Ollama...")
+    print("Gemini failed. Trying OpenAI...")
+
+    answer = ask_openai(original_message)
+
+    if answer:
+        return answer
+
+
+    # =====================================================
+    # Ollama ثالثًا
+    # =====================================================
+
+    print("OpenAI failed. Trying Ollama...")
 
     answer = ask_ollama(original_message)
 
     if answer:
         return answer
 
+
     # =====================================================
-    # فشل الاثنين
+    # فشل الجميع
     # =====================================================
 
     return "أنا Ido AI ولم أجد إجابة حاليًا."
@@ -321,7 +400,11 @@ def get_image_response(
             "ما الذي يظهر فيها."
         )
 
+
+    # =====================================================
     # Gemini مع الصورة
+    # =====================================================
+
     answer = ask_gemini_image(
         message.strip(),
         image_bytes,
@@ -330,5 +413,12 @@ def get_image_response(
 
     if answer:
         return answer
+
+
+    # =====================================================
+    # إذا فشل Gemini في الصورة
+    # =====================================================
+
+    print("Gemini image failed.")
 
     return "تعذر تحليل الصورة حاليًا."

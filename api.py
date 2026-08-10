@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from brain import get_response
 
+
 api = Blueprint("api", __name__)
 
 
@@ -21,7 +22,7 @@ def chat_api():
             "answer": "اكتب رسالة"
         })
 
-    # إرسال الرسالة إلى عقل Aido AI
+    # إرسال الرسالة إلى عقل Ido AI
     answer = get_response(message)
 
     return jsonify({
