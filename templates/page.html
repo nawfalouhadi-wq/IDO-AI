@@ -1,1407 +1,395 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>IDO AI</title>
-
-    <style>
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #ffffff;
-            color: #202123;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        body.dark {
-            background: #212121;
-            color: #ececec;
-        }
-
-        /* =========================
-           التطبيق
-        ========================= */
-
-        .app {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-        }
-
-
-        /* =========================
-           الشريط الجانبي
-        ========================= */
-
-        .sidebar {
-            width: 280px;
-            background: #f7f7f8;
-            border-left: 1px solid #e5e5e5;
-            display: flex;
-            flex-direction: column;
-            padding: 14px;
-            transition: 0.3s;
-            overflow: hidden;
-        }
-
-        body.dark .sidebar {
-            background: #171717;
-            border-color: #303030;
-        }
-
-
-        .logo {
-            font-size: 21px;
-            font-weight: bold;
-            padding: 12px;
-            margin-bottom: 10px;
-        }
-
-
-        .new-chat {
-            border: 1px solid #d9d9d9;
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            cursor: pointer;
-            font-size: 15px;
-            text-align: right;
-            margin-bottom: 15px;
-        }
-
-        .new-chat:hover {
-            background: #eeeeee;
-        }
-
-        body.dark .new-chat {
-            background: #212121;
-            color: white;
-            border-color: #444;
-        }
-
-
-        .history-title {
-            font-size: 13px;
-            color: #777;
-            margin: 8px 10px;
-        }
-
-
-        .history {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-
-        .history-item {
-            padding: 11px;
-            border-radius: 7px;
-            cursor: pointer;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            font-size: 14px;
-        }
-
-        .history-item:hover {
-            background: #e8e8e8;
-        }
-
-        body.dark .history-item:hover {
-            background: #2f2f2f;
-        }
-
-
-        .sidebar-bottom {
-            border-top: 1px solid #ddd;
-            padding-top: 10px;
-        }
-
-        body.dark .sidebar-bottom {
-            border-color: #333;
-        }
-
-
-        .side-btn {
-            width: 100%;
-            border: none;
-            background: transparent;
-            padding: 11px;
-            border-radius: 7px;
-            cursor: pointer;
-            text-align: right;
-            font-size: 14px;
-            color: inherit;
-        }
-
-        .side-btn:hover {
-            background: #e8e8e8;
-        }
-
-        body.dark .side-btn:hover {
-            background: #2f2f2f;
-        }
-
-
-        /* =========================
-           المنطقة الرئيسية
-        ========================= */
-
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-
-        .topbar {
-            height: 60px;
-            border-bottom: 1px solid #e5e5e5;
-            display: flex;
-            align-items: center;
-            padding: 0 20px;
-            justify-content: space-between;
-        }
-
-        body.dark .topbar {
-            border-color: #333;
-        }
-
-
-        .mobile-menu {
-            display: none;
-            border: none;
-            background: transparent;
-            font-size: 24px;
-            cursor: pointer;
-            color: inherit;
-        }
-
-
-        .model-name {
-            font-weight: bold;
-            font-size: 17px;
-        }
-
-
-        .status {
-            font-size: 13px;
-            color: #10a37f;
-        }
-
-
-        /* =========================
-           المحادثة
-        ========================= */
-
-        .chat {
-            flex: 1;
-            overflow-y: auto;
-            padding: 35px 20px 170px;
-        }
-
-
-        .welcome {
-            max-width: 760px;
-            margin: 80px auto 40px;
-            text-align: center;
-        }
-
-
-        .welcome-icon {
-            font-size: 52px;
-            margin-bottom: 15px;
-        }
-
-
-        .welcome h1 {
-            font-size: 30px;
-            margin-bottom: 12px;
-        }
-
-
-        .welcome p {
-            color: #777;
-            font-size: 16px;
-        }
-
-        body.dark .welcome p {
-            color: #aaa;
-        }
-
-
-        /* =========================
-           الرسائل
-        ========================= */
-
-        .message {
-            max-width: 850px;
-            margin: 0 auto 25px;
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-        }
-
-
-        .avatar {
-            width: 35px;
-            height: 35px;
-            min-width: 35px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #10a37f;
-            color: white;
-            font-size: 17px;
-        }
-
-
-        .message-content {
-            line-height: 1.8;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            flex: 1;
-        }
-
-
-        .message-user .avatar {
-            background: #555;
-        }
-
-
-        .message-name {
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-
-
-        /* =========================
-           صندوق الكتابة
-        ========================= */
-
-        .composer-area {
-            position: fixed;
-            bottom: 0;
-            right: 280px;
-            left: 0;
-            background: linear-gradient(
-                transparent,
-                rgba(255,255,255,0.95) 25%
-            );
-            padding: 30px 20px 18px;
-        }
-
-        body.dark .composer-area {
-            background: linear-gradient(
-                transparent,
-                rgba(33,33,33,0.96) 25%
-            );
-        }
-
-
-        .composer {
-            max-width: 850px;
-            margin: auto;
-            background: white;
-            border: 1px solid #d9d9d9;
-            border-radius: 14px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-            padding: 10px;
-        }
-
-        body.dark .composer {
-            background: #2f2f2f;
-            border-color: #555;
-        }
-
-
-        .composer textarea {
-            width: 100%;
-            min-height: 55px;
-            max-height: 180px;
-            resize: none;
-            border: none;
-            outline: none;
-            background: transparent;
-            color: inherit;
-            font-size: 16px;
-            padding: 10px;
-            font-family: inherit;
-        }
-
-
-        .composer-bottom {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 4px;
-        }
-
-
-        .tools {
-            display: flex;
-            gap: 6px;
-        }
-
-
-        .tool {
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            border-radius: 8px;
-            padding: 8px 10px;
-            font-size: 15px;
-            color: inherit;
-        }
-
-        .tool:hover {
-            background: #eeeeee;
-        }
-
-        body.dark .tool:hover {
-            background: #444;
-        }
-
-
-        .send-btn {
-            border: none;
-            background: #10a37f;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 9px;
-            cursor: pointer;
-            font-size: 18px;
-        }
-
-        .send-btn:hover {
-            opacity: 0.85;
-        }
-
-
-        /* =========================
-           أزرار الإجابة
-        ========================= */
-
-        .answer-tools {
-            display: flex;
-            gap: 7px;
-            margin-top: 10px;
-        }
-
-
-        .answer-btn {
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            padding: 6px 9px;
-            border-radius: 7px;
-            color: #666;
-        }
-
-        .answer-btn:hover {
-            background: #eeeeee;
-        }
-
-        body.dark .answer-btn:hover {
-            background: #333;
-            color: white;
-        }
-
-
-        /* =========================
-           الكتابة
-        ========================= */
-
-        #typing {
-            display: none;
-            max-width: 850px;
-            margin: auto;
-            color: #777;
-            font-size: 14px;
-            padding: 8px;
-        }
-
-
-        /* =========================
-           رسالة النسخ
-        ========================= */
-
-        #copyMessage {
-            display: none;
-            position: fixed;
-            bottom: 125px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #10a37f;
-            color: white;
-            padding: 9px 15px;
-            border-radius: 8px;
-            z-index: 1000;
-        }
-
-
-        /* =========================
-           الهاتف
-        ========================= */
-
-        @media (max-width: 800px) {
-
-            .sidebar {
-                position: fixed;
-                right: -290px;
-                top: 0;
-                bottom: 0;
-                z-index: 1000;
-                box-shadow: -5px 0 20px rgba(0,0,0,0.15);
-            }
-
-            .sidebar.open {
-                right: 0;
-            }
-
-            .mobile-menu {
-                display: block;
-            }
-
-            .composer-area {
-                right: 0;
-            }
-
-            .chat {
-                padding-left: 12px;
-                padding-right: 12px;
-            }
-
-            .welcome h1 {
-                font-size: 25px;
-            }
-
-        }
-
-    </style>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IDO AI</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#fff;color:#202123;height:100vh;overflow:hidden}
+body.dark{background:#212121;color:#eee}
+.app{display:flex;height:100vh}
+.sidebar{width:260px;background:#f7f7f8;border-left:1px solid #ddd;padding:14px;display:flex;flex-direction:column}
+body.dark .sidebar{background:#171717;border-color:#333}
+.logo{font-size:21px;font-weight:bold;padding:12px;margin-bottom:8px}
+button{font-family:inherit}
+.new-chat,.side-btn{width:100%;padding:11px;border:0;border-radius:8px;cursor:pointer;text-align:right;background:transparent;color:inherit}
+.new-chat{border:1px solid #ddd;background:#fff;margin-bottom:12px}
+body.dark .new-chat{background:#222;border-color:#444}
+.new-chat:hover,.side-btn:hover,.tool:hover,.answer-btn:hover{background:#eee}
+body.dark .new-chat:hover,body.dark .side-btn:hover,body.dark .tool:hover,body.dark .answer-btn:hover{background:#333}
+.history-title{font-size:13px;color:#777;margin:8px}
+.history{flex:1;overflow:auto}
+.history-item{padding:10px;border-radius:7px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.history-item:hover{background:#e8e8e8}
+.sidebar-bottom{border-top:1px solid #ddd;padding-top:8px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:60px;border-bottom:1px solid #ddd;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.model-name{font-weight:bold}
+.status{font-size:13px;color:#10a37f}
+.mobile-menu{display:none;background:none;border:0;font-size:24px;color:inherit}
+.chat{flex:1;overflow:auto;padding:35px 20px 170px}
+.welcome{max-width:760px;margin:80px auto 40px;text-align:center}
+.welcome-icon{font-size:50px;margin-bottom:15px}
+.welcome h1{font-size:30px;margin-bottom:12px}
+.welcome p{color:#777}
+.message{max-width:850px;margin:0 auto 25px;display:flex;gap:12px;align-items:flex-start}
+.avatar{width:35px;height:35px;min-width:35px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:#10a37f;color:#fff}
+.message-user .avatar{background:#555}
+.message-content{flex:1;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.message-name{font-weight:bold;margin-bottom:4px}
+.answer-tools{display:flex;gap:5px;margin-top:8px}
+.answer-btn,.tool{border:0;background:transparent;color:#666;padding:7px 9px;border-radius:7px;cursor:pointer}
+body.dark .answer-btn,body.dark .tool{color:#ccc}
+.composer-area{position:fixed;bottom:0;right:260px;left:0;padding:30px 20px 18px;background:linear-gradient(transparent,rgba(255,255,255,.96) 25%)}
+body.dark .composer-area{background:linear-gradient(transparent,rgba(33,33,33,.97) 25%)}
+.composer{max-width:850px;margin:auto;background:#fff;border:1px solid #ddd;border-radius:14px;box-shadow:0 3px 12px #0001;padding:10px}
+body.dark .composer{background:#2f2f2f;border-color:#555}
+.composer textarea{width:100%;min-height:55px;max-height:180px;resize:none;border:0;outline:0;background:transparent;color:inherit;font:16px Arial;padding:10px}
+.composer-bottom{display:flex;justify-content:space-between;align-items:center}
+.tools{display:flex;gap:5px}
+.send-btn{border:0;background:#10a37f;color:#fff;width:40px;height:40px;border-radius:9px;cursor:pointer;font-size:18px}
+#typing{display:none;max-width:850px;margin:auto;color:#777;padding:8px}
+#copyMessage{display:none;position:fixed;bottom:125px;left:50%;transform:translateX(-50%);background:#10a37f;color:#fff;padding:9px 15px;border-radius:8px}
+@media(max-width:800px){
+.sidebar{position:fixed;right:-270px;top:0;bottom:0;z-index:10;box-shadow:-5px 0 20px #0002;transition:.25s}
+.sidebar.open{right:0}
+.mobile-menu{display:block}
+.composer-area{right:0}
+.chat{padding:25px 12px 170px}
+.welcome h1{font-size:25px}
+}
+</style>
 </head>
 
-
 <body>
-
 <div class="app">
 
-
-    <!-- =========================
-         القائمة الجانبية
-    ========================= -->
-
-    <aside class="sidebar" id="sidebar">
-
-        <div class="logo">
-            🤖 IDO AI
-        </div>
-
-
-        <button class="new-chat" id="newChatBtn">
-            ＋ محادثة جديدة
-        </button>
-
-
-        <div class="history-title">
-            المحادثات
-        </div>
-
-
-        <div class="history" id="history"></div>
-
-
-        <div class="sidebar-bottom">
-
-            <button class="side-btn" id="themeBtn">
-                🌙 الوضع الليلي
-            </button>
-
-            <button class="side-btn" id="clearBtn">
-                🗑️ مسح المحادثات
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =========================
-         المنطقة الرئيسية
-    ========================= -->
-
-    <main class="main">
-
-
-        <header class="topbar">
-
-            <button class="mobile-menu" id="mobileMenu">
-                ☰
-            </button>
-
-
-            <div class="model-name">
-                Ido AI 🤖
-            </div>
-
-
-            <div class="status">
-                🟢 متصل
-            </div>
-
-        </header>
-
-
-        <!-- =========================
-             المحادثة
-        ========================= -->
-
-        <section class="chat" id="chat">
-
-
-            {% if not answer %}
-
-            <div class="welcome" id="welcome">
-
-                <div class="welcome-icon">
-                    🤖
-                </div>
-
-                <h1 id="welcomeText">
-                    مرحبًا بك في Ido AI
-                </h1>
-
-                <p>
-                    كيف يمكنني مساعدتك اليوم؟
-                </p>
-
-            </div>
-
-            {% endif %}
-
-
-            {% if answer %}
-
-            <div class="message message-user">
-
-                <div class="avatar">
-                    👤
-                </div>
-
-                <div class="message-content">
-
-                    <div class="message-name">
-                        أنت
-                    </div>
-
-                    <div>
-                        {{ request.form.get("question", "") }}
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="message message-ai">
-
-                <div class="avatar">
-                    🤖
-                </div>
-
-                <div class="message-content">
-
-                    <div class="message-name">
-                        Ido AI
-                    </div>
-
-                    <div id="answer">
-                        {{ answer }}
-                    </div>
-
-
-                    <div class="answer-tools">
-
-                        <button
-                            class="answer-btn"
-                            id="voiceBtn"
-                            type="button"
-                            title="قراءة الإجابة">
-
-                            🔊 قراءة
-
-                        </button>
-
-
-                        <button
-                            class="answer-btn"
-                            id="copyBtn"
-                            type="button"
-                            title="نسخ الإجابة">
-
-                            📋 نسخ
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            {% endif %}
-
-
-            <div id="typing">
-                🤖 Ido AI يكتب...
-            </div>
-
-
-        </section>
-
-
-        <!-- =========================
-             صندوق الكتابة
-        ========================= -->
-
-        <div class="composer-area">
-
-            <form
-                method="POST"
-                id="chatForm"
-                class="composer">
-
-
-                <textarea
-                    id="question"
-                    name="question"
-                    placeholder="اكتب رسالتك إلى Ido AI..."
-                    required></textarea>
-
-
-                <div class="composer-bottom">
-
-
-                    <div class="tools">
-
-                        <button
-                            type="button"
-                            class="tool"
-                            id="micBtn"
-                            title="الميكروفون">
-
-                            🎤
-
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="tool"
-                            id="voiceBtn2"
-                            title="قراءة الإجابة">
-
-                            🔊
-
-                        </button>
-
-                    </div>
-
-
-                    <button
-                        type="submit"
-                        class="send-btn"
-                        title="إرسال">
-
-                        ↑
-
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-
-    </main>
-
+<aside class="sidebar" id="sidebar">
+    <div class="logo">🤖 IDO AI</div>
+    <button class="new-chat" id="newChatBtn">＋ محادثة جديدة</button>
+    <div class="history-title">المحادثات</div>
+    <div class="history" id="history"></div>
+
+    <div class="sidebar-bottom">
+        <button class="side-btn" id="themeBtn">🌙 الوضع الليلي</button>
+        <button class="side-btn" id="clearBtn">🗑️ مسح المحادثات</button>
+    </div>
+</aside>
+
+<main class="main">
+
+<header class="topbar">
+    <button class="mobile-menu" id="mobileMenu">☰</button>
+    <div class="model-name">Ido AI 🤖</div>
+    <div class="status">🟢 متصل</div>
+</header>
+
+<section class="chat" id="chat">
+
+{% if not answer %}
+<div class="welcome" id="welcome">
+    <div class="welcome-icon">🤖</div>
+    <h1 id="welcomeText">مرحبًا بك في Ido AI</h1>
+    <p>كيف يمكنني مساعدتك اليوم؟</p>
+</div>
+{% endif %}
+
+{% if answer %}
+<div class="message message-user">
+    <div class="avatar">👤</div>
+    <div class="message-content">
+        <div class="message-name">أنت</div>
+        <div>{{ request.form.get("question","") }}</div>
+    </div>
 </div>
 
+<div class="message message-ai">
+    <div class="avatar">🤖</div>
+    <div class="message-content">
+        <div class="message-name">Ido AI</div>
+        <div id="answer">{{ answer }}</div>
 
-<!-- رسالة النسخ -->
+        <div class="answer-tools">
+            <button class="answer-btn" id="voiceBtn" type="button">🔊 قراءة</button>
+            <button class="answer-btn" id="copyBtn" type="button">📋 نسخ</button>
+        </div>
+    </div>
+</div>
+{% endif %}
 
-<div id="copyMessage">
-    ✅ تم نسخ الرد
+<div id="typing">🤖 Ido AI يكتب...</div>
+</section>
+
+<div class="composer-area">
+<form method="POST" id="chatForm" class="composer">
+
+<textarea id="question" name="question"
+placeholder="اكتب رسالتك إلى Ido AI..." required></textarea>
+
+<div class="composer-bottom">
+    <div class="tools">
+        <button type="button" class="tool" id="micBtn" title="الميكروفون">🎤</button>
+        <button type="button" class="tool" id="voiceBtn2" title="قراءة الإجابة">🔊</button>
+    </div>
+
+    <button type="submit" class="send-btn" title="إرسال">↑</button>
 </div>
 
+</form>
+</div>
+
+</main>
+</div>
+
+<div id="copyMessage">✅ تم نسخ الرد</div>
 
 <script>
+const $=id=>document.getElementById(id);
+const body=document.body,
+sidebar=$("sidebar"),
+history=$("history"),
+question=$("question"),
+chat=$("chat"),
+answer=$("answer"),
+voiceBtn=$("voiceBtn"),
+voiceBtn2=$("voiceBtn2"),
+typing=$("typing");
 
-    /* =========================
-       العناصر
-    ========================= */
+let userName=localStorage.getItem("ido_user_name");
 
-    const body = document.body;
+if(!userName){
+    userName=prompt("السلام عليكم ورحمة الله وبركاته\nما اسمك؟");
+    if(userName?.trim()){
+        userName=userName.trim();
+        localStorage.setItem("ido_user_name",userName);
+    }
+}
 
-    const sidebar = document.getElementById("sidebar");
-
-    const mobileMenu = document.getElementById("mobileMenu");
-
-    const themeBtn = document.getElementById("themeBtn");
-
-    const newChatBtn = document.getElementById("newChatBtn");
-
-    const clearBtn = document.getElementById("clearBtn");
-
-    const history = document.getElementById("history");
-
-    const chatForm = document.getElementById("chatForm");
-
-    const question = document.getElementById("question");
-
-    const typing = document.getElementById("typing");
-
-    const answerElement = document.getElementById("answer");
-
-    const copyBtn = document.getElementById("copyBtn");
-
-    const voiceBtn = document.getElementById("voiceBtn");
-
-    const voiceBtn2 = document.getElementById("voiceBtn2");
+if(userName&&$("welcomeText"))
+    $("welcomeText").textContent="مرحبًا يا "+userName+" 👋";
 
 
-    /* =========================
-       الاسم
-    ========================= */
+/* الوضع الليلي */
+if(localStorage.getItem("ido_theme")==="dark"){
+    body.classList.add("dark");
+    $("themeBtn").textContent="☀️ الوضع النهاري";
+}
 
-    let userName = localStorage.getItem("ido_user_name");
+$("themeBtn").onclick=()=>{
+    body.classList.toggle("dark");
+    const dark=body.classList.contains("dark");
+    localStorage.setItem("ido_theme",dark?"dark":"light");
+    $("themeBtn").textContent=dark?"☀️ الوضع النهاري":"🌙 الوضع الليلي";
+};
 
 
-    if (!userName) {
+/* القائمة في الهاتف */
+$("mobileMenu").onclick=()=>{
+    sidebar.classList.toggle("open");
+};
 
-        userName = prompt(
-            "مرحبًا! ما اسمك؟"
-        );
 
-        if (userName && userName.trim()) {
+/* حجم صندوق الكتابة */
+question.oninput=()=>{
+    question.style.height="auto";
+    question.style.height=Math.min(question.scrollHeight,180)+"px";
+};
 
-            userName = userName.trim();
 
-            localStorage.setItem(
-                "ido_user_name",
-                userName
-            );
+/* عند الإرسال */
+$("chatForm").onsubmit=()=>{
+    typing.style.display="block";
+};
 
-        }
 
+/* نسخ الإجابة */
+$("copyBtn")?.addEventListener("click",async()=>{
+    await navigator.clipboard.writeText(answer.innerText);
+    const msg=$("copyMessage");
+    msg.style.display="block";
+    setTimeout(()=>msg.style.display="none",1800);
+});
+
+
+/* =========================
+   تنظيف النص قبل الصوت
+========================= */
+function cleanForVoice(text){
+
+    return text
+        .replace(/https?:\/\/\S+/gi,"")
+        .replace(/[🤖👤😊😄😂🤣😍🥰😘😎👍❤️💬🔊📋🎤🧮🌍🇲🇦🇫🇷⏰☀️🌙🗑️＋↑]/gu,"")
+        .replace(/\b(smiley voice|smiley|voice on|voice off)\b/gi,"")
+        .replace(/\s+/g," ")
+        .trim();
+}
+
+
+/* =========================
+   الصوت
+========================= */
+let speaking=false;
+
+function updateVoiceButtons(active){
+    if(voiceBtn) voiceBtn.textContent=active?"⏹ إيقاف":"🔊 قراءة";
+    if(voiceBtn2) voiceBtn2.textContent=active?"⏹":"🔊";
+}
+
+function speakAnswer(){
+
+    if(!answer)return;
+
+    if(speaking){
+        speechSynthesis.cancel();
+        speaking=false;
+        updateVoiceButtons(false);
+        return;
     }
 
+    const text=cleanForVoice(answer.innerText);
 
-    const welcomeText =
-        document.getElementById("welcomeText");
+    if(!text)return;
 
-
-    if (welcomeText && userName) {
-
-        welcomeText.textContent =
-            "مرحبًا يا " + userName + " 👋";
-
+    if(!("speechSynthesis" in window)){
+        alert("المتصفح لا يدعم قراءة النص.");
+        return;
     }
 
-
-    /* =========================
-       الوضع الليلي
-    ========================= */
-
-    const savedTheme =
-        localStorage.getItem("ido_theme");
-
-
-    if (savedTheme === "dark") {
-
-        body.classList.add("dark");
-
-        themeBtn.textContent =
-            "☀️ الوضع النهاري";
-
-    }
-
-
-    themeBtn.addEventListener("click", function () {
-
-        body.classList.toggle("dark");
-
-
-        if (body.classList.contains("dark")) {
-
-            localStorage.setItem(
-                "ido_theme",
-                "dark"
-            );
-
-            themeBtn.textContent =
-                "☀️ الوضع النهاري";
-
-        } else {
-
-            localStorage.setItem(
-                "ido_theme",
-                "light"
-            );
-
-            themeBtn.textContent =
-                "🌙 الوضع الليلي";
-
-        }
-
-    });
-
-
-    /* =========================
-       القائمة في الهاتف
-    ========================= */
-
-    mobileMenu.addEventListener("click", function () {
-
-        sidebar.classList.toggle("open");
-
-    });
-
-
-    /* =========================
-       الكتابة
-    ========================= */
-
-    question.addEventListener("input", function () {
-
-        this.style.height = "auto";
-
-        this.style.height =
-            Math.min(this.scrollHeight, 180) + "px";
-
-    });
-
-
-    /* =========================
-       إرسال الرسالة
-    ========================= */
-
-    chatForm.addEventListener("submit", function () {
-
-        typing.style.display = "block";
-
-    });
-
-
-    /* =========================
-       نسخ الإجابة
-    ========================= */
-
-    function copyAnswer() {
-
-        if (!answerElement) {
-            return;
-        }
-
-
-        const text =
-            answerElement.innerText;
-
-
-        navigator.clipboard.writeText(text)
-            .then(function () {
-
-                const copyMessage =
-                    document.getElementById(
-                        "copyMessage"
-                    );
-
-                copyMessage.style.display =
-                    "block";
-
-
-                setTimeout(function () {
-
-                    copyMessage.style.display =
-                        "none";
-
-                }, 2000);
-
-            });
-
-    }
-
-
-    if (copyBtn) {
-
-        copyBtn.addEventListener(
-            "click",
-            copyAnswer
-        );
-
-    }
-
-
-    /* =========================
-       Voice / Text To Speech
-    ========================= */
-
-    let speaking = false;
-
-
-    function speakAnswer() {
-
-        if (!answerElement) {
-
-            return;
-
-        }
-
-
-        const text =
-            answerElement.innerText.trim();
-
-
-        if (!text) {
-
-            return;
-
-        }
-
-
-        if (!("speechSynthesis" in window)) {
-
-            alert(
-                "المتصفح لا يدعم ميزة قراءة النص."
-            );
-
-            return;
-
-        }
-
-
-        if (speaking) {
-
-            window.speechSynthesis.cancel();
-
-            speaking = false;
-
-            updateVoiceButtons(false);
-
-            return;
-
-        }
-
-
-        window.speechSynthesis.cancel();
-
-
-        const speech =
-            new SpeechSynthesisUtterance(text);
-
-
-        speech.lang = "ar-SA";
-
-        speech.rate = 0.95;
-
-        speech.pitch = 1;
-
-
-        speech.onstart = function () {
-
-            speaking = true;
-
-            updateVoiceButtons(true);
-
-        };
-
-
-        speech.onend = function () {
-
-            speaking = false;
-
-            updateVoiceButtons(false);
-
-        };
-
-
-        speech.onerror = function () {
-
-            speaking = false;
-
-            updateVoiceButtons(false);
-
-        };
-
-
-        window.speechSynthesis.speak(
-            speech
-        );
-
-    }
-
-
-    function updateVoiceButtons(active) {
-
-        if (voiceBtn) {
-
-            voiceBtn.textContent =
-                active
-                ? "⏹ إيقاف"
-                : "🔊 قراءة";
-
-        }
-
-
-        if (voiceBtn2) {
-
-            voiceBtn2.textContent =
-                active
-                ? "⏹"
-                : "🔊";
-
-        }
-
-    }
-
-
-    if (voiceBtn) {
-
-        voiceBtn.addEventListener(
-            "click",
-            speakAnswer
-        );
-
-    }
-
-
-    if (voiceBtn2) {
-
-        voiceBtn2.addEventListener(
-            "click",
-            speakAnswer
-        );
-
-    }
-
-
-    /* =========================
-       الميكروفون
-    ========================= */
-
-    const micBtn =
-        document.getElementById("micBtn");
-
-
-    if (
-        micBtn &&
-        (
-            "webkitSpeechRecognition" in window ||
-            "SpeechRecognition" in window
-        )
-    ) {
-
-        const SpeechRecognition =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-
-        const recognition =
-            new SpeechRecognition();
-
-
-        recognition.lang = "ar-SA";
-
-        recognition.continuous = false;
-
-        recognition.interimResults = false;
-
-
-        micBtn.addEventListener(
-            "click",
-            function () {
-
-                recognition.start();
-
-                micBtn.textContent =
-                    "🔴";
-
-            }
-        );
-
-
-        recognition.onresult =
-            function (event) {
-
-                question.value =
-                    event.results[0][0].transcript;
-
-            };
-
-
-        recognition.onend =
-            function () {
-
-                micBtn.textContent =
-                    "🎤";
-
-            };
-
-
-        recognition.onerror =
-            function () {
-
-                micBtn.textContent =
-                    "🎤";
-
-            };
-
-    }
-
-
-    /* =========================
-       المحادثات
-    ========================= */
-
-    let conversations =
-        JSON.parse(
-            localStorage.getItem(
-                "ido_conversations"
-            ) || "[]"
-        );
-
-
-    function saveConversations() {
-
-        localStorage.setItem(
-            "ido_conversations",
-            JSON.stringify(conversations)
-        );
-
-    }
-
-
-    function renderHistory() {
-
-        history.innerHTML = "";
-
-
-        conversations.forEach(
-            function (conversation, index) {
-
-                const item =
-                    document.createElement("div");
-
-
-                item.className =
-                    "history-item";
-
-
-                item.textContent =
-                    conversation.title ||
-                    "محادثة جديدة";
-
-
-                item.addEventListener(
-                    "click",
-                    function () {
-
-                        loadConversation(index);
-
-                    }
-                );
-
-
-                history.appendChild(item);
-
-            }
-        );
-
-    }
-
-
-    function loadConversation(index) {
-
-        const conversation =
-            conversations[index];
-
-
-        if (!conversation) {
-
-            return;
-
-        }
-
-
-        if (conversation.html) {
-
-            document.getElementById(
-                "chat"
-            ).innerHTML =
-                conversation.html;
-
-        }
-
-
-        if (window.innerWidth <= 800) {
-
-            sidebar.classList.remove(
-                "open"
-            );
-
-        }
-
-    }
-
-
-    function createConversation() {
-
-        const title =
-            question.value.trim();
-
-
-        conversations.unshift({
-
-            title:
-                title ||
-                "محادثة جديدة",
-
-            html:
-                document.getElementById(
-                    "chat"
-                ).innerHTML,
-
-            date:
-                new Date().toISOString()
-
-        });
-
-
-        if (conversations.length > 30) {
-
-            conversations =
-                conversations.slice(0, 30);
-
-        }
-
-
-        saveConversations();
-
-        renderHistory();
-
-    }
-
-
-    /* =========================
-       محادثة جديدة
-    ========================= */
-
-    newChatBtn.addEventListener(
-        "click",
-        function () {
-
-            window.location.href = "/";
-
-        }
+    speechSynthesis.cancel();
+
+    const speech=new SpeechSynthesisUtterance(text);
+
+    speech.lang="ar-SA";
+    speech.rate=.90;
+    speech.pitch=1;
+    speech.volume=1;
+
+    speech.onstart=()=>{
+        speaking=true;
+        updateVoiceButtons(true);
+    };
+
+    speech.onend=()=>{
+        speaking=false;
+        updateVoiceButtons(false);
+    };
+
+    speech.onerror=()=>{
+        speaking=false;
+        updateVoiceButtons(false);
+    };
+
+    speechSynthesis.speak(speech);
+}
+
+voiceBtn?.addEventListener("click",speakAnswer);
+voiceBtn2?.addEventListener("click",speakAnswer);
+
+
+/* =========================
+   الميكروفون
+========================= */
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+if(SpeechRecognition){
+
+    const recognition=new SpeechRecognition();
+
+    recognition.lang="ar-SA";
+    recognition.continuous=false;
+    recognition.interimResults=false;
+
+    $("micBtn").onclick=()=>{
+        try{
+            recognition.start();
+            $("micBtn").textContent="🔴";
+        }catch(e){}
+    };
+
+    recognition.onresult=e=>{
+        question.value=e.results[0][0].transcript;
+        question.dispatchEvent(new Event("input"));
+    };
+
+    recognition.onend=()=>{
+        $("micBtn").textContent="🎤";
+    };
+
+    recognition.onerror=()=>{
+        $("micBtn").textContent="🎤";
+    };
+}
+
+
+/* =========================
+   المحادثات
+========================= */
+let conversations=JSON.parse(
+    localStorage.getItem("ido_conversations")||"[]"
+);
+
+function saveConversations(){
+    localStorage.setItem(
+        "ido_conversations",
+        JSON.stringify(conversations)
     );
+}
 
+function renderHistory(){
 
-    /* =========================
-       مسح المحادثات
-    ========================= */
+    history.innerHTML="";
 
-    clearBtn.addEventListener(
-        "click",
-        function () {
+    conversations.forEach((c,i)=>{
+        const item=document.createElement("div");
 
-            const confirmed =
-                confirm(
-                    "هل تريد حذف جميع المحادثات المحفوظة؟"
-                );
+        item.className="history-item";
+        item.textContent=c.title||"محادثة جديدة";
 
+        item.onclick=()=>{
+            if(c.html)chat.innerHTML=c.html;
+            if(innerWidth<=800)sidebar.classList.remove("open");
+        };
 
-            if (!confirmed) {
+        history.appendChild(item);
+    });
+}
 
-                return;
+function saveCurrentConversation(){
 
-            }
+    if(!answer)return;
 
+    conversations.unshift({
+        title:question.value.trim()||"محادثة جديدة",
+        html:chat.innerHTML,
+        date:new Date().toISOString()
+    });
 
-            conversations = [];
+    conversations=conversations.slice(0,30);
 
-            saveConversations();
-
-            renderHistory();
-
-        }
-    );
-
-
-    /* =========================
-       حفظ المحادثة بعد الإجابة
-    ========================= */
-
-    if (answerElement) {
-
-        setTimeout(
-            function () {
-
-                createConversation();
-
-            },
-            300
-        );
-
-    }
-
-
-    /* =========================
-       عرض المحادثات
-    ========================= */
-
+    saveConversations();
     renderHistory();
+}
 
+$("newChatBtn").onclick=()=>location.href="/";
 
-    /* =========================
-       إغلاق الصوت عند مغادرة الصفحة
-    ========================= */
+$("clearBtn").onclick=()=>{
+    if(confirm("هل تريد حذف جميع المحادثات المحفوظة؟")){
+        conversations=[];
+        saveConversations();
+        renderHistory();
+    }
+};
 
-    window.addEventListener(
-        "beforeunload",
-        function () {
+if(answer)setTimeout(saveCurrentConversation,300);
 
-            if (
-                "speechSynthesis" in window
-            ) {
+renderHistory();
 
-                window.speechSynthesis.cancel();
-
-            }
-
-        }
-    );
-
+window.onbeforeunload=()=>{
+    speechSynthesis?.cancel();
+};
 </script>
 
-
 </body>
-
 </html>
