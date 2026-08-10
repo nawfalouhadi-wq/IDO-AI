@@ -5,7 +5,6 @@ from google import genai
 from google.genai import types
 
 # تحميل ملف .env
-
 load_dotenv()
 
 # =========================
@@ -29,6 +28,7 @@ if GEMINI_API_KEY:
 else:
     print("GEMINI_API_KEY: NOT FOUND")
 
+
 # =========================
 # Ollama
 # =========================
@@ -39,6 +39,7 @@ OLLAMA_URL = os.getenv(
 )
 
 print("BRAIN.PY LOADED - GEMINI + OLLAMA READY")
+
 
 # =========================
 # Gemini - نص
@@ -54,7 +55,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-2.5-flash",
             contents=message
         )
 
@@ -89,7 +90,7 @@ def ask_gemini_image(message, image_bytes, mime_type):
         )
 
         response = gemini_client.models.generate_content(
-            model="gemini-3.6-flash",
+            model="gemini-2.5-flash",
             contents=[
                 message,
                 image_part
