@@ -4,6 +4,7 @@ import requests
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
+from google.genai.types import HttpOptions
 
 
 # =========================================================
@@ -24,7 +25,10 @@ gemini_client = None
 if GEMINI_API_KEY:
     try:
         gemini_client = genai.Client(
-            api_key=GEMINI_API_KEY
+            api_key=GEMINI_API_KEY,
+            http_options=HttpOptions(
+                timeout=5000
+            )
         )
 
         print("GEMINI CLIENT: READY")
@@ -77,7 +81,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="3.5",
+            model="GEMINI_MODEL_HERE",
             contents=message
         )
 
@@ -146,10 +150,7 @@ def ask_openrouter(message):
                     }
                 ]
             },
-
-            # 5 ثوانٍ للاتصال
-            # 30 ثانية لانتظار الرد
-            timeout=(5, 30)
+            timeout=(5, 5)
         )
 
         print(
@@ -188,14 +189,6 @@ def ask_openrouter(message):
 
         print(
             "OpenRouter returned empty response."
-        )
-
-        return None
-
-    except requests.exceptions.Timeout:
-        print(
-            "OpenRouter TIMEOUT: "
-            "انتهت مهلة 30 ثانية."
         )
 
         return None
@@ -239,7 +232,7 @@ def ask_gemini_image(
 
         response = (
             gemini_client.models.generate_content(
-                model="3.5",
+                model="GEMINI_MODEL_HERE",
 
                 contents=[
                     message,
