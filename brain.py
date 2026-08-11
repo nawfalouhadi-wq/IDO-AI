@@ -6,7 +6,6 @@ from google.genai import types
 from openai import OpenAI
 
 # تحميل ملف .env
-
 load_dotenv()
 
 # =========================================================
@@ -31,6 +30,7 @@ if GEMINI_API_KEY:
 else:
     print("GEMINI_API_KEY: NOT FOUND")
 
+
 # =========================================================
 # OpenAI
 # =========================================================
@@ -42,7 +42,8 @@ openai_client = None
 if OPENAI_API_KEY:
     try:
         openai_client = OpenAI(
-            api_key=OPENAI_API_KEY
+            api_key=OPENAI_API_KEY,
+            timeout=30.0
         )
 
         print("OPENAI CLIENT: READY")
@@ -52,6 +53,7 @@ if OPENAI_API_KEY:
 
 else:
     print("OPENAI_API_KEY: NOT FOUND")
+
 
 # =========================================================
 # OpenRouter
@@ -66,6 +68,7 @@ if OPENROUTER_API_KEY:
 else:
     print("OPENROUTER_API_KEY: NOT FOUND")
 
+
 # =========================================================
 # Ollama
 # =========================================================
@@ -79,6 +82,7 @@ print(
     "BRAIN.PY LOADED - "
     "GEMINI + OPENAI + OPENROUTER + OLLAMA READY"
 )
+
 
 # =========================================================
 # Gemini - نص
@@ -139,7 +143,7 @@ def ask_openrouter(message):
                     }
                 ]
             },
-            timeout=60
+            timeout=(10, 25)
         )
 
         print("OpenRouter Status:", response.status_code)
@@ -256,7 +260,7 @@ def ask_ollama(message):
                 "prompt": message,
                 "stream": False
             },
-            timeout=60
+            timeout=(5, 20)
         )
 
         print("Ollama Status:", response.status_code)
