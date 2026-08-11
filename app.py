@@ -51,6 +51,7 @@ if api_available:
 def ai_response(question):
 
     try:
+
         question = question.strip()
 
         if not question:
@@ -61,53 +62,81 @@ def ai_response(question):
         # =====================================================
 
         try:
+
             result = calculate(question)
 
             if result is not None:
                 return f"النتيجة: {result}"
 
         except Exception as e:
-            print("CALCULATOR ERROR:", e)
+
+            print(
+                "CALCULATOR ERROR:",
+                e
+            )
 
         # =====================================================
         # الترجمة
         # =====================================================
 
         try:
+
             translated = translate(question)
 
             if (
                 translated
-                and translated.lower() != question.lower()
+                and translated.lower()
+                != question.lower()
             ):
+
                 return translated
 
         except Exception as e:
-            print("TRANSLATOR ERROR:", e)
+
+            print(
+                "TRANSLATOR ERROR:",
+                e
+            )
 
         # =====================================================
         # الذاكرة
         # =====================================================
 
         try:
-            memory_answer = get_answer(question)
+
+            memory_answer = get_answer(
+                question
+            )
 
             if memory_answer:
                 return memory_answer
 
         except Exception as e:
-            print("MEMORY ERROR:", e)
+
+            print(
+                "MEMORY ERROR:",
+                e
+            )
 
         # =====================================================
         # Gemini / OpenRouter / Groq / Mistral
         # =====================================================
 
-        answer = get_response(question)
+        answer = get_response(
+            question
+        )
 
-        return answer or "لم أجد إجابة حاليًا."
+        return (
+            answer
+            or "لم أجد إجابة حاليًا."
+        )
 
     except Exception as e:
-        print("AI RESPONSE ERROR:", e)
+
+        print(
+            "AI RESPONSE ERROR:",
+            e
+        )
 
         return f"خطأ: {e}"
 
@@ -116,13 +145,20 @@ def ai_response(question):
 # الصفحة الرئيسية
 # =========================================================
 
-@app.route("/", methods=["GET", "POST"])
+@app.route(
+    "/",
+    methods=["GET", "POST"]
+)
 def home():
 
     answer = ""
+
     generated_image = None
 
-    current_time = datetime.now().strftime("%H:%M:%S")
+    current_time = (
+        datetime.now()
+        .strftime("%H:%M:%S")
+    )
 
     if request.method == "POST":
 
@@ -143,15 +179,19 @@ def home():
 
             try:
 
-                print("IMAGE REQUEST RECEIVED")
+                print(
+                    "IMAGE REQUEST RECEIVED"
+                )
 
                 image_bytes = image.read()
+
                 mime_type = image.mimetype
 
                 if not image_bytes:
 
                     answer = (
-                        "لم يتم اختيار صورة صالحة."
+                        "لم يتم اختيار "
+                        "صورة صالحة."
                     )
 
                 else:
@@ -162,13 +202,16 @@ def home():
 
                     if question:
 
-                        image_question = question
+                        image_question = (
+                            question
+                        )
 
                     else:
 
                         image_question = (
-                            "حلل هذه الصورة واشرح لي "
-                            "بالتفصيل ما الذي يظهر فيها."
+                            "حلل هذه الصورة "
+                            "واشرح لي بالتفصيل "
+                            "ما الذي يظهر فيها."
                         )
 
                     print(
@@ -188,21 +231,48 @@ def home():
                     )
 
                     # =========================================
-                    # تحليل الصورة
-                    #
-                    # brain.py يتولى اختيار Mistral/Pixtral
+                    # تحليل / تعديل الصورة
                     # =========================================
 
-                    answer = get_image_response(
+                    result = get_image_response(
                         image_question,
                         image_bytes,
                         mime_type
                     )
 
-                    if not answer:
+                    # =========================================
+                    # هل النتيجة صورة مولدة؟
+                    # =========================================
+
+                    if (
+                        isinstance(result, str)
+                        and result.startswith(
+                            "IMAGE_URL:"
+                        )
+                    ):
+
+                        generated_image = (
+                            result[
+                                len("IMAGE_URL:"):
+                            ].strip()
+                        )
 
                         answer = (
-                            "تعذر تحليل الصورة حاليًا."
+                            "تم إنشاء الصورة "
+                            "بناءً على طلبك."
+                        )
+
+                        print(
+                            "GENERATED IMAGE:",
+                            generated_image
+                        )
+
+                    else:
+
+                        answer = (
+                            result
+                            or "تعذر معالجة "
+                            "الصورة حاليًا."
                         )
 
             except Exception as e:
@@ -213,7 +283,8 @@ def home():
                 )
 
                 answer = (
-                    "حدث خطأ أثناء تحليل الصورة: "
+                    "حدث خطأ أثناء "
+                    "معالجة الصورة: "
                     f"{e}"
                 )
 

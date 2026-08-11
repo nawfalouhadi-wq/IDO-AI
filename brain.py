@@ -1,6 +1,7 @@
 import os
 import base64
 import uuid
+import re
 from pathlib import Path
 
 import requests
@@ -13,6 +14,7 @@ try:
     from mistralai.client import Mistral
 except Exception:
     Mistral = None
+
 
 # =========================================================
 # تحميل ملف .env
@@ -257,7 +259,7 @@ else:
 
 
 # =========================================================
-# Image Generation Agent
+# Mistral Image Generation Agent
 # =========================================================
 
 mistral_image_agent = None
@@ -275,11 +277,12 @@ if mistral_client is not None:
                 ),
                 instructions=(
                     "Generate high-quality images "
-                    "from the user's description. "
-                    "When the user asks to modify "
-                    "a described object, recreate "
-                    "the scene while applying the "
-                    "requested modification."
+                    "from detailed prompts. "
+                    "When the prompt describes an "
+                    "existing scene and asks for a "
+                    "modification, recreate the scene "
+                    "while applying the requested "
+                    "visual change."
                 ),
                 tools=[
                     {
@@ -349,15 +352,12 @@ def clean_answer(answer):
 # استخراج محتوى الاستجابة
 # =========================================================
 
-def extract_response_content(
-    data
-):
+def extract_response_content(data):
 
     if not isinstance(
         data,
         dict
     ):
-
         return None
 
     choices = data.get(
@@ -368,18 +368,15 @@ def extract_response_content(
     if not choices:
         return None
 
-    message_data = (
-        choices[0].get(
-            "message",
-            {}
-        )
+    message_data = choices[0].get(
+        "message",
+        {}
     )
 
     if not isinstance(
         message_data,
         dict
     ):
-
         return None
 
     return clean_answer(
@@ -432,17 +429,17 @@ def save_generated_image(
 
 
 # =========================================================
-# استخراج ملفات الصور من استجابة Mistral
+# استخراج File IDs من استجابة Mistral
 # =========================================================
 
 def extract_generated_images(
     response
 ):
 
-    images = []
+    file_ids = []
 
     if response is None:
-        return images
+        return file_ids
 
     outputs = getattr(
         response,
@@ -451,7 +448,7 @@ def extract_generated_images(
     )
 
     if not outputs:
-        return images
+        return file_ids
 
     for output in outputs:
 
@@ -481,29 +478,20 @@ def extract_generated_images(
             if not file_id:
                 continue
 
-            if (
-                chunk_type not in
-                (
-                    "tool_file",
-                    "file"
+            if chunk_type == "tool_file":
+
+                file_ids.append(
+                    file_id
                 )
-            ):
-                continue
 
-            images.append(
-                file_id
-            )
-
-    return images
+    return file_ids
 
 
 # =========================================================
 # Gemini - نص
 # =========================================================
 
-def ask_gemini(
-    message
-):
+def ask_gemini(message):
 
     if gemini_client is None:
 
@@ -564,9 +552,7 @@ def ask_gemini(
 # OpenRouter - نص
 # =========================================================
 
-def ask_openrouter(
-    message
-):
+def ask_openrouter(message):
 
     if not OPENROUTER_API_KEY:
 
@@ -691,9 +677,7 @@ def ask_openrouter(
 # Groq - نص
 # =========================================================
 
-def ask_groq(
-    message
-):
+def ask_groq(message):
 
     if not GROQ_API_KEY:
 
@@ -820,9 +804,7 @@ def ask_groq(
 # Mistral - نص
 # =========================================================
 
-def ask_mistral(
-    message
-):
+def ask_mistral(message):
 
     if not MISTRAL_API_KEY:
 
@@ -956,21 +938,9 @@ def ask_groq_image(
 ):
 
     if not GROQ_API_KEY:
-
-        print(
-            "Groq IMAGE ERROR: "
-            "API key غير موجود."
-        )
-
         return None
 
     if not image_bytes:
-
-        print(
-            "Groq IMAGE ERROR: "
-            "الصورة فارغة."
-        )
-
         return None
 
     try:
@@ -1065,45 +1035,9 @@ def ask_groq_image(
 
             return None
 
-        data = response.json()
-
-        answer = (
-            extract_response_content(
-                data
-            )
+        return extract_response_content(
+            response.json()
         )
-
-        if answer:
-
-            print(
-                "Groq image response received."
-            )
-
-            return answer
-
-        print(
-            "Groq returned empty "
-            "image response."
-        )
-
-        return None
-
-    except requests.exceptions.Timeout:
-
-        print(
-            "Groq IMAGE ERROR: timeout."
-        )
-
-        return None
-
-    except requests.exceptions.ConnectionError:
-
-        print(
-            "Groq IMAGE ERROR: "
-            "connection failed."
-        )
-
-        return None
 
     except Exception as e:
 
@@ -1126,21 +1060,9 @@ def ask_mistral_image(
 ):
 
     if not MISTRAL_API_KEY:
-
-        print(
-            "Mistral IMAGE ERROR: "
-            "API key غير موجود."
-        )
-
         return None
 
     if not image_bytes:
-
-        print(
-            "Mistral IMAGE ERROR: "
-            "الصورة فارغة."
-        )
-
         return None
 
     try:
@@ -1235,46 +1157,9 @@ def ask_mistral_image(
 
             return None
 
-        data = response.json()
-
-        answer = (
-            extract_response_content(
-                data
-            )
+        return extract_response_content(
+            response.json()
         )
-
-        if answer:
-
-            print(
-                "Mistral image response "
-                "received."
-            )
-
-            return answer
-
-        print(
-            "Mistral returned empty "
-            "image response."
-        )
-
-        return None
-
-    except requests.exceptions.Timeout:
-
-        print(
-            "Mistral IMAGE ERROR: timeout."
-        )
-
-        return None
-
-    except requests.exceptions.ConnectionError:
-
-        print(
-            "Mistral IMAGE ERROR: "
-            "connection failed."
-        )
-
-        return None
 
     except Exception as e:
 
@@ -1287,12 +1172,10 @@ def ask_mistral_image(
 
 
 # =========================================================
-# Mistral - توليد صورة
+# توليد صورة جديدة
 # =========================================================
 
-def generate_image(
-    prompt
-):
+def generate_image(prompt):
 
     if not prompt:
         return None
@@ -1305,21 +1188,9 @@ def generate_image(
         return None
 
     if mistral_client is None:
-
-        print(
-            "IMAGE GENERATION ERROR: "
-            "Mistral client غير جاهز."
-        )
-
         return None
 
     if mistral_image_agent is None:
-
-        print(
-            "IMAGE GENERATION ERROR: "
-            "Mistral image agent غير جاهز."
-        )
-
         return None
 
     try:
@@ -1330,9 +1201,7 @@ def generate_image(
 
         response = (
             mistral_client.beta.conversations.start(
-                agent_id=(
-                    mistral_image_agent.id
-                ),
+                agent_id=mistral_image_agent.id,
                 inputs=prompt
             )
         )
@@ -1347,7 +1216,7 @@ def generate_image(
 
             print(
                 "Mistral image generation "
-                "returned no image file."
+                "returned no image."
             )
 
             return None
@@ -1374,22 +1243,9 @@ def generate_image(
             else downloaded
         )
 
-        image_url = (
-            save_generated_image(
-                image_bytes
-            )
+        return save_generated_image(
+            image_bytes
         )
-
-        if image_url:
-
-            print(
-                "Generated image saved:",
-                image_url
-            )
-
-            return image_url
-
-        return None
 
     except Exception as e:
 
@@ -1399,6 +1255,197 @@ def generate_image(
         )
 
         return None
+
+
+# =========================================================
+# كشف طلب تعديل صورة
+# =========================================================
+
+def is_image_edit_request(
+    message
+):
+
+    if not message:
+        return False
+
+    text = str(
+        message
+    ).strip().lower()
+
+    edit_words = [
+
+        "اجعل",
+        "خلي",
+        "خلّي",
+        "بدل",
+        "استبدل",
+        "غير",
+        "غيّر",
+        "تغيير",
+        "عدّل",
+        "عدل",
+        "تعديل",
+        "حوّل",
+        "حول",
+        "استبدل السيارة",
+        "غيّر السيارة",
+        "اجعل السيارة",
+
+        "edit",
+        "modify",
+        "change",
+        "replace",
+        "transform",
+        "make it",
+        "turn it into"
+    ]
+
+    for word in edit_words:
+
+        if word in text:
+            return True
+
+    return False
+
+
+# =========================================================
+# بناء Prompt خاص بتحرير صورة
+# =========================================================
+
+def build_image_edit_prompt(
+    image_description,
+    edit_request
+):
+
+    description = (
+        image_description or
+        "A realistic scene containing the "
+        "main subject shown in the original image."
+    )
+
+    request = (
+        edit_request or
+        "Keep the scene unchanged."
+    )
+
+    return f"""
+Create a new photorealistic image based on
+the following source-scene description.
+
+SOURCE SCENE:
+{description}
+
+REQUESTED EDIT:
+{request}
+
+IMPORTANT:
+- Preserve the same overall composition.
+- Preserve the same camera viewpoint.
+- Preserve the same environment and background.
+- Preserve the approximate lighting and weather.
+- Preserve the position and scale of the main subject.
+- Change only what the user requested.
+- Make the result look like a real photograph.
+- Do not add unrelated objects.
+- Keep the requested replacement visually coherent
+  with the original scene.
+"""
+
+
+# =========================================================
+# تعديل صورة بالاعتماد على تحليلها
+# =========================================================
+
+def edit_image(
+    edit_request,
+    image_bytes,
+    mime_type
+):
+
+    if not edit_request:
+        return None
+
+    if not image_bytes:
+        return None
+
+    print(
+        "IMAGE EDIT REQUEST:",
+        edit_request
+    )
+
+    # =====================================================
+    # تحليل الصورة الأصلية
+    # =====================================================
+
+    analysis_prompt = (
+        "Describe this image in very detailed "
+        "visual terms for a second image model. "
+        "Focus on composition, camera angle, "
+        "main subject, colors, environment, "
+        "background, lighting, shadows, weather, "
+        "and spatial relationships. "
+        "Do not discuss the requested edit. "
+        "Return only the visual description."
+    )
+
+    image_description = (
+        ask_mistral_image(
+            analysis_prompt,
+            image_bytes,
+            mime_type
+        )
+    )
+
+    if not image_description:
+
+        image_description = (
+            ask_groq_image(
+                analysis_prompt,
+                image_bytes,
+                mime_type
+            )
+        )
+
+    if not image_description:
+
+        print(
+            "IMAGE EDIT ERROR: "
+            "Could not analyze source image."
+        )
+
+        return None
+
+    # =====================================================
+    # إنشاء Prompt جديد
+    # =====================================================
+
+    edit_prompt = build_image_edit_prompt(
+        image_description,
+        edit_request
+    )
+
+    # =====================================================
+    # توليد الصورة المعدلة
+    # =====================================================
+
+    generated_image = generate_image(
+        edit_prompt
+    )
+
+    if generated_image:
+
+        print(
+            "IMAGE EDIT COMPLETED:",
+            generated_image
+        )
+
+        return generated_image
+
+    print(
+        "IMAGE EDIT FAILED."
+    )
+
+    return None
 
 
 # =========================================================
@@ -1506,25 +1553,18 @@ def get_response(
 ):
 
     if not message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
+        return "اكتب رسالة أولًا."
 
     original_message = str(
         message
     ).strip()
 
     if not original_message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
+        return "اكتب رسالة أولًا."
 
     message_lower = (
         original_message.lower()
     )
-
 
     # =====================================================
     # طلب إنشاء صورة
@@ -1554,14 +1594,13 @@ def get_response(
         if generated:
 
             return (
-                "تم إنشاء الصورة:\n"
+                "IMAGE_URL:"
                 f"{generated}"
             )
 
         return (
             "تعذر إنشاء الصورة حاليًا."
         )
-
 
     # =====================================================
     # الردود السريعة والثابتة
@@ -1619,23 +1658,11 @@ def get_response(
             "تم تطويري وبنائي بواسطة "
             "Noufal Ouhadi، وأنا Ido AI.",
 
-        "من انشاك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
         "من أنشأك":
             "تم تطويري وبنائي بواسطة "
             "Noufal Ouhadi، وأنا Ido AI.",
 
         "من صممك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من صاحبك":
-            "أنا Ido AI، وقد تم تطويري "
-            "وبنائي بواسطة Noufal Ouhadi.",
-
-        "من وراءك":
             "تم تطويري وبنائي بواسطة "
             "Noufal Ouhadi، وأنا Ido AI.",
 
@@ -1646,13 +1673,6 @@ def get_response(
         "من طور ido ai":
             "تم تطوير Ido AI بواسطة "
             "Noufal Ouhadi.",
-
-        "الوقت":
-            "يمكنك معرفة الوقت من النظام.",
-
-        "كم عدد الناس في العالم":
-            "يبلغ عدد سكان العالم "
-            "أكثر من 8 مليارات نسمة.",
 
         "ما هو الذكاء الاصطناعي":
             "الذكاء الاصطناعي هو مجال من علوم "
@@ -1683,17 +1703,10 @@ def get_response(
             "إلى اللقاء! أتمنى لك يومًا سعيدًا."
     }
 
-
-    # =====================================================
-    # البحث في الردود الجاهزة
-    # =====================================================
-
     for key, value in responses.items():
 
         if key in message_lower:
-
             return value
-
 
     # =====================================================
     # Gemini أولًا
@@ -1704,9 +1717,7 @@ def get_response(
     )
 
     if answer:
-
         return answer
-
 
     # =====================================================
     # OpenRouter ثانيًا
@@ -1722,9 +1733,7 @@ def get_response(
     )
 
     if answer:
-
         return answer
-
 
     # =====================================================
     # Groq ثالثًا
@@ -1740,9 +1749,7 @@ def get_response(
     )
 
     if answer:
-
         return answer
-
 
     # =====================================================
     # Mistral رابعًا
@@ -1758,13 +1765,7 @@ def get_response(
     )
 
     if answer:
-
         return answer
-
-
-    # =====================================================
-    # فشل جميع الخوادم
-    # =====================================================
 
     return (
         "أنا Ido AI ولم أجد إجابة حاليًا."
@@ -1772,7 +1773,7 @@ def get_response(
 
 
 # =========================================================
-# تحليل صورة
+# تحليل أو تعديل صورة
 # =========================================================
 
 def get_image_response(
@@ -1811,9 +1812,33 @@ def get_image_response(
 
     message = message.strip()
 
+    # =====================================================
+    # طلب تعديل الصورة
+    # =====================================================
+
+    if is_image_edit_request(
+        message
+    ):
+
+        generated_image = edit_image(
+            message,
+            image_bytes,
+            mime_type
+        )
+
+        if generated_image:
+
+            return (
+                "IMAGE_URL:"
+                f"{generated_image}"
+            )
+
+        return (
+            "تعذر تعديل الصورة حاليًا."
+        )
 
     # =====================================================
-    # Mistral مع الصورة أولًا
+    # تحليل الصورة بـ Mistral
     # =====================================================
 
     answer = ask_mistral_image(
@@ -1826,9 +1851,8 @@ def get_image_response(
 
         return answer
 
-
     # =====================================================
-    # Groq مع الصورة ثانيًا
+    # Groq كاحتياط
     # =====================================================
 
     print(
@@ -1845,11 +1869,6 @@ def get_image_response(
     if answer:
 
         return answer
-
-
-    # =====================================================
-    # فشل جميع خوادم تحليل الصور
-    # =====================================================
 
     return (
         "تعذر تحليل الصورة حاليًا."
