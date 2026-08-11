@@ -16,12 +16,12 @@ load_dotenv()
 
 
 # =========================================================
-# إعدادات عامة
+# إعدادات عامة - سرعة عالية
 # =========================================================
 
 REQUEST_TIMEOUT = (
-    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "10")),
-    int(os.getenv("REQUEST_READ_TIMEOUT", "60"))
+    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "2")),
+    int(os.getenv("REQUEST_READ_TIMEOUT", "2"))
 )
 
 
@@ -33,9 +33,9 @@ GEMINI_API_KEY = os.getenv(
     "GEMINI_API_KEY"
 )
 
+
 # =========================================================
 # Gemini Model
-# النموذج المستقر الحالي
 # =========================================================
 
 GEMINI_MODEL = os.getenv(
@@ -54,7 +54,7 @@ if GEMINI_API_KEY:
         gemini_client = genai.Client(
             api_key=GEMINI_API_KEY,
             http_options=HttpOptions(
-                timeout=15000
+                timeout=2000
             )
         )
 
@@ -91,6 +91,7 @@ OPENROUTER_API_KEY = os.getenv(
     "OPENROUTER_API_KEY"
 )
 
+
 OPENROUTER_URL = (
     "https://openrouter.ai/api/v1/chat/completions"
 )
@@ -110,12 +111,50 @@ else:
 
 
 # =========================================================
+# Groq
+# =========================================================
+
+GROQ_API_KEY = os.getenv(
+    "GROQ_API_KEY"
+)
+
+
+GROQ_URL = (
+    "https://api.groq.com/openai/v1/chat/completions"
+)
+
+
+GROQ_MODEL = os.getenv(
+    "GROQ_MODEL",
+    "openai/gpt-oss-20b"
+)
+
+
+if GROQ_API_KEY:
+
+    print(
+        "GROQ CLIENT: READY"
+    )
+
+    print(
+        "GROQ MODEL:",
+        GROQ_MODEL
+    )
+
+else:
+
+    print(
+        "GROQ_API_KEY: NOT FOUND"
+    )
+
+
+# =========================================================
 # معلومات التشغيل
 # =========================================================
 
 print(
     "BRAIN.PY LOADED - "
-    "GEMINI 3.6 FLASH + OPENROUTER READY"
+    "GEMINI + OPENROUTER + GROQ READY"
 )
 
 
@@ -171,6 +210,7 @@ def ask_gemini(message):
             "Trying Gemini..."
         )
 
+
         response = (
             gemini_client.models.generate_content(
 
@@ -186,6 +226,7 @@ def ask_gemini(message):
             answer = clean_answer(
                 response.text
             )
+
 
             if answer:
 
@@ -349,7 +390,8 @@ def ask_openrouter(message):
     except requests.exceptions.Timeout:
 
         print(
-            "OpenRouter ERROR: request timeout."
+            "OpenRouter ERROR: "
+            "2 second timeout."
         )
 
         return None
@@ -358,7 +400,8 @@ def ask_openrouter(message):
     except requests.exceptions.ConnectionError:
 
         print(
-            "OpenRouter ERROR: connection failed."
+            "OpenRouter ERROR: "
+            "connection failed."
         )
 
         return None
@@ -368,6 +411,172 @@ def ask_openrouter(message):
 
         print(
             "OpenRouter ERROR:",
+            e
+        )
+
+        return None
+
+
+# =========================================================
+# Groq - نص
+# =========================================================
+
+def ask_groq(message):
+
+    if not GROQ_API_KEY:
+
+        print(
+            "Groq ERROR: "
+            "API key غير موجود."
+        )
+
+        return None
+
+
+    if not message:
+
+        return None
+
+
+    try:
+
+        print(
+            "Trying Groq..."
+        )
+
+
+        response = requests.post(
+
+            GROQ_URL,
+
+            headers={
+
+                "Authorization":
+                    f"Bearer {GROQ_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    GROQ_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content":
+                            message
+                    }
+                ],
+
+                "temperature":
+                    0.7,
+
+                "max_completion_tokens":
+                    1024
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+
+        print(
+            "Groq Status:",
+            response.status_code
+        )
+
+
+        if response.status_code != 200:
+
+            print(
+                "Groq Response:",
+                response.text[:2000]
+            )
+
+            return None
+
+
+        try:
+
+            data = response.json()
+
+        except Exception as e:
+
+            print(
+                "Groq JSON ERROR:",
+                e
+            )
+
+            return None
+
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+
+        if choices:
+
+            message_data = choices[0].get(
+                "message",
+                {}
+            )
+
+
+            answer = clean_answer(
+                message_data.get(
+                    "content"
+                )
+            )
+
+
+            if answer:
+
+                print(
+                    "Groq response received."
+                )
+
+                return answer
+
+
+        print(
+            "Groq returned empty response."
+        )
+
+        return None
+
+
+    except requests.exceptions.Timeout:
+
+        print(
+            "Groq ERROR: "
+            "2 second timeout."
+        )
+
+        return None
+
+
+    except requests.exceptions.ConnectionError:
+
+        print(
+            "Groq ERROR: "
+            "connection failed."
+        )
+
+        return None
+
+
+    except Exception as e:
+
+        print(
+            "Groq ERROR:",
             e
         )
 
@@ -439,6 +648,7 @@ def ask_gemini_image(
             answer = clean_answer(
                 response.text
             )
+
 
             if answer:
 
@@ -649,7 +859,7 @@ def ask_openrouter_image(
 
         print(
             "OpenRouter IMAGE ERROR: "
-            "request timeout."
+            "2 second timeout."
         )
 
         return None
@@ -834,7 +1044,7 @@ def get_response(message):
 
 
     # =====================================================
-    # Gemini 3.6 Flash أولًا
+    # Gemini أولًا
     # =====================================================
 
     answer = ask_gemini(
@@ -868,7 +1078,27 @@ def get_response(message):
 
 
     # =====================================================
-    # فشل Gemini و OpenRouter
+    # Groq ثالثًا
+    # =====================================================
+
+    print(
+        "OpenRouter failed. "
+        "Trying Groq..."
+    )
+
+
+    answer = ask_groq(
+        original_message
+    )
+
+
+    if answer:
+
+        return answer
+
+
+    # =====================================================
+    # فشل جميع الخوادم
     # =====================================================
 
     return (
@@ -917,7 +1147,7 @@ def get_image_response(
 
 
     # =====================================================
-    # Gemini 3.6 Flash مع الصورة أولًا
+    # Gemini مع الصورة أولًا
     # =====================================================
 
     answer = ask_gemini_image(
