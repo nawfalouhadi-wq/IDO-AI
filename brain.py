@@ -43,9 +43,7 @@ GEMINI_MODEL = os.getenv(
     "gemini-3.6-flash"
 )
 
-
 gemini_client = None
-
 
 if GEMINI_API_KEY:
 
@@ -54,7 +52,7 @@ if GEMINI_API_KEY:
         gemini_client = genai.Client(
             api_key=GEMINI_API_KEY,
             http_options=HttpOptions(
-                timeout=2000
+                timeout=10000
             )
         )
 
@@ -91,11 +89,9 @@ OPENROUTER_API_KEY = os.getenv(
     "OPENROUTER_API_KEY"
 )
 
-
 OPENROUTER_URL = (
     "https://openrouter.ai/api/v1/chat/completions"
 )
-
 
 if OPENROUTER_API_KEY:
 
@@ -118,17 +114,14 @@ GROQ_API_KEY = os.getenv(
     "GROQ_API_KEY"
 )
 
-
 GROQ_URL = (
     "https://api.groq.com/openai/v1/chat/completions"
 )
-
 
 GROQ_MODEL = os.getenv(
     "GROQ_MODEL",
     "openai/gpt-oss-20b"
 )
-
 
 if GROQ_API_KEY:
 
@@ -149,12 +142,47 @@ else:
 
 
 # =========================================================
+# Mistral
+# =========================================================
+
+MISTRAL_API_KEY = os.getenv(
+    "MISTRAL_API_KEY"
+)
+
+MISTRAL_URL = (
+    "https://api.mistral.ai/v1/chat/completions"
+)
+
+MISTRAL_MODEL = os.getenv(
+    "MISTRAL_MODEL",
+    "mistral-small-latest"
+)
+
+if MISTRAL_API_KEY:
+
+    print(
+        "MISTRAL CLIENT: READY"
+    )
+
+    print(
+        "MISTRAL MODEL:",
+        MISTRAL_MODEL
+    )
+
+else:
+
+    print(
+        "MISTRAL_API_KEY: NOT FOUND"
+    )
+
+
+# =========================================================
 # معلومات التشغيل
 # =========================================================
 
 print(
     "BRAIN.PY LOADED - "
-    "GEMINI + OPENROUTER + GROQ READY"
+    "GEMINI + OPENROUTER + GROQ + MISTRAL READY"
 )
 
 
@@ -198,18 +226,15 @@ def ask_gemini(message):
 
         return None
 
-
     if not message:
 
         return None
-
 
     try:
 
         print(
             "Trying Gemini..."
         )
-
 
         response = (
             gemini_client.models.generate_content(
@@ -220,13 +245,11 @@ def ask_gemini(message):
             )
         )
 
-
         if response:
 
             answer = clean_answer(
                 response.text
             )
-
 
             if answer:
 
@@ -236,13 +259,11 @@ def ask_gemini(message):
 
                 return answer
 
-
         print(
             "Gemini returned empty response."
         )
 
         return None
-
 
     except Exception as e:
 
@@ -269,18 +290,15 @@ def ask_openrouter(message):
 
         return None
 
-
     if not message:
 
         return None
-
 
     try:
 
         print(
             "Trying OpenRouter..."
         )
-
 
         response = requests.post(
 
@@ -319,12 +337,10 @@ def ask_openrouter(message):
             timeout=REQUEST_TIMEOUT
         )
 
-
         print(
             "OpenRouter Status:",
             response.status_code
         )
-
 
         if response.status_code != 200:
 
@@ -334,7 +350,6 @@ def ask_openrouter(message):
             )
 
             return None
-
 
         try:
 
@@ -349,12 +364,10 @@ def ask_openrouter(message):
 
             return None
 
-
         choices = data.get(
             "choices",
             []
         )
-
 
         if choices:
 
@@ -363,13 +376,11 @@ def ask_openrouter(message):
                 {}
             )
 
-
             answer = clean_answer(
                 message_data.get(
                     "content"
                 )
             )
-
 
             if answer:
 
@@ -379,13 +390,11 @@ def ask_openrouter(message):
 
                 return answer
 
-
         print(
             "OpenRouter returned empty response."
         )
 
         return None
-
 
     except requests.exceptions.Timeout:
 
@@ -396,7 +405,6 @@ def ask_openrouter(message):
 
         return None
 
-
     except requests.exceptions.ConnectionError:
 
         print(
@@ -405,7 +413,6 @@ def ask_openrouter(message):
         )
 
         return None
-
 
     except Exception as e:
 
@@ -432,18 +439,15 @@ def ask_groq(message):
 
         return None
 
-
     if not message:
 
         return None
-
 
     try:
 
         print(
             "Trying Groq..."
         )
-
 
         response = requests.post(
 
@@ -485,12 +489,10 @@ def ask_groq(message):
             timeout=REQUEST_TIMEOUT
         )
 
-
         print(
             "Groq Status:",
             response.status_code
         )
-
 
         if response.status_code != 200:
 
@@ -500,7 +502,6 @@ def ask_groq(message):
             )
 
             return None
-
 
         try:
 
@@ -515,12 +516,10 @@ def ask_groq(message):
 
             return None
 
-
         choices = data.get(
             "choices",
             []
         )
-
 
         if choices:
 
@@ -529,13 +528,11 @@ def ask_groq(message):
                 {}
             )
 
-
             answer = clean_answer(
                 message_data.get(
                     "content"
                 )
             )
-
 
             if answer:
 
@@ -545,13 +542,11 @@ def ask_groq(message):
 
                 return answer
 
-
         print(
             "Groq returned empty response."
         )
 
         return None
-
 
     except requests.exceptions.Timeout:
 
@@ -562,7 +557,6 @@ def ask_groq(message):
 
         return None
 
-
     except requests.exceptions.ConnectionError:
 
         print(
@@ -572,11 +566,162 @@ def ask_groq(message):
 
         return None
 
-
     except Exception as e:
 
         print(
             "Groq ERROR:",
+            e
+        )
+
+        return None
+
+
+# =========================================================
+# Mistral - نص
+# =========================================================
+
+def ask_mistral(message):
+
+    if not MISTRAL_API_KEY:
+
+        print(
+            "Mistral ERROR: "
+            "API key غير موجود."
+        )
+
+        return None
+
+    if not message:
+
+        return None
+
+    try:
+
+        print(
+            "Trying Mistral..."
+        )
+
+        response = requests.post(
+
+            MISTRAL_URL,
+
+            headers={
+
+                "Authorization":
+                    f"Bearer {MISTRAL_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    MISTRAL_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content":
+                            message
+                    }
+                ],
+
+                "temperature":
+                    0.7,
+
+                "max_tokens":
+                    1024
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Mistral Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Mistral Response:",
+                response.text[:2000]
+            )
+
+            return None
+
+        try:
+
+            data = response.json()
+
+        except Exception as e:
+
+            print(
+                "Mistral JSON ERROR:",
+                e
+            )
+
+            return None
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if choices:
+
+            message_data = choices[0].get(
+                "message",
+                {}
+            )
+
+            answer = clean_answer(
+                message_data.get(
+                    "content"
+                )
+            )
+
+            if answer:
+
+                print(
+                    "Mistral response received."
+                )
+
+                return answer
+
+        print(
+            "Mistral returned empty response."
+        )
+
+        return None
+
+    except requests.exceptions.Timeout:
+
+        print(
+            "Mistral ERROR: "
+            "2 second timeout."
+        )
+
+        return None
+
+    except requests.exceptions.ConnectionError:
+
+        print(
+            "Mistral ERROR: "
+            "connection failed."
+        )
+
+        return None
+
+    except Exception as e:
+
+        print(
+            "Mistral ERROR:",
             e
         )
 
@@ -602,7 +747,6 @@ def ask_gemini_image(
 
         return None
 
-
     if not image_bytes:
 
         print(
@@ -612,13 +756,11 @@ def ask_gemini_image(
 
         return None
 
-
     try:
 
         print(
             "Trying Gemini with image..."
         )
-
 
         image_part = types.Part.from_bytes(
 
@@ -626,7 +768,6 @@ def ask_gemini_image(
 
             mime_type=mime_type
         )
-
 
         response = (
             gemini_client.models.generate_content(
@@ -642,13 +783,11 @@ def ask_gemini_image(
             )
         )
 
-
         if response:
 
             answer = clean_answer(
                 response.text
             )
-
 
             if answer:
 
@@ -658,14 +797,12 @@ def ask_gemini_image(
 
                 return answer
 
-
         print(
             "Gemini returned empty "
             "image response."
         )
 
         return None
-
 
     except Exception as e:
 
@@ -696,7 +833,6 @@ def ask_openrouter_image(
 
         return None
 
-
     if not image_bytes:
 
         print(
@@ -706,13 +842,11 @@ def ask_openrouter_image(
 
         return None
 
-
     try:
 
         print(
             "Trying OpenRouter with image..."
         )
-
 
         image_base64 = base64.b64encode(
             image_bytes
@@ -720,12 +854,10 @@ def ask_openrouter_image(
             "utf-8"
         )
 
-
         image_data_url = (
             f"data:{mime_type};base64,"
             f"{image_base64}"
         )
-
 
         response = requests.post(
 
@@ -785,12 +917,10 @@ def ask_openrouter_image(
             timeout=REQUEST_TIMEOUT
         )
 
-
         print(
             "OpenRouter Image Status:",
             response.status_code
         )
-
 
         if response.status_code != 200:
 
@@ -800,7 +930,6 @@ def ask_openrouter_image(
             )
 
             return None
-
 
         try:
 
@@ -815,12 +944,10 @@ def ask_openrouter_image(
 
             return None
 
-
         choices = data.get(
             "choices",
             []
         )
-
 
         if choices:
 
@@ -829,13 +956,11 @@ def ask_openrouter_image(
                 {}
             )
 
-
             answer = clean_answer(
                 message_data.get(
                     "content"
                 )
             )
-
 
             if answer:
 
@@ -846,14 +971,12 @@ def ask_openrouter_image(
 
                 return answer
 
-
         print(
             "OpenRouter returned empty "
             "image response."
         )
 
         return None
-
 
     except requests.exceptions.Timeout:
 
@@ -864,7 +987,6 @@ def ask_openrouter_image(
 
         return None
 
-
     except requests.exceptions.ConnectionError:
 
         print(
@@ -874,11 +996,202 @@ def ask_openrouter_image(
 
         return None
 
-
     except Exception as e:
 
         print(
             "OpenRouter IMAGE ERROR:",
+            e
+        )
+
+        return None
+
+
+# =========================================================
+# Mistral - صورة
+# =========================================================
+
+def ask_mistral_image(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not MISTRAL_API_KEY:
+
+        print(
+            "Mistral ERROR: "
+            "API key غير موجود."
+        )
+
+        return None
+
+    if not image_bytes:
+
+        print(
+            "Mistral IMAGE ERROR: "
+            "الصورة فارغة."
+        )
+
+        return None
+
+    try:
+
+        print(
+            "Trying Mistral with image..."
+        )
+
+        image_base64 = base64.b64encode(
+            image_bytes
+        ).decode(
+            "utf-8"
+        )
+
+        image_data_url = (
+            f"data:{mime_type};base64,"
+            f"{image_base64}"
+        )
+
+        response = requests.post(
+
+            MISTRAL_URL,
+
+            headers={
+
+                "Authorization":
+                    f"Bearer {MISTRAL_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    MISTRAL_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+
+                                "type":
+                                    "image_url",
+
+                                "image_url":
+                                    image_data_url
+                            }
+                        ]
+                    }
+                ],
+
+                "temperature":
+                    0.7,
+
+                "max_tokens":
+                    1024
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Mistral Image Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Mistral Image Response:",
+                response.text[:2000]
+            )
+
+            return None
+
+        try:
+
+            data = response.json()
+
+        except Exception as e:
+
+            print(
+                "Mistral Image JSON ERROR:",
+                e
+            )
+
+            return None
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if choices:
+
+            message_data = choices[0].get(
+                "message",
+                {}
+            )
+
+            answer = clean_answer(
+                message_data.get(
+                    "content"
+                )
+            )
+
+            if answer:
+
+                print(
+                    "Mistral image response "
+                    "received."
+                )
+
+                return answer
+
+        print(
+            "Mistral returned empty "
+            "image response."
+        )
+
+        return None
+
+    except requests.exceptions.Timeout:
+
+        print(
+            "Mistral IMAGE ERROR: "
+            "2 second timeout."
+        )
+
+        return None
+
+    except requests.exceptions.ConnectionError:
+
+        print(
+            "Mistral IMAGE ERROR: "
+            "connection failed."
+        )
+
+        return None
+
+    except Exception as e:
+
+        print(
+            "Mistral IMAGE ERROR:",
             e
         )
 
@@ -895,16 +1208,13 @@ def get_response(message):
 
         return "اكتب رسالة أولًا."
 
-
     original_message = str(
         message
     ).strip()
 
-
     if not original_message:
 
         return "اكتب رسالة أولًا."
-
 
     message_lower = (
         original_message.lower()
@@ -1051,7 +1361,6 @@ def get_response(message):
         original_message
     )
 
-
     if answer:
 
         return answer
@@ -1066,11 +1375,9 @@ def get_response(message):
         "Trying OpenRouter..."
     )
 
-
     answer = ask_openrouter(
         original_message
     )
-
 
     if answer:
 
@@ -1086,11 +1393,27 @@ def get_response(message):
         "Trying Groq..."
     )
 
-
     answer = ask_groq(
         original_message
     )
 
+    if answer:
+
+        return answer
+
+
+    # =====================================================
+    # Mistral رابعًا
+    # =====================================================
+
+    print(
+        "Groq failed. "
+        "Trying Mistral..."
+    )
+
+    answer = ask_mistral(
+        original_message
+    )
 
     if answer:
 
@@ -1122,11 +1445,9 @@ def get_image_response(
             "لم يتم إرسال صورة صالحة."
         )
 
-
     if not mime_type:
 
         mime_type = "image/jpeg"
-
 
     if not mime_type.startswith("image/"):
 
@@ -1134,14 +1455,12 @@ def get_image_response(
             "الملف المرسل ليس صورة صالحة."
         )
 
-
     if not message or not message.strip():
 
         message = (
             "حلل هذه الصورة واشرح لي "
             "ما الذي يظهر فيها."
         )
-
 
     message = message.strip()
 
@@ -1159,22 +1478,19 @@ def get_image_response(
         mime_type
     )
 
-
     if answer:
 
         return answer
 
 
     # =====================================================
-    # إذا فشل Gemini في الصورة
-    # الانتقال إلى OpenRouter
+    # OpenRouter مع الصورة ثانيًا
     # =====================================================
 
     print(
         "Gemini image failed. "
         "Trying OpenRouter image..."
     )
-
 
     answer = ask_openrouter_image(
 
@@ -1185,6 +1501,28 @@ def get_image_response(
         mime_type
     )
 
+    if answer:
+
+        return answer
+
+
+    # =====================================================
+    # Mistral مع الصورة ثالثًا
+    # =====================================================
+
+    print(
+        "OpenRouter image failed. "
+        "Trying Mistral image..."
+    )
+
+    answer = ask_mistral_image(
+
+        message,
+
+        image_bytes,
+
+        mime_type
+    )
 
     if answer:
 
@@ -1192,7 +1530,7 @@ def get_image_response(
 
 
     # =====================================================
-    # فشل Gemini و OpenRouter
+    # فشل جميع خوادم الصور
     # =====================================================
 
     return (
