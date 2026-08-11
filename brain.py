@@ -1,5 +1,6 @@
 import os
 import requests
+
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
@@ -21,9 +22,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 gemini_client = None
 
 if GEMINI_API_KEY:
-
     try:
-
         gemini_client = genai.Client(
             api_key=GEMINI_API_KEY
         )
@@ -31,11 +30,9 @@ if GEMINI_API_KEY:
         print("GEMINI CLIENT: READY")
 
     except Exception as e:
-
         print("GEMINI CLIENT ERROR:", e)
 
 else:
-
     print("GEMINI_API_KEY: NOT FOUND")
 
 
@@ -52,11 +49,8 @@ OPENROUTER_URL = (
 )
 
 if OPENROUTER_API_KEY:
-
     print("OPENROUTER CLIENT: READY")
-
 else:
-
     print("OPENROUTER_API_KEY: NOT FOUND")
 
 
@@ -73,33 +67,39 @@ print(
 def ask_gemini(message):
 
     if gemini_client is None:
-
-        print("Gemini ERROR: client غير جاهز.")
+        print(
+            "Gemini ERROR: "
+            "client غير جاهز."
+        )
 
         return None
 
     try:
-
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="GEMINI_MODEL_HERE",
             contents=message
         )
 
         if response and response.text:
-
-            print("Gemini response received.")
+            print(
+                "Gemini response received."
+            )
 
             return response.text.strip()
 
-        print("Gemini returned empty response.")
+        print(
+            "Gemini returned empty response."
+        )
 
         return None
 
     except Exception as e:
-
-        print("Gemini ERROR:", e)
+        print(
+            "Gemini ERROR:",
+            e
+        )
 
         return None
 
@@ -111,7 +111,6 @@ def ask_gemini(message):
 def ask_openrouter(message):
 
     if not OPENROUTER_API_KEY:
-
         print(
             "OpenRouter ERROR: "
             "API key غير موجود."
@@ -120,12 +119,10 @@ def ask_openrouter(message):
         return None
 
     try:
-
         print("Trying OpenRouter...")
 
         response = requests.post(
             OPENROUTER_URL,
-
             headers={
                 "Authorization":
                     f"Bearer {OPENROUTER_API_KEY}",
@@ -136,14 +133,11 @@ def ask_openrouter(message):
                 "X-Title":
                     "Aido AI"
             },
-
             json={
-
                 "model":
                     "openrouter/free",
 
                 "messages": [
-
                     {
                         "role":
                             "user",
@@ -151,10 +145,8 @@ def ask_openrouter(message):
                         "content":
                             message
                     }
-
                 ]
             },
-
             timeout=(10, 60)
         )
 
@@ -164,7 +156,6 @@ def ask_openrouter(message):
         )
 
         if response.status_code != 200:
-
             print(
                 "OpenRouter Response:",
                 response.text
@@ -177,7 +168,6 @@ def ask_openrouter(message):
         choices = data.get("choices")
 
         if choices:
-
             message_data = choices[0].get(
                 "message",
                 {}
@@ -188,7 +178,6 @@ def ask_openrouter(message):
             )
 
             if answer:
-
                 print(
                     "OpenRouter response received."
                 )
@@ -202,7 +191,6 @@ def ask_openrouter(message):
         return None
 
     except Exception as e:
-
         print(
             "OpenRouter ERROR:",
             e
@@ -222,7 +210,6 @@ def ask_gemini_image(
 ):
 
     if gemini_client is None:
-
         print(
             "Gemini ERROR: "
             "client غير جاهز."
@@ -231,7 +218,6 @@ def ask_gemini_image(
         return None
 
     try:
-
         print(
             "Trying Gemini with image..."
         )
@@ -243,7 +229,7 @@ def ask_gemini_image(
 
         response = (
             gemini_client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="GEMINI_MODEL_HERE",
 
                 contents=[
                     message,
@@ -253,7 +239,6 @@ def ask_gemini_image(
         )
 
         if response and response.text:
-
             print(
                 "Gemini image response received."
             )
@@ -268,7 +253,6 @@ def ask_gemini_image(
         return None
 
     except Exception as e:
-
         print(
             "Gemini IMAGE ERROR:",
             e
@@ -284,7 +268,6 @@ def ask_gemini_image(
 def get_response(message):
 
     if not message:
-
         return "اكتب رسالة أولًا."
 
     original_message = message.strip()
@@ -432,7 +415,6 @@ def get_response(message):
     for key, value in responses.items():
 
         if key in message_lower:
-
             return value
 
 
@@ -445,7 +427,6 @@ def get_response(message):
     )
 
     if answer:
-
         return answer
 
 
@@ -463,7 +444,6 @@ def get_response(message):
     )
 
     if answer:
-
         return answer
 
 
@@ -487,7 +467,6 @@ def get_image_response(
 ):
 
     if not message or not message.strip():
-
         message = (
             "حلل هذه الصورة واشرح لي "
             "ما الذي يظهر فيها."
@@ -505,7 +484,6 @@ def get_image_response(
     )
 
     if answer:
-
         return answer
 
 

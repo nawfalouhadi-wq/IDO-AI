@@ -18,7 +18,6 @@ except Exception as e:
     print("API error:", e)
     api_available = False
 
-
 # =========================
 # إنشاء تطبيق Flask
 # =========================
@@ -28,7 +27,6 @@ app = Flask(
     template_folder="templates"
 )
 
-
 # =========================
 # تسجيل API
 # =========================
@@ -36,15 +34,13 @@ app = Flask(
 if api_available:
     app.register_blueprint(api)
 
-
 # =========================
-# Aido AI Response
+# Ido AI Response
 # =========================
 
 def ai_response(question):
 
     try:
-
         question = question.strip()
 
         if not question:
@@ -55,42 +51,39 @@ def ai_response(question):
         # =========================
 
         try:
-
             result = calculate(question)
 
             if result is not None:
                 return f"النتيجة: {result}"
 
-        except Exception:
-            pass
+        except Exception as e:
+            print("CALCULATOR ERROR:", e)
 
         # =========================
         # الترجمة
         # =========================
 
         try:
-
             translated = translate(question)
 
             if translated and translated.lower() != question.lower():
                 return translated
 
-        except Exception:
-            pass
+        except Exception as e:
+            print("TRANSLATOR ERROR:", e)
 
         # =========================
         # الذاكرة
         # =========================
 
         try:
-
             memory_answer = get_answer(question)
 
             if memory_answer:
                 return memory_answer
 
-        except Exception:
-            pass
+        except Exception as e:
+            print("MEMORY ERROR:", e)
 
         # =========================
         # Gemini / OpenRouter / OpenAI
@@ -161,6 +154,9 @@ def home():
                         image_bytes,
                         mime_type
                     )
+
+                    if not answer:
+                        answer = "تعذر تحليل الصورة حاليًا."
 
             except Exception as e:
 
