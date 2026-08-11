@@ -19,24 +19,10 @@ load_dotenv()
 # إعدادات عامة
 # =========================================================
 
-# تقليل وقت الانتظار عند حدوث مشكلة في الاتصال.
-# هذا لا يبطئ الردود الناجحة، وإنما يجعل الانتقال إلى
-# OpenRouter أسرع إذا فشل Gemini.
-
 REQUEST_TIMEOUT = (
-    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "5")),
-    int(os.getenv("REQUEST_READ_TIMEOUT", "30"))
+    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "10")),
+    int(os.getenv("REQUEST_READ_TIMEOUT", "120"))
 )
-
-
-# =========================================================
-# جلسة OpenRouter
-# =========================================================
-
-# إعادة استخدام اتصال HTTP يساعد على تقليل الوقت
-# في الطلبات المتكررة.
-
-openrouter_session = requests.Session()
 
 
 # =========================================================
@@ -56,10 +42,7 @@ if GEMINI_API_KEY:
         gemini_client = genai.Client(
             api_key=GEMINI_API_KEY,
             http_options=HttpOptions(
-                # 3 ثوانٍ بدل 5 ثوانٍ.
-                # الهدف هو عدم انتظار Gemini طويلًا
-                # عند حدوث مشكلة قبل الانتقال إلى OpenRouter.
-                timeout=3000
+                timeout=5000
             )
         )
 
@@ -125,6 +108,7 @@ print(
 def clean_answer(answer):
 
     if answer is None:
+
         return None
 
     try:
@@ -132,6 +116,7 @@ def clean_answer(answer):
         answer = str(answer).strip()
 
         if not answer:
+
             return None
 
         return answer
@@ -167,12 +152,14 @@ def ask_gemini(message):
         )
 
         # =================================================
-        # الموديل كما هو بدون تغييره
+        # Gemini 3.6 Flash
         # =================================================
 
         response = (
             gemini_client.models.generate_content(
-                model="3.5",
+
+                model="gemini-3.6-flash",
+
                 contents=message
             )
         )
@@ -232,7 +219,7 @@ def ask_openrouter(message):
             "Trying OpenRouter..."
         )
 
-        response = openrouter_session.post(
+        response = requests.post(
 
             OPENROUTER_URL,
 
@@ -389,7 +376,9 @@ def ask_gemini_image(
         )
 
         image_part = types.Part.from_bytes(
+
             data=image_bytes,
+
             mime_type=mime_type
         )
 
@@ -397,13 +386,15 @@ def ask_gemini_image(
             gemini_client.models.generate_content(
 
                 # =================================================
-                # الموديل كما هو بدون تغييره
+                # Gemini 3.6 Flash
                 # =================================================
 
-                model="3.5",
+                model="gemini-3.6-flash",
 
                 contents=[
+
                     message,
+
                     image_part
                 ]
             )
@@ -485,7 +476,7 @@ def ask_openrouter_image(
             f"{image_base64}"
         )
 
-        response = openrouter_session.post(
+        response = requests.post(
 
             OPENROUTER_URL,
 
