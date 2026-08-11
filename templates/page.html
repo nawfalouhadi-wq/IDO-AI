@@ -83,7 +83,6 @@
             content: "";
 
             position: fixed;
-
             inset: 0;
 
             background: rgba(255, 255, 255, 0.72);
@@ -288,7 +287,7 @@
         }
 
         /* =====================================================
-           HISTORY SEARCH
+           HISTORY
         ===================================================== */
 
         .history-search {
@@ -756,6 +755,16 @@
             background: var(--surface-2);
 
             border-color: var(--primary);
+        }
+
+        .message-action.stop-reading {
+            color: var(--danger);
+        }
+
+        .message-action.stop-reading:hover {
+            border-color: var(--danger);
+
+            background: rgba(239, 68, 68, 0.08);
         }
 
         .message-action .icon {
@@ -1593,7 +1602,6 @@
                 id="newChatBtn"
                 type="button"
             >
-
                 <span class="icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 5v14"></path>
@@ -1604,14 +1612,12 @@
                 <span>
                     محادثة جديدة
                 </span>
-
             </button>
 
             <div class="sidebar-title">
                 المحادثات
             </div>
 
-            <!-- البحث في المحادثات -->
             <input
                 type="search"
                 class="history-search"
@@ -1633,7 +1639,6 @@
                     id="exportBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M12 3v12"></path>
@@ -1645,7 +1650,6 @@
                     <span>
                         تصدير المحادثة
                     </span>
-
                 </button>
 
                 <button
@@ -1653,7 +1657,6 @@
                     id="copyChatBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <rect
@@ -1671,7 +1674,6 @@
                     <span>
                         نسخ المحادثة
                     </span>
-
                 </button>
 
                 <button
@@ -1679,7 +1681,6 @@
                     id="themeBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3A6.7 6.7 0 0 0 21 12.8z"></path>
@@ -1689,7 +1690,6 @@
                     <span id="themeText">
                         الوضع الليلي
                     </span>
-
                 </button>
 
                 <button
@@ -1697,7 +1697,6 @@
                     id="backgroundBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <rect
@@ -1721,7 +1720,6 @@
                     <span>
                         خلفية الجهاز
                     </span>
-
                 </button>
 
                 <button
@@ -1729,7 +1727,6 @@
                     id="clearBackgroundBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M4 4l16 16"></path>
@@ -1740,7 +1737,6 @@
                     <span>
                         إزالة الخلفية
                     </span>
-
                 </button>
 
                 <button
@@ -1748,7 +1744,6 @@
                     id="clearBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M3 6h18"></path>
@@ -1762,7 +1757,6 @@
                     <span>
                         مسح المحادثات
                     </span>
-
                 </button>
 
             </div>
@@ -1786,17 +1780,13 @@
                         title="القائمة"
                         aria-label="فتح القائمة"
                     >
-
                         <span class="icon">
-
                             <svg viewBox="0 0 24 24">
                                 <path d="M4 6h16"></path>
                                 <path d="M4 12h16"></path>
                                 <path d="M4 18h16"></path>
                             </svg>
-
                         </span>
-
                     </button>
 
                     <div class="model-logo">
@@ -1821,7 +1811,6 @@
                     class="status"
                     id="status"
                 >
-
                     <span
                         class="status-dot"
                         id="statusDot"
@@ -1830,7 +1819,6 @@
                     <span id="statusText">
                         متصل
                     </span>
-
                 </div>
 
             </header>
@@ -1938,6 +1926,7 @@
                             autocomplete="off"
                             placeholder="اكتب رسالتك هنا..."
                             aria-label="رسالتك"
+                            maxlength="4000"
                         ></textarea>
 
                         <div class="composer-meta">
@@ -1956,7 +1945,6 @@
                                 title="إضافة صورة"
                                 aria-label="إضافة صورة"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <rect
                                         x="3"
@@ -1974,7 +1962,6 @@
 
                                     <path d="M21 15l-5-5L5 20"></path>
                                 </svg>
-
                             </button>
 
                             <!-- تحويل الكلام إلى نص -->
@@ -1985,7 +1972,6 @@
                                 title="تحويل الكلام إلى نص"
                                 aria-label="تحويل الكلام إلى نص"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <rect
                                         x="9"
@@ -1999,7 +1985,6 @@
                                     <path d="M12 18v3"></path>
                                     <path d="M8 21h8"></path>
                                 </svg>
-
                             </button>
 
                             <!-- المحادثة الصوتية -->
@@ -2010,7 +1995,6 @@
                                 title="المحادثة الصوتية"
                                 aria-label="المحادثة الصوتية"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <path d="M12 2v20"></path>
                                     <path d="M5 9v6"></path>
@@ -2018,7 +2002,6 @@
                                     <path d="M8 6v12"></path>
                                     <path d="M16 6v12"></path>
                                 </svg>
-
                             </button>
 
                             <!-- قراءة آخر إجابة -->
@@ -2029,13 +2012,31 @@
                                 title="قراءة آخر إجابة"
                                 aria-label="قراءة آخر إجابة"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <path d="M11 5L6 9H3v6h3l5 4z"></path>
                                     <path d="M15 9a4 4 0 0 1 0 6"></path>
                                     <path d="M18 6a8 8 0 0 1 0 12"></path>
                                 </svg>
+                            </button>
 
+                            <!-- إيقاف القراءة -->
+                            <button
+                                type="button"
+                                class="tool"
+                                id="stopReadingBtn"
+                                title="إيقاف القراءة"
+                                aria-label="إيقاف القراءة"
+                                style="display: none;"
+                            >
+                                <svg viewBox="0 0 24 24">
+                                    <rect
+                                        x="6"
+                                        y="6"
+                                        width="12"
+                                        height="12"
+                                        rx="2"
+                                    ></rect>
+                                </svg>
                             </button>
 
                             <!-- إرسال -->
@@ -2046,12 +2047,10 @@
                                 title="إرسال"
                                 aria-label="إرسال"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <path d="M22 2L11 13"></path>
                                     <path d="M22 2l-7 20-4-9-9-4z"></path>
                                 </svg>
-
                             </button>
 
                         </div>
@@ -2077,7 +2076,7 @@
     >
 
     <!-- =========================================================
-         TOAST CONTAINER
+         TOAST
     ========================================================== -->
 
     <div
@@ -2212,6 +2211,8 @@
         const micBtn = document.getElementById("micBtn");
         const voiceChatBtn = document.getElementById("voiceChatBtn");
         const voiceBtn2 = document.getElementById("voiceBtn2");
+        const stopReadingBtn =
+            document.getElementById("stopReadingBtn");
 
         const voicePanel = document.getElementById("voicePanel");
         const voiceStart = document.getElementById("voiceStart");
@@ -2245,11 +2246,13 @@
 
         let conversations = [];
 
+        let isReading = false;
+
         const MAX_MESSAGE_LENGTH = 4000;
 
 
         /* =========================================================
-           STORAGE KEYS
+           STORAGE
         ========================================================= */
 
         const STORAGE_CONVERSATIONS = "aido_conversations";
@@ -2271,16 +2274,15 @@
                 document.createElement("div");
 
             toast.className = "toast";
-
             toast.textContent = message;
 
             toastContainer.appendChild(toast);
 
             setTimeout(
                 function () {
-
-                    toast.remove();
-
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
                 },
                 3100
             );
@@ -2288,7 +2290,7 @@
 
 
         /* =========================================================
-           LOAD CONVERSATIONS
+           CONVERSATIONS
         ========================================================= */
 
         function loadConversations() {
@@ -2320,10 +2322,6 @@
             }
         }
 
-
-        /* =========================================================
-           SAVE CONVERSATIONS
-        ========================================================= */
 
         function saveConversations() {
 
@@ -2397,9 +2395,7 @@
 
                     localStorage.setItem(
                         STORAGE_THEME,
-                        dark
-                            ? "dark"
-                            : "light"
+                        dark ? "dark" : "light"
                     );
 
                 } catch (error) {
@@ -2463,7 +2459,6 @@
         backgroundBtn.addEventListener(
             "click",
             function () {
-
                 backgroundInput.click();
             }
         );
@@ -2534,6 +2529,14 @@
                         }
                     };
 
+                reader.onerror =
+                    function () {
+
+                        showToast(
+                            "تعذر قراءة صورة الخلفية."
+                        );
+                    };
+
                 reader.readAsDataURL(file);
             }
         );
@@ -2580,7 +2583,6 @@
         mobileMenu.addEventListener(
             "click",
             function () {
-
                 sidebar.classList.toggle("open");
             }
         );
@@ -2593,7 +2595,6 @@
         imageBtn.addEventListener(
             "click",
             function () {
-
                 imageInput.click();
             }
         );
@@ -2686,7 +2687,10 @@
 
             const height =
                 Math.min(
-                    questionInput.scrollHeight,
+                    Math.max(
+                        questionInput.scrollHeight,
+                        45
+                    ),
                     150
                 );
 
@@ -2703,16 +2707,10 @@
             characterCount.textContent =
                 `${length} / ${MAX_MESSAGE_LENGTH}`;
 
-            if (length >= MAX_MESSAGE_LENGTH) {
-
-                characterCount.style.color =
-                    "var(--danger)";
-
-            } else {
-
-                characterCount.style.color =
-                    "var(--muted)";
-            }
+            characterCount.style.color =
+                length >= MAX_MESSAGE_LENGTH
+                    ? "var(--danger)"
+                    : "var(--muted)";
         }
 
 
@@ -2733,7 +2731,6 @@
                 }
 
                 resizeTextarea();
-
                 updateCharacterCount();
             }
         );
@@ -2768,12 +2765,166 @@
 
             requestAnimationFrame(
                 function () {
-
                     chat.scrollTop =
                         chat.scrollHeight;
                 }
             );
         }
+
+
+        /* =========================================================
+           TEXT TO SPEECH
+           القراءة الخاصة بإجابات الشات
+        ========================================================= */
+
+        function updateReadingButton() {
+
+            if (!stopReadingBtn) {
+                return;
+            }
+
+            stopReadingBtn.style.display =
+                isReading
+                    ? "flex"
+                    : "none";
+
+            voiceBtn2.style.display =
+                isReading
+                    ? "none"
+                    : "flex";
+        }
+
+
+        function stopReading(showMessage = false) {
+
+            if (
+                "speechSynthesis" in window
+            ) {
+
+                window.speechSynthesis.cancel();
+            }
+
+            isReading = false;
+
+            voiceAI.classList.remove(
+                "active"
+            );
+
+            updateReadingButton();
+
+            if (showMessage) {
+
+                showToast(
+                    "تم إيقاف القراءة."
+                );
+            }
+        }
+
+
+        function speakText(text) {
+
+            if (!text) {
+                return;
+            }
+
+            if (
+                !("speechSynthesis" in window)
+            ) {
+
+                showToast(
+                    "المتصفح لا يدعم قراءة النص صوتيًا."
+                );
+
+                return;
+            }
+
+            stopReading(false);
+
+            const utterance =
+                new SpeechSynthesisUtterance(
+                    text
+                );
+
+            utterance.lang = "ar-SA";
+            utterance.rate = 0.95;
+            utterance.pitch = 1;
+
+            isReading = true;
+
+            updateReadingButton();
+
+            utterance.onstart =
+                function () {
+
+                    isReading = true;
+
+                    voiceAI.classList.add(
+                        "active"
+                    );
+
+                    updateReadingButton();
+                };
+
+            utterance.onend =
+                function () {
+
+                    isReading = false;
+
+                    voiceAI.classList.remove(
+                        "active"
+                    );
+
+                    updateReadingButton();
+                };
+
+            utterance.onerror =
+                function (event) {
+
+                    console.error(
+                        "Speech synthesis error:",
+                        event
+                    );
+
+                    isReading = false;
+
+                    voiceAI.classList.remove(
+                        "active"
+                    );
+
+                    updateReadingButton();
+                };
+
+            window.speechSynthesis.speak(
+                utterance
+            );
+        }
+
+
+        voiceBtn2.addEventListener(
+            "click",
+            function () {
+
+                if (!lastAnswer) {
+
+                    showToast(
+                        "لا توجد إجابة لقراءتها."
+                    );
+
+                    return;
+                }
+
+                speakText(lastAnswer);
+            }
+        );
+
+
+        stopReadingBtn.addEventListener(
+            "click",
+            function () {
+
+                stopReading(true);
+            }
+        );
 
 
         /* =========================================================
@@ -2783,7 +2934,8 @@
         function addMessage(
             text,
             type,
-            imageUrl = null
+            imageUrl = null,
+            autoRead = false
         ) {
 
             welcome.classList.add("hidden");
@@ -2924,15 +3076,69 @@
                     "click",
                     function () {
 
+                        lastAnswer = text;
+
                         speakText(text);
                     }
                 );
 
 
-                actions.appendChild(copyButton);
-                actions.appendChild(speakButton);
+                /* STOP */
 
-                message.appendChild(actions);
+                const stopButton =
+                    document.createElement("button");
+
+                stopButton.className =
+                    "message-action stop-reading";
+
+                stopButton.type =
+                    "button";
+
+                stopButton.title =
+                    "إيقاف القراءة";
+
+                stopButton.innerHTML = `
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect
+                                x="6"
+                                y="6"
+                                width="12"
+                                height="12"
+                                rx="2"
+                            ></rect>
+                        </svg>
+                    </span>
+
+                    <span class="message-action-label">
+                        إيقاف
+                    </span>
+                `;
+
+                stopButton.addEventListener(
+                    "click",
+                    function () {
+
+                        stopReading(true);
+                    }
+                );
+
+
+                actions.appendChild(
+                    copyButton
+                );
+
+                actions.appendChild(
+                    speakButton
+                );
+
+                actions.appendChild(
+                    stopButton
+                );
+
+                message.appendChild(
+                    actions
+                );
             }
 
             chatInner.insertBefore(
@@ -2941,6 +3147,20 @@
             );
 
             scrollToBottom();
+
+            if (
+                type === "ai" &&
+                autoRead &&
+                text
+            ) {
+
+                setTimeout(
+                    function () {
+                        speakText(text);
+                    },
+                    150
+                );
+            }
         }
 
 
@@ -3059,10 +3279,9 @@
                 }
             );
 
-            const text =
-                parts.join("\n\n");
-
-            await copyText(text);
+            await copyText(
+                parts.join("\n\n")
+            );
         }
 
 
@@ -3073,7 +3292,7 @@
 
 
         /* =========================================================
-           EXPORT CURRENT CHAT
+           EXPORT
         ========================================================= */
 
         function exportCurrentChat() {
@@ -3157,9 +3376,7 @@
 
             setTimeout(
                 function () {
-
                     URL.revokeObjectURL(url);
-
                 },
                 1000
             );
@@ -3173,86 +3390,6 @@
         exportBtn.addEventListener(
             "click",
             exportCurrentChat
-        );
-
-
-        /* =========================================================
-           TEXT TO SPEECH
-        ========================================================= */
-
-        function speakText(text) {
-
-            if (!text) {
-                return;
-            }
-
-            if (
-                !("speechSynthesis" in window)
-            ) {
-
-                showToast(
-                    "المتصفح لا يدعم قراءة النص صوتيًا."
-                );
-
-                return;
-            }
-
-            window.speechSynthesis.cancel();
-
-            const utterance =
-                new SpeechSynthesisUtterance(
-                    text
-                );
-
-            utterance.lang = "ar-SA";
-            utterance.rate = 0.95;
-            utterance.pitch = 1;
-
-            utterance.onstart =
-                function () {
-
-                    voiceAI.classList.add(
-                        "active"
-                    );
-                };
-
-            utterance.onend =
-                function () {
-
-                    voiceAI.classList.remove(
-                        "active"
-                    );
-                };
-
-            utterance.onerror =
-                function () {
-
-                    voiceAI.classList.remove(
-                        "active"
-                    );
-                };
-
-            window.speechSynthesis.speak(
-                utterance
-            );
-        }
-
-
-        voiceBtn2.addEventListener(
-            "click",
-            function () {
-
-                if (lastAnswer) {
-
-                    speakText(lastAnswer);
-
-                } else {
-
-                    showToast(
-                        "لا توجد إجابة لقراءتها."
-                    );
-                }
-            }
         );
 
 
@@ -3376,7 +3513,7 @@
 
 
         /* =========================================================
-           DELETE ONE HISTORY ITEM
+           DELETE HISTORY ITEM
         ========================================================= */
 
         function deleteConversation(index) {
@@ -3413,11 +3550,9 @@
             history.innerHTML = "";
 
             const search =
-                historySearch
-                    ? historySearch.value
-                        .trim()
-                        .toLowerCase()
-                    : "";
+                historySearch.value
+                    .trim()
+                    .toLowerCase();
 
             const filtered =
                 conversations
@@ -3464,7 +3599,9 @@
                         ? "لا توجد نتائج."
                         : "لا توجد محادثات محفوظة";
 
-                history.appendChild(empty);
+                history.appendChild(
+                    empty
+                );
 
                 return;
             }
@@ -3537,15 +3674,25 @@
                         }
                     );
 
-                    historyItem.appendChild(title);
-                    historyItem.appendChild(date);
-                    historyItem.appendChild(deleteButton);
+                    historyItem.appendChild(
+                        title
+                    );
+
+                    historyItem.appendChild(
+                        date
+                    );
+
+                    historyItem.appendChild(
+                        deleteButton
+                    );
 
                     historyItem.addEventListener(
                         "click",
                         function () {
 
-                            loadConversation(index);
+                            loadConversation(
+                                index
+                            );
 
                             sidebar.classList.remove(
                                 "open"
@@ -3561,16 +3708,9 @@
         }
 
 
-        /* =========================================================
-           HISTORY SEARCH
-        ========================================================= */
-
         historySearch.addEventListener(
             "input",
-            function () {
-
-                renderHistory();
-            }
+            renderHistory
         );
 
 
@@ -3586,6 +3726,8 @@
             if (!conversation) {
                 return;
             }
+
+            stopReading(false);
 
             clearChat(false);
 
@@ -3618,6 +3760,8 @@
             showWelcome = true
         ) {
 
+            stopReading(false);
+
             const messages =
                 chatInner.querySelectorAll(
                     ".message"
@@ -3625,7 +3769,6 @@
 
             messages.forEach(
                 function (message) {
-
                     message.remove();
                 }
             );
@@ -3726,7 +3869,7 @@
 
 
         /* =========================================================
-           READ SERVER RESPONSE
+           SERVER RESPONSE
         ========================================================= */
 
         async function extractServerAnswer(
@@ -3751,7 +3894,6 @@
                 );
 
             if (!answerElement) {
-
                 return "";
             }
 
@@ -3787,6 +3929,8 @@
 
                     return;
                 }
+
+                stopReading(false);
 
                 const imageFile =
                     selectedImage;
@@ -3947,6 +4091,11 @@
 
                     setTyping(false);
 
+                    /*
+                     * لا نقرأ الإجابة تلقائيًا في الشات الكتابي.
+                     * القراءة التلقائية هنا تكون فقط عند استخدام
+                     * المحادثة الصوتية.
+                     */
                     addMessage(
                         answer,
                         "ai"
@@ -3959,6 +4108,15 @@
                     );
 
                     setOnlineStatus(true);
+
+                    /*
+                     * إذا كانت هذه محادثة صوتية،
+                     * اقرأ الإجابة صوتيًا بعد وصولها.
+                     */
+                    if (voiceMode) {
+
+                        speakText(answer);
+                    }
 
                 } catch (error) {
 
@@ -3981,6 +4139,18 @@
                         errorMessage,
                         "ai"
                     );
+
+                    /*
+                     * في حالة المحادثة الصوتية أيضًا،
+                     * نقرأ رسالة الخطأ حتى لا تبقى المحادثة
+                     * صامتة.
+                     */
+                    if (voiceMode) {
+
+                        speakText(
+                            errorMessage
+                        );
+                    }
 
                 } finally {
 
@@ -4015,7 +4185,6 @@
                 window.webkitSpeechRecognition;
 
             if (!SpeechRecognition) {
-
                 return false;
             }
 
@@ -4083,7 +4252,7 @@
                     function (event) {
 
                         console.error(
-                            "Speech error:",
+                            "Speech recognition error:",
                             event.error
                         );
 
@@ -4101,6 +4270,13 @@
 
                             voiceStatus.textContent =
                                 "حدث خطأ أثناء الاستماع.";
+
+                            voiceStart.classList.remove(
+                                "recording"
+                            );
+
+                            voiceStart.textContent =
+                                "بدء المحادثة";
                         }
                     };
 
@@ -4114,30 +4290,49 @@
                             "active"
                         );
 
-                        voiceAI.classList.remove(
-                            "active"
-                        );
-
+                        /*
+                         * لا نحذف voiceMode هنا قبل إرسال الرسالة،
+                         * لأن submit يحتاج معرفة أن الطلب صوتي
+                         * حتى يقرأ الإجابة تلقائيًا.
+                         */
                         if (voiceMode) {
 
-                            voiceMode = false;
+                            voiceAI.classList.remove(
+                                "active"
+                            );
 
                             voiceStart.classList.remove(
                                 "recording"
                             );
 
                             voiceStart.textContent =
-                                "بدء المحادثة";
-
-                            voiceStatus.textContent =
-                                "تم التقاط الكلام.";
+                                "إيقاف المحادثة";
 
                             if (
                                 questionInput.value.trim()
                             ) {
 
+                                voiceStatus.textContent =
+                                    "جاري إرسال كلامك إلى Aido AI...";
+
                                 chatForm.requestSubmit();
+
+                            } else {
+
+                                voiceStatus.textContent =
+                                    "لم ألتقط كلامًا واضحًا.";
+
+                                voiceMode = false;
+
+                                voiceStart.textContent =
+                                    "بدء المحادثة";
                             }
+
+                        } else {
+
+                            voiceAI.classList.remove(
+                                "active"
+                            );
                         }
                     };
 
@@ -4189,6 +4384,12 @@
 
                 } else {
 
+                    /*
+                     * الميكروفون العادي:
+                     * تحويل الكلام إلى نص فقط.
+                     */
+                    voiceMode = false;
+
                     try {
 
                         recognition.start();
@@ -4225,6 +4426,9 @@
                 voicePanel.classList.add(
                     "show"
                 );
+
+                voiceStatus.textContent =
+                    "اضغط لبدء المحادثة";
             }
         );
 
@@ -4287,6 +4491,11 @@
 
                     return;
                 }
+
+                /*
+                 * إيقاف أي قراءة سابقة قبل بدء محادثة صوتية.
+                 */
+                stopReading(false);
 
                 voiceMode = true;
 
@@ -4427,6 +4636,8 @@
 
                 if (event.key === "Escape") {
 
+                    stopReading(false);
+
                     stopVoiceChat();
 
                     voicePanel.classList.remove(
@@ -4436,6 +4647,21 @@
                     sidebar.classList.remove(
                         "open"
                     );
+                }
+            }
+        );
+
+
+        /* =========================================================
+           PAGE VISIBILITY
+        ========================================================= */
+
+        document.addEventListener(
+            "visibilitychange",
+            function () {
+
+                if (document.hidden) {
+                    stopReading(false);
                 }
             }
         );
@@ -4457,7 +4683,28 @@
 
         updateCharacterCount();
 
-        setOnlineStatus(true);
+        updateReadingButton();
+
+        setOnlineStatus(
+            navigator.onLine
+        );
+
+
+        window.addEventListener(
+            "online",
+            function () {
+                setOnlineStatus(true);
+            }
+        );
+
+
+        window.addEventListener(
+            "offline",
+            function () {
+                setOnlineStatus(false);
+            }
+        );
+
     </script>
 
 </body>
