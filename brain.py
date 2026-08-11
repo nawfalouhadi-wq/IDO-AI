@@ -6,6 +6,7 @@ from google.genai import types
 from openai import OpenAI
 
 # تحميل ملف .env
+
 load_dotenv()
 
 # =========================================================
@@ -130,7 +131,7 @@ def ask_openrouter(message):
                 "X-Title": "Aido AI"
             },
             json={
-                "model": "openai/gpt-5.6-luna",
+                "model": "openrouter/free",
                 "messages": [
                     {
                         "role": "user",
