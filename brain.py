@@ -53,7 +53,6 @@ if OPENROUTER_API_KEY:
 else:
     print("OPENROUTER_API_KEY: NOT FOUND")
 
-
 print(
     "BRAIN.PY LOADED - "
     "GEMINI + OPENROUTER READY"
@@ -78,7 +77,7 @@ def ask_gemini(message):
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="GEMINI_MODEL_HERE",
+            model="3.5",
             contents=message
         )
 
@@ -147,7 +146,10 @@ def ask_openrouter(message):
                     }
                 ]
             },
-            timeout=(10, 60)
+
+            # 5 ثوانٍ للاتصال
+            # 30 ثانية لانتظار الرد
+            timeout=(5, 30)
         )
 
         print(
@@ -186,6 +188,14 @@ def ask_openrouter(message):
 
         print(
             "OpenRouter returned empty response."
+        )
+
+        return None
+
+    except requests.exceptions.Timeout:
+        print(
+            "OpenRouter TIMEOUT: "
+            "انتهت مهلة 30 ثانية."
         )
 
         return None
@@ -229,7 +239,7 @@ def ask_gemini_image(
 
         response = (
             gemini_client.models.generate_content(
-                model="GEMINI_MODEL_HERE",
+                model="3.5",
 
                 contents=[
                     message,
