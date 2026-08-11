@@ -2,42 +2,26 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <meta name="description" content="Aido AI - مساعد الذكاء الاصطناعي">
-
     <meta name="theme-color" content="#2563eb">
 
     <title>Aido AI</title>
 
-
     <style>
-
-        /* =========================================================
-           RESET
-        ========================================================= */
-
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
-
-        /* =========================================================
-           COLORS
-        ========================================================= */
-
         :root {
-
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
 
             --background: #f5f7fb;
-
             --surface: #ffffff;
             --surface-2: #f1f5f9;
 
@@ -49,124 +33,80 @@
             --success: #22c55e;
             --danger: #ef4444;
 
-            --shadow:
-                0 4px 20px rgba(0, 0, 0, 0.06);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 
             --radius: 12px;
         }
 
-
-        /* =========================================================
-           DARK MODE
-        ========================================================= */
-
         body.dark {
-
             --background: #111827;
-
             --surface: #1f2937;
-
             --surface-2: #374151;
-
-            --border: #374151;
+            --border: #4b5563;
 
             --text: #f9fafb;
-
             --muted: #9ca3af;
 
-            --shadow:
-                0 4px 20px rgba(0, 0, 0, 0.25);
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
         }
-
-
-        /* =========================================================
-           HTML / BODY
-        ========================================================= */
 
         html,
         body {
-
             width: 100%;
             height: 100%;
         }
 
-
         body {
-
-            font-family:
-                Arial,
-                Tahoma,
-                sans-serif;
-
-            background:
-                var(--background);
-
-            color:
-                var(--text);
-
-            overflow:
-                hidden;
+            font-family: Arial, Tahoma, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            overflow: hidden;
 
             transition:
                 background 0.2s ease,
                 color 0.2s ease;
         }
 
-
         button,
         textarea,
         input {
-
             font-family: inherit;
         }
 
-
         button {
-
             border: none;
         }
 
-
         button:focus-visible,
         textarea:focus-visible {
-
-            outline:
-                2px solid var(--primary);
-
-            outline-offset:
-                2px;
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            APP
-        ========================================================= */
+        ===================================================== */
 
         .app {
-
             width: 100%;
             height: 100vh;
 
             display: flex;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            SIDEBAR
-        ========================================================= */
+        ===================================================== */
 
         .sidebar {
-
             width: 270px;
             height: 100%;
 
             flex-shrink: 0;
 
-            background:
-                var(--surface);
+            background: var(--surface);
 
-            border-left:
-                1px solid var(--border);
+            border-left: 1px solid var(--border);
 
             display: flex;
             flex-direction: column;
@@ -175,15 +115,11 @@
 
             z-index: 900;
 
-            transition:
-                right 0.25s ease;
+            transition: right 0.25s ease;
         }
 
-
         .brand {
-
             display: flex;
-
             align-items: center;
 
             gap: 12px;
@@ -191,62 +127,46 @@
             margin-bottom: 25px;
         }
 
-
         .brand-logo,
         .model-logo,
         .welcome-logo {
-
             display: flex;
 
             align-items: center;
             justify-content: center;
 
-            background:
-                var(--primary);
+            background: var(--primary);
 
-            color:
-                #ffffff;
+            color: #ffffff;
 
-            font-weight:
-                bold;
+            font-weight: bold;
         }
 
-
         .brand-logo {
-
             width: 46px;
             height: 46px;
 
             border-radius: 14px;
         }
 
-
         .brand-name {
-
             font-size: 19px;
-
             font-weight: bold;
         }
 
-
         .brand-version {
-
             display: block;
 
             margin-top: 3px;
 
-            color:
-                var(--muted);
+            color: var(--muted);
 
             font-size: 12px;
         }
 
-
         .new-chat,
         .side-btn {
-
             width: 100%;
-
             min-height: 44px;
 
             padding: 11px 12px;
@@ -256,53 +176,49 @@
             cursor: pointer;
 
             display: flex;
-
             align-items: center;
 
             gap: 10px;
 
-            color:
-                var(--text);
+            color: var(--text);
 
-            background:
-                transparent;
+            background: transparent;
 
             font-size: 14px;
 
             text-align: right;
+
+            transition:
+                background 0.2s ease,
+                transform 0.1s ease;
         }
 
-
         .new-chat {
-
             justify-content: center;
 
-            background:
-                var(--primary);
+            background: var(--primary);
 
-            color:
-                #ffffff;
+            color: #ffffff;
 
             margin-bottom: 22px;
         }
 
-
         .new-chat:hover {
-
-            background:
-                var(--primary-hover);
+            background: var(--primary-hover);
         }
-
 
         .side-btn:hover {
-
-            background:
-                var(--surface-2);
+            background: var(--surface-2);
         }
 
+        .new-chat:active,
+        .side-btn:active,
+        .tool:active,
+        .send-btn:active {
+            transform: scale(0.97);
+        }
 
         .icon {
-
             width: 20px;
             height: 20px;
 
@@ -311,41 +227,29 @@
             flex-shrink: 0;
         }
 
-
         svg {
-
             width: 100%;
             height: 100%;
 
             fill: none;
 
-            stroke:
-                currentColor;
+            stroke: currentColor;
 
-            stroke-width:
-                1.8;
+            stroke-width: 1.8;
 
-            stroke-linecap:
-                round;
-
-            stroke-linejoin:
-                round;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
 
-
         .sidebar-title {
-
-            color:
-                var(--muted);
+            color: var(--muted);
 
             font-size: 13px;
 
             margin-bottom: 10px;
         }
 
-
         .history {
-
             flex: 1;
 
             overflow-y: auto;
@@ -353,9 +257,7 @@
             padding-left: 2px;
         }
 
-
         .history-item {
-
             padding: 10px;
 
             margin-bottom: 5px;
@@ -370,49 +272,36 @@
 
             white-space: nowrap;
 
-            text-overflow:
-                ellipsis;
-        }
+            text-overflow: ellipsis;
 
+            transition: background 0.2s ease;
+        }
 
         .history-item:hover {
-
-            background:
-                var(--surface-2);
+            background: var(--surface-2);
         }
 
-
         .history-empty {
-
-            color:
-                var(--muted);
+            color: var(--muted);
 
             font-size: 13px;
 
-            text-align:
-                center;
+            text-align: center;
 
-            padding:
-                20px 10px;
+            padding: 20px 10px;
         }
-
 
         .sidebar-bottom {
+            border-top: 1px solid var(--border);
 
-            border-top:
-                1px solid var(--border);
-
-            padding-top:
-                12px;
+            padding-top: 12px;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            MAIN
-        ========================================================= */
+        ===================================================== */
 
         .main {
-
             flex: 1;
 
             min-width: 0;
@@ -424,37 +313,29 @@
             flex-direction: column;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            TOPBAR
-        ========================================================= */
+        ===================================================== */
 
         .topbar {
-
             height: 70px;
 
             flex-shrink: 0;
 
-            padding:
-                0 22px;
+            padding: 0 22px;
 
-            background:
-                var(--surface);
+            background: var(--surface);
 
-            border-bottom:
-                1px solid var(--border);
+            border-bottom: 1px solid var(--border);
 
             display: flex;
 
             align-items: center;
 
-            justify-content:
-                space-between;
+            justify-content: space-between;
         }
 
-
         .topbar-right {
-
             display: flex;
 
             align-items: center;
@@ -462,77 +343,61 @@
             gap: 10px;
         }
 
-
         .model-logo {
-
             width: 40px;
             height: 40px;
 
             border-radius: 12px;
         }
 
-
         .model-name {
-
-            font-weight:
-                bold;
+            font-weight: bold;
         }
 
-
         .model-subtitle {
-
-            color:
-                var(--muted);
+            color: var(--muted);
 
             font-size: 12px;
 
             margin-top: 2px;
         }
 
-
         .status {
-
             display: flex;
 
             align-items: center;
 
             gap: 7px;
 
-            color:
-                #16a34a;
+            color: #16a34a;
 
             font-size: 13px;
-        }
 
+            transition: color 0.2s ease;
+        }
 
         .status.offline {
-
-            color:
-                var(--danger);
+            color: var(--danger);
         }
 
-
         .status-dot {
-
             width: 9px;
             height: 9px;
 
             border-radius: 50%;
 
-            background:
-                var(--success);
-        }
+            background: var(--success);
 
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+        }
 
         .status-dot.offline {
+            background: var(--danger);
 
-            background:
-                var(--danger);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
         }
 
-
         .mobile-menu {
-
             display: none;
 
             width: 38px;
@@ -540,86 +405,61 @@
 
             border-radius: 10px;
 
-            background:
-                transparent;
+            background: transparent;
 
-            color:
-                var(--text);
+            color: var(--text);
 
             cursor: pointer;
 
             align-items: center;
-
-            justify-content:
-                center;
+            justify-content: center;
         }
-
 
         .mobile-menu:hover {
-
-            background:
-                var(--surface-2);
+            background: var(--surface-2);
         }
 
-
-        /* =========================================================
+        /* =====================================================
            CHAT
-        ========================================================= */
+        ===================================================== */
 
         .chat {
-
             flex: 1;
 
             overflow-y: auto;
 
-            padding:
-                35px 20px;
+            padding: 35px 20px;
 
-            scroll-behavior:
-                smooth;
+            scroll-behavior: smooth;
         }
 
-
         .chat-inner {
-
             width: 100%;
 
             max-width: 850px;
 
-            margin:
-                0 auto;
+            margin: 0 auto;
         }
 
-
         .welcome {
-
-            min-height:
-                55vh;
+            min-height: 55vh;
 
             display: flex;
 
-            flex-direction:
-                column;
+            flex-direction: column;
 
-            justify-content:
-                center;
+            justify-content: center;
 
-            align-items:
-                center;
+            align-items: center;
 
-            text-align:
-                center;
+            text-align: center;
         }
 
-
         .welcome.hidden {
-
             display: none;
         }
 
-
         .welcome-logo {
-
             width: 72px;
             height: 72px;
 
@@ -628,162 +468,110 @@
             font-size: 23px;
 
             margin-bottom: 20px;
+
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.18);
         }
 
-
         .welcome h1 {
-
             font-size: 28px;
 
             margin-bottom: 10px;
         }
 
-
         .welcome p {
-
-            color:
-                var(--muted);
+            color: var(--muted);
         }
 
-
-        /* =========================================================
+        /* =====================================================
            MESSAGES
-        ========================================================= */
+        ===================================================== */
 
         .message {
-
             display: flex;
 
-            flex-direction:
-                column;
+            flex-direction: column;
 
             gap: 6px;
 
             margin-bottom: 22px;
 
-            animation:
-                messageAppear 0.2s ease;
+            animation: messageAppear 0.2s ease;
         }
 
-
         @keyframes messageAppear {
-
             from {
-
                 opacity: 0;
-
-                transform:
-                    translateY(5px);
+                transform: translateY(5px);
             }
 
             to {
-
                 opacity: 1;
-
-                transform:
-                    translateY(0);
+                transform: translateY(0);
             }
         }
 
-
         .message-user {
-
-            align-items:
-                flex-start;
+            align-items: flex-start;
         }
-
 
         .message-ai {
-
-            align-items:
-                flex-end;
+            align-items: flex-end;
         }
 
-
         .message-label {
-
-            color:
-                var(--muted);
+            color: var(--muted);
 
             font-size: 12px;
 
-            padding:
-                0 5px;
+            padding: 0 5px;
         }
-
 
         .message-bubble {
+            max-width: 82%;
 
-            max-width:
-                82%;
+            padding: 13px 16px;
 
-            padding:
-                13px 16px;
+            border-radius: 16px;
 
-            border-radius:
-                16px;
+            line-height: 1.7;
 
-            line-height:
-                1.7;
+            white-space: pre-wrap;
 
-            white-space:
-                pre-wrap;
+            word-break: break-word;
 
-            word-break:
-                break-word;
-
-            overflow-wrap:
-                anywhere;
+            overflow-wrap: anywhere;
         }
-
 
         .message-user .message-bubble {
+            background: var(--primary);
 
-            background:
-                var(--primary);
+            color: #ffffff;
 
-            color:
-                #ffffff;
-
-            border-bottom-right-radius:
-                4px;
+            border-bottom-right-radius: 4px;
         }
-
 
         .message-ai .message-bubble {
+            background: var(--surface);
 
-            background:
-                var(--surface);
+            border: 1px solid var(--border);
 
-            border:
-                1px solid var(--border);
-
-            border-bottom-left-radius:
-                4px;
+            border-bottom-left-radius: 4px;
         }
-
 
         .message-image {
+            max-width: 300px;
+            max-height: 300px;
 
-            max-width:
-                300px;
+            border-radius: 12px;
 
-            max-height:
-                300px;
+            object-fit: contain;
 
-            border-radius:
-                12px;
+            margin-top: 8px;
 
-            object-fit:
-                contain;
-
-            margin-top:
-                8px;
+            border: 1px solid var(--border);
         }
 
-
         .message-actions {
-
             display: flex;
 
             gap: 5px;
@@ -791,654 +579,443 @@
             margin-top: 3px;
         }
 
-
         .message-action {
-
             width: 32px;
             height: 32px;
 
             border-radius: 8px;
 
-            background:
-                var(--surface-2);
+            background: var(--surface-2);
 
-            color:
-                var(--text);
+            color: var(--text);
 
             cursor: pointer;
 
             display: flex;
 
-            align-items:
-                center;
+            align-items: center;
+            justify-content: center;
 
-            justify-content:
-                center;
+            transition:
+                background 0.2s ease,
+                transform 0.1s ease;
         }
-
 
         .message-action:hover {
-
-            background:
-                var(--border);
+            background: var(--border);
         }
 
+        .message-action:active {
+            transform: scale(0.94);
+        }
 
-        /* =========================================================
+        /* =====================================================
            TYPING
-        ========================================================= */
+        ===================================================== */
 
         .typing {
-
             display: none;
 
             align-items: center;
 
             gap: 8px;
 
-            color:
-                var(--muted);
+            color: var(--muted);
 
-            margin-bottom:
-                20px;
+            margin-bottom: 20px;
 
-            padding:
-                0 5px;
+            padding: 0 5px;
         }
 
-
         .typing.show {
-
             display: flex;
         }
 
-
         .typing-dots {
-
             display: inline-flex;
 
             gap: 4px;
         }
 
-
         .typing-dots span {
-
             width: 6px;
             height: 6px;
 
             border-radius: 50%;
 
-            background:
-                var(--muted);
+            background: var(--muted);
 
-            animation:
-                typing 1s infinite;
+            animation: typing 1s infinite;
         }
-
 
         .typing-dots span:nth-child(2) {
-
-            animation-delay:
-                0.15s;
+            animation-delay: 0.15s;
         }
-
 
         .typing-dots span:nth-child(3) {
-
-            animation-delay:
-                0.3s;
+            animation-delay: 0.3s;
         }
 
-
         @keyframes typing {
-
             0%,
             60%,
             100% {
-
-                transform:
-                    translateY(0);
+                transform: translateY(0);
             }
 
             30% {
-
-                transform:
-                    translateY(-5px);
+                transform: translateY(-5px);
             }
         }
 
-
-        /* =========================================================
+        /* =====================================================
            COMPOSER
-        ========================================================= */
+        ===================================================== */
 
         .composer-area {
-
             flex-shrink: 0;
 
-            padding:
-                15px 20px 20px;
+            padding: 15px 20px 20px;
         }
-
 
         .composer {
+            max-width: 850px;
 
-            max-width:
-                850px;
-
-            margin:
-                0 auto;
+            margin: 0 auto;
         }
-
 
         .input-box {
+            background: var(--surface);
 
-            background:
-                var(--surface);
+            border: 1px solid var(--border);
 
-            border:
-                1px solid var(--border);
+            border-radius: 18px;
 
-            border-radius:
-                18px;
+            padding: 12px;
 
-            padding:
-                12px;
-
-            box-shadow:
-                var(--shadow);
+            box-shadow: var(--shadow);
         }
-
 
         textarea {
-
             width: 100%;
 
-            min-height:
-                45px;
+            min-height: 45px;
+            max-height: 150px;
 
-            max-height:
-                150px;
+            padding: 8px;
 
-            padding:
-                8px;
+            border: none;
+            outline: none;
 
-            border:
-                none;
+            resize: none;
 
-            outline:
-                none;
+            background: transparent;
 
-            resize:
-                none;
+            color: var(--text);
 
-            background:
-                transparent;
+            font-size: 15px;
 
-            color:
-                var(--text);
+            line-height: 1.6;
 
-            font-size:
-                15px;
-
-            line-height:
-                1.6;
+            overflow-y: auto;
         }
-
 
         textarea::placeholder {
-
-            color:
-                var(--muted);
+            color: var(--muted);
         }
-
 
         .tools {
-
             display: flex;
 
-            align-items:
-                center;
+            align-items: center;
 
-            gap:
-                7px;
+            gap: 7px;
         }
-
 
         .tool,
         .send-btn {
-
             width: 38px;
             height: 38px;
 
-            border-radius:
-                10px;
+            border-radius: 10px;
 
-            cursor:
-                pointer;
+            cursor: pointer;
 
             display: flex;
 
-            align-items:
-                center;
+            align-items: center;
+            justify-content: center;
 
-            justify-content:
-                center;
+            transition:
+                background 0.2s ease,
+                transform 0.1s ease,
+                opacity 0.2s ease;
         }
-
 
         .tool {
+            background: var(--surface-2);
 
-            background:
-                var(--surface-2);
-
-            color:
-                var(--text);
+            color: var(--text);
         }
-
 
         .tool:hover {
-
-            background:
-                var(--border);
+            background: var(--border);
         }
-
 
         .tool.active {
+            background: var(--danger);
 
-            background:
-                var(--danger);
-
-            color:
-                #ffffff;
+            color: #ffffff;
         }
-
 
         .send-btn {
+            margin-right: auto;
 
-            margin-right:
-                auto;
+            background: var(--primary);
 
-            background:
-                var(--primary);
-
-            color:
-                #ffffff;
+            color: #ffffff;
         }
-
 
         .send-btn:hover {
-
-            background:
-                var(--primary-hover);
+            background: var(--primary-hover);
         }
-
 
         .send-btn:disabled {
+            opacity: 0.6;
 
-            opacity:
-                0.6;
-
-            cursor:
-                not-allowed;
+            cursor: not-allowed;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            IMAGE
-        ========================================================= */
+        ===================================================== */
 
         #imageInput {
-
-            display:
-                none;
+            display: none;
         }
-
 
         .image-container {
+            display: none;
 
-            display:
-                none;
+            position: relative;
 
-            position:
-                relative;
+            width: fit-content;
 
-            width:
-                fit-content;
-
-            margin-bottom:
-                10px;
+            margin-bottom: 10px;
         }
-
 
         .image-container.show {
-
-            display:
-                block;
+            display: block;
         }
-
 
         #previewImage {
+            max-width: 150px;
+            max-height: 120px;
 
-            max-width:
-                150px;
+            border-radius: 10px;
 
-            max-height:
-                120px;
+            object-fit: cover;
 
-            border-radius:
-                10px;
-
-            object-fit:
-                cover;
+            border: 1px solid var(--border);
         }
-
 
         #removeImage {
+            position: absolute;
 
-            position:
-                absolute;
+            top: -8px;
+            left: -8px;
 
-            top:
-                -8px;
+            width: 24px;
+            height: 24px;
 
-            left:
-                -8px;
+            border-radius: 50%;
 
-            width:
-                24px;
+            background: var(--danger);
 
-            height:
-                24px;
+            color: #ffffff;
 
-            border-radius:
-                50%;
+            cursor: pointer;
 
-            background:
-                var(--danger);
+            font-size: 18px;
 
-            color:
-                #ffffff;
-
-            cursor:
-                pointer;
-
-            font-size:
-                18px;
-
-            line-height:
-                20px;
+            line-height: 20px;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            VOICE PANEL
-        ========================================================= */
+        ===================================================== */
 
         .voice-panel {
+            display: none;
 
-            display:
-                none;
+            position: fixed;
 
-            position:
-                fixed;
+            inset: 0;
 
-            inset:
-                0;
+            z-index: 1000;
 
-            z-index:
-                1000;
+            padding: 20px;
 
-            padding:
-                20px;
+            background: rgba(0, 0, 0, 0.55);
 
-            background:
-                rgba(0, 0, 0, 0.55);
-
-            align-items:
-                center;
-
-            justify-content:
-                center;
+            align-items: center;
+            justify-content: center;
         }
-
 
         .voice-panel.show {
-
-            display:
-                flex;
+            display: flex;
         }
-
 
         .voice-box {
+            width: min(420px, 90%);
 
-            width:
-                min(420px, 90%);
+            padding: 30px;
 
-            padding:
-                30px;
+            border-radius: 20px;
 
-            border-radius:
-                20px;
+            background: var(--surface);
 
-            background:
-                var(--surface);
+            color: var(--text);
 
-            color:
-                var(--text);
+            text-align: center;
 
-            text-align:
-                center;
-
-            box-shadow:
-                0 20px 50px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
         }
-
 
         .voice-box h2 {
-
-            margin-bottom:
-                12px;
+            margin-bottom: 12px;
         }
-
 
         .voice-box p {
-
-            color:
-                var(--muted);
+            color: var(--muted);
         }
-
 
         .voice-button {
+            width: 80px;
+            height: 80px;
 
-            width:
-                80px;
+            margin: 25px auto;
 
-            height:
-                80px;
+            border-radius: 50%;
 
-            margin:
-                25px auto;
+            background: var(--primary);
 
-            border-radius:
-                50%;
+            color: #ffffff;
 
-            background:
-                var(--primary);
+            cursor: pointer;
 
-            color:
-                #ffffff;
+            display: flex;
 
-            cursor:
-                pointer;
+            align-items: center;
+            justify-content: center;
 
-            display:
-                flex;
+            font-size: 14px;
 
-            align-items:
-                center;
-
-            justify-content:
-                center;
-
-            font-size:
-                14px;
+            transition:
+                background 0.2s ease,
+                transform 0.1s ease;
         }
 
+        .voice-button:hover {
+            background: var(--primary-hover);
+        }
+
+        .voice-button:active {
+            transform: scale(0.96);
+        }
 
         .voice-button.recording {
-
-            background:
-                var(--danger);
+            background: var(--danger);
         }
-
 
         .voice-close {
+            padding: 8px 15px;
 
-            padding:
-                8px 15px;
+            border-radius: 8px;
 
-            border-radius:
-                8px;
+            background: var(--danger);
 
-            background:
-                var(--danger);
+            color: #ffffff;
 
-            color:
-                #ffffff;
-
-            cursor:
-                pointer;
+            cursor: pointer;
         }
 
-
-        /* =========================================================
+        /* =====================================================
            MOBILE
-        ========================================================= */
+        ===================================================== */
 
         @media (max-width: 750px) {
 
             .sidebar {
+                position: fixed;
 
-                position:
-                    fixed;
+                top: 0;
+                right: -280px;
+                bottom: 0;
 
-                top:
-                    0;
-
-                right:
-                    -280px;
-
-                bottom:
-                    0;
-
-                box-shadow:
-                    -10px 0 30px rgba(0, 0, 0, 0.12);
+                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
             }
-
 
             .sidebar.open {
-
-                right:
-                    0;
+                right: 0;
             }
-
 
             .mobile-menu {
-
-                display:
-                    flex;
+                display: flex;
             }
-
 
             .topbar {
-
-                padding:
-                    0 12px;
+                padding: 0 12px;
             }
-
 
             .chat {
-
-                padding:
-                    20px 12px;
+                padding: 20px 12px;
             }
-
 
             .composer-area {
-
-                padding:
-                    10px;
+                padding: 10px;
             }
-
 
             .message-bubble {
-
-                max-width:
-                    92%;
+                max-width: 92%;
             }
-
 
             .welcome h1 {
-
-                font-size:
-                    22px;
+                font-size: 22px;
             }
-
 
             .model-subtitle {
-
-                display:
-                    none;
+                display: none;
             }
-
 
             .status {
-
-                font-size:
-                    12px;
+                font-size: 12px;
             }
-
 
             .tool,
             .send-btn {
-
-                width:
-                    36px;
-
-                height:
-                    36px;
+                width: 36px;
+                height: 36px;
             }
-
         }
-
     </style>
-
 </head>
-
 
 <body>
 
-
     <div class="app">
-
 
         <!-- =====================================================
              SIDEBAR
         ====================================================== -->
 
-        <aside
-            class="sidebar"
-            id="sidebar"
-        >
-
+        <aside class="sidebar" id="sidebar">
 
             <div class="brand">
 
                 <div class="brand-logo">
                     DA
                 </div>
-
 
                 <div>
 
@@ -1454,7 +1031,6 @@
 
             </div>
 
-
             <button
                 class="new-chat"
                 id="newChatBtn"
@@ -1464,15 +1040,11 @@
                 <span class="icon">
 
                     <svg viewBox="0 0 24 24">
-
                         <path d="M12 5v14"></path>
-
                         <path d="M5 12h14"></path>
-
                     </svg>
 
                 </span>
-
 
                 <span>
                     محادثة جديدة
@@ -1480,20 +1052,16 @@
 
             </button>
 
-
             <div class="sidebar-title">
                 المحادثات
             </div>
-
 
             <div
                 class="history"
                 id="history"
             ></div>
 
-
             <div class="sidebar-bottom">
-
 
                 <button
                     class="side-btn"
@@ -1504,20 +1072,16 @@
                     <span class="icon">
 
                         <svg viewBox="0 0 24 24">
-
                             <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3A6.7 6.7 0 0 0 21 12.8z"></path>
-
                         </svg>
 
                     </span>
-
 
                     <span id="themeText">
                         الوضع الليلي
                     </span>
 
                 </button>
-
 
                 <button
                     class="side-btn"
@@ -1528,21 +1092,14 @@
                     <span class="icon">
 
                         <svg viewBox="0 0 24 24">
-
                             <path d="M3 6h18"></path>
-
                             <path d="M8 6V4h8v2"></path>
-
                             <path d="M19 6l-1 15H6L5 6"></path>
-
                             <path d="M10 11v6"></path>
-
                             <path d="M14 11v6"></path>
-
                         </svg>
 
                     </span>
-
 
                     <span>
                         مسح المحادثات
@@ -1550,12 +1107,9 @@
 
                 </button>
 
-
             </div>
 
-
         </aside>
-
 
         <!-- =====================================================
              MAIN
@@ -1563,43 +1117,33 @@
 
         <main class="main">
 
-
-            <!-- TOPBAR -->
-
             <header class="topbar">
 
-
                 <div class="topbar-right">
-
 
                     <button
                         class="mobile-menu"
                         id="mobileMenu"
                         type="button"
                         title="القائمة"
+                        aria-label="فتح القائمة"
                     >
 
                         <span class="icon">
 
                             <svg viewBox="0 0 24 24">
-
                                 <path d="M4 6h16"></path>
-
                                 <path d="M4 12h16"></path>
-
                                 <path d="M4 18h16"></path>
-
                             </svg>
 
                         </span>
 
                     </button>
 
-
                     <div class="model-logo">
                         DA
                     </div>
-
 
                     <div>
 
@@ -1607,16 +1151,13 @@
                             Aido AI
                         </div>
 
-
                         <div class="model-subtitle">
                             Gemini AI + OpenRouter + OpenAI
                         </div>
 
                     </div>
 
-
                 </div>
-
 
                 <div
                     class="status"
@@ -1628,30 +1169,27 @@
                         id="statusDot"
                     ></span>
 
-
                     <span id="statusText">
                         متصل
                     </span>
 
                 </div>
 
-
             </header>
 
-
-            <!-- CHAT -->
+            <!-- =================================================
+                 CHAT
+            ================================================== -->
 
             <section
                 class="chat"
                 id="chat"
             >
 
-
                 <div
                     class="chat-inner"
                     id="chatInner"
                 >
-
 
                     <div
                         class="welcome"
@@ -1662,18 +1200,15 @@
                             DA
                         </div>
 
-
                         <h1>
                             مرحباً بك في Aido AI
                         </h1>
-
 
                         <p>
                             كيف يمكنني مساعدتك اليوم؟
                         </p>
 
                     </div>
-
 
                     <div
                         class="typing"
@@ -1684,39 +1219,30 @@
                             Aido AI يكتب
                         </span>
 
-
                         <span class="typing-dots">
-
                             <span></span>
                             <span></span>
                             <span></span>
-
                         </span>
 
                     </div>
 
-
                 </div>
-
 
             </section>
 
-
-            <!-- COMPOSER -->
+            <!-- =================================================
+                 COMPOSER
+            ================================================== -->
 
             <div class="composer-area">
-
 
                 <form
                     class="composer"
                     id="chatForm"
                 >
 
-
                     <div class="input-box">
-
-
-                        <!-- IMAGE PREVIEW -->
 
                         <div
                             class="image-container"
@@ -1729,19 +1255,16 @@
                                 alt="معاينة الصورة"
                             >
 
-
                             <button
                                 type="button"
                                 id="removeImage"
                                 title="إزالة الصورة"
+                                aria-label="إزالة الصورة"
                             >
                                 ×
                             </button>
 
                         </div>
-
-
-                        <!-- IMAGE INPUT -->
 
                         <input
                             type="file"
@@ -1750,34 +1273,26 @@
                             accept="image/*"
                         >
 
-
-                        <!-- TEXT -->
-
                         <textarea
                             id="question"
                             name="question"
                             rows="1"
                             autocomplete="off"
                             placeholder="اكتب رسالتك هنا..."
+                            aria-label="رسالتك"
                         ></textarea>
 
-
-                        <!-- TOOLS -->
-
                         <div class="tools">
-
-
-                            <!-- IMAGE -->
 
                             <button
                                 type="button"
                                 class="tool"
                                 id="imageBtn"
                                 title="إضافة صورة"
+                                aria-label="إضافة صورة"
                             >
 
                                 <svg viewBox="0 0 24 24">
-
                                     <rect
                                         x="3"
                                         y="4"
@@ -1793,23 +1308,19 @@
                                     ></circle>
 
                                     <path d="M21 15l-5-5L5 20"></path>
-
                                 </svg>
 
                             </button>
-
-
-                            <!-- MICROPHONE -->
 
                             <button
                                 type="button"
                                 class="tool"
                                 id="micBtn"
                                 title="تحويل الكلام إلى نص"
+                                aria-label="تحويل الكلام إلى نص"
                             >
 
                                 <svg viewBox="0 0 24 24">
-
                                     <rect
                                         x="9"
                                         y="3"
@@ -1819,101 +1330,72 @@
                                     ></rect>
 
                                     <path d="M5 11a7 7 0 0 0 14 0"></path>
-
                                     <path d="M12 18v3"></path>
-
                                     <path d="M8 21h8"></path>
-
                                 </svg>
 
                             </button>
-
-
-                            <!-- VOICE CHAT -->
 
                             <button
                                 type="button"
                                 class="tool"
                                 id="voiceChatBtn"
                                 title="المحادثة الصوتية"
+                                aria-label="المحادثة الصوتية"
                             >
 
                                 <svg viewBox="0 0 24 24">
-
                                     <path d="M12 2v20"></path>
-
                                     <path d="M5 9v6"></path>
-
                                     <path d="M19 9v6"></path>
-
                                     <path d="M8 6v12"></path>
-
                                     <path d="M16 6v12"></path>
-
                                 </svg>
 
                             </button>
-
-
-                            <!-- READ -->
 
                             <button
                                 type="button"
                                 class="tool"
                                 id="voiceBtn2"
                                 title="قراءة آخر إجابة"
+                                aria-label="قراءة آخر إجابة"
                             >
 
                                 <svg viewBox="0 0 24 24">
-
                                     <path d="M11 5L6 9H3v6h3l5 4z"></path>
-
                                     <path d="M15 9a4 4 0 0 1 0 6"></path>
-
                                     <path d="M18 6a8 8 0 0 1 0 12"></path>
-
                                 </svg>
 
                             </button>
-
-
-                            <!-- SEND -->
 
                             <button
                                 type="submit"
                                 class="send-btn"
                                 id="sendBtn"
                                 title="إرسال"
+                                aria-label="إرسال"
                             >
 
                                 <svg viewBox="0 0 24 24">
-
                                     <path d="M22 2L11 13"></path>
-
                                     <path d="M22 2l-7 20-4-9-9-4z"></path>
-
                                 </svg>
 
                             </button>
 
-
                         </div>
-
 
                     </div>
 
-
                 </form>
-
 
             </div>
 
-
         </main>
 
-
     </div>
-
 
     <!-- =========================================================
          VOICE PANEL
@@ -1924,19 +1406,15 @@
         id="voicePanel"
     >
 
-
         <div class="voice-box">
-
 
             <h2>
                 المحادثة الصوتية
             </h2>
 
-
             <p id="voiceStatus">
                 اضغط لبدء المحادثة
             </p>
-
 
             <button
                 class="voice-button"
@@ -1946,9 +1424,7 @@
                 بدء المحادثة
             </button>
 
-
             <br>
-
 
             <button
                 class="voice-close"
@@ -1958,12 +1434,9 @@
                 إغلاق
             </button>
 
-
         </div>
 
-
     </div>
-
 
     <!-- =========================================================
          SERVER ANSWER
@@ -1971,113 +1444,55 @@
 
     <div
         id="server-answer"
-        style="display:none;"
+        style="display: none;"
     >
         {% if answer %}
             {{ answer }}
         {% endif %}
     </div>
 
-
-    <!-- =========================================================
-         JAVASCRIPT
-    ========================================================== -->
-
     <script>
-
         "use strict";
-
 
         /* =========================================================
            ELEMENTS
         ========================================================= */
 
-        const chatForm =
-            document.getElementById("chatForm");
+        const chatForm = document.getElementById("chatForm");
+        const questionInput = document.getElementById("question");
+        const chat = document.getElementById("chat");
+        const chatInner = document.getElementById("chatInner");
+        const welcome = document.getElementById("welcome");
+        const typing = document.getElementById("typing");
+        const sendBtn = document.getElementById("sendBtn");
 
-        const questionInput =
-            document.getElementById("question");
+        const imageBtn = document.getElementById("imageBtn");
+        const imageInput = document.getElementById("imageInput");
+        const imageContainer = document.getElementById("imageContainer");
+        const previewImage = document.getElementById("previewImage");
+        const removeImage = document.getElementById("removeImage");
 
-        const chat =
-            document.getElementById("chat");
+        const newChatBtn = document.getElementById("newChatBtn");
+        const themeBtn = document.getElementById("themeBtn");
+        const themeText = document.getElementById("themeText");
+        const clearBtn = document.getElementById("clearBtn");
+        const history = document.getElementById("history");
 
-        const chatInner =
-            document.getElementById("chatInner");
+        const mobileMenu = document.getElementById("mobileMenu");
+        const sidebar = document.getElementById("sidebar");
 
-        const welcome =
-            document.getElementById("welcome");
+        const micBtn = document.getElementById("micBtn");
+        const voiceChatBtn = document.getElementById("voiceChatBtn");
+        const voiceBtn2 = document.getElementById("voiceBtn2");
 
-        const typing =
-            document.getElementById("typing");
+        const voicePanel = document.getElementById("voicePanel");
+        const voiceStart = document.getElementById("voiceStart");
+        const voiceClose = document.getElementById("voiceClose");
+        const voiceStatus = document.getElementById("voiceStatus");
 
-        const sendBtn =
-            document.getElementById("sendBtn");
-
-        const imageBtn =
-            document.getElementById("imageBtn");
-
-        const imageInput =
-            document.getElementById("imageInput");
-
-        const imageContainer =
-            document.getElementById("imageContainer");
-
-        const previewImage =
-            document.getElementById("previewImage");
-
-        const removeImage =
-            document.getElementById("removeImage");
-
-        const newChatBtn =
-            document.getElementById("newChatBtn");
-
-        const themeBtn =
-            document.getElementById("themeBtn");
-
-        const themeText =
-            document.getElementById("themeText");
-
-        const clearBtn =
-            document.getElementById("clearBtn");
-
-        const history =
-            document.getElementById("history");
-
-        const mobileMenu =
-            document.getElementById("mobileMenu");
-
-        const sidebar =
-            document.getElementById("sidebar");
-
-        const micBtn =
-            document.getElementById("micBtn");
-
-        const voiceChatBtn =
-            document.getElementById("voiceChatBtn");
-
-        const voiceBtn2 =
-            document.getElementById("voiceBtn2");
-
-        const voicePanel =
-            document.getElementById("voicePanel");
-
-        const voiceStart =
-            document.getElementById("voiceStart");
-
-        const voiceClose =
-            document.getElementById("voiceClose");
-
-        const voiceStatus =
-            document.getElementById("voiceStatus");
-
-        const status =
-            document.getElementById("status");
-
-        const statusText =
-            document.getElementById("statusText");
-
-        const statusDot =
-            document.getElementById("statusDot");
+        const status = document.getElementById("status");
+        const statusText = document.getElementById("statusText");
+        const statusDot = document.getElementById("statusDot");
 
 
         /* =========================================================
@@ -2085,43 +1500,79 @@
         ========================================================= */
 
         let selectedImage = null;
-
         let lastAnswer = "";
 
         let recognition = null;
+        let speechAvailable = false;
 
         let isRecording = false;
-
         let voiceMode = false;
-
-
-        /* =========================================================
-           CONVERSATIONS
-        ========================================================= */
 
         let conversations = [];
 
 
-        try {
+        /* =========================================================
+           STORAGE KEYS
+        ========================================================= */
 
-            conversations =
-                JSON.parse(
+        const STORAGE_CONVERSATIONS = "aido_conversations";
+        const STORAGE_THEME = "aido_theme";
+
+
+        /* =========================================================
+           LOAD CONVERSATIONS
+        ========================================================= */
+
+        function loadConversations() {
+
+            try {
+
+                const saved =
                     localStorage.getItem(
-                        "aido_conversations"
-                    ) || "[]"
+                        STORAGE_CONVERSATIONS
+                    );
+
+                conversations =
+                    saved
+                        ? JSON.parse(saved)
+                        : [];
+
+                if (!Array.isArray(conversations)) {
+                    conversations = [];
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Conversation load error:",
+                    error
                 );
 
-
-            if (!Array.isArray(conversations)) {
-
                 conversations = [];
-
             }
+        }
 
-        } catch (error) {
 
-            conversations = [];
+        /* =========================================================
+           SAVE CONVERSATIONS
+        ========================================================= */
 
+        function saveConversations() {
+
+            try {
+
+                localStorage.setItem(
+                    STORAGE_CONVERSATIONS,
+                    JSON.stringify(conversations)
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Conversation save error:",
+                    error
+                );
+            }
         }
 
 
@@ -2131,31 +1582,33 @@
 
         function loadTheme() {
 
-            const savedTheme =
-                localStorage.getItem(
-                    "aido_theme"
-                );
+            try {
 
+                const savedTheme =
+                    localStorage.getItem(
+                        STORAGE_THEME
+                    );
 
-            if (savedTheme === "dark") {
+                const dark =
+                    savedTheme === "dark";
 
-                document.body.classList.add(
-                    "dark"
-                );
-
-                themeText.textContent =
-                    "الوضع النهاري";
-
-            } else {
-
-                document.body.classList.remove(
-                    "dark"
+                document.body.classList.toggle(
+                    "dark",
+                    dark
                 );
 
                 themeText.textContent =
-                    "الوضع الليلي";
+                    dark
+                        ? "الوضع النهاري"
+                        : "الوضع الليلي";
+
+            } catch (error) {
+
+                console.error(
+                    "Theme load error:",
+                    error
+                );
             }
-
         }
 
 
@@ -2163,35 +1616,34 @@
             "click",
             function () {
 
-                document.body.classList.toggle(
-                    "dark"
-                );
-
-
                 const dark =
-                    document.body.classList.contains(
+                    document.body.classList.toggle(
                         "dark"
                     );
 
+                try {
 
-                localStorage.setItem(
-                    "aido_theme",
-                    dark
-                        ? "dark"
-                        : "light"
-                );
+                    localStorage.setItem(
+                        STORAGE_THEME,
+                        dark
+                            ? "dark"
+                            : "light"
+                    );
 
+                } catch (error) {
+
+                    console.error(
+                        "Theme save error:",
+                        error
+                    );
+                }
 
                 themeText.textContent =
                     dark
                         ? "الوضع النهاري"
                         : "الوضع الليلي";
-
             }
         );
-
-
-        loadTheme();
 
 
         /* =========================================================
@@ -2202,10 +1654,7 @@
             "click",
             function () {
 
-                sidebar.classList.toggle(
-                    "open"
-                );
-
+                sidebar.classList.toggle("open");
             }
         );
 
@@ -2219,7 +1668,6 @@
             function () {
 
                 imageInput.click();
-
             }
         );
 
@@ -2229,38 +1677,29 @@
             function () {
 
                 const file =
+                    imageInput.files &&
                     imageInput.files[0];
 
-
                 if (!file) {
-
                     return;
                 }
 
-
-                if (
-                    !file.type.startsWith(
-                        "image/"
-                    )
-                ) {
+                if (!file.type.startsWith("image/")) {
 
                     alert(
                         "الملف المختار ليس صورة."
                     );
 
-
                     imageInput.value = "";
+                    selectedImage = null;
 
                     return;
                 }
 
-
                 selectedImage = file;
-
 
                 const reader =
                     new FileReader();
-
 
                 reader.onload =
                     function (event) {
@@ -2271,12 +1710,20 @@
                         imageContainer.classList.add(
                             "show"
                         );
-
                     };
 
+                reader.onerror =
+                    function () {
+
+                        alert(
+                            "تعذر قراءة الصورة."
+                        );
+
+                        selectedImage = null;
+                        imageInput.value = "";
+                    };
 
                 reader.readAsDataURL(file);
-
             }
         );
 
@@ -2294,7 +1741,6 @@
                 imageContainer.classList.remove(
                     "show"
                 );
-
             }
         );
 
@@ -2305,18 +1751,17 @@
 
         function resizeTextarea() {
 
-            questionInput.style.height =
-                "auto";
+            questionInput.style.height = "auto";
 
-
-            questionInput.style.height =
+            const height =
                 Math.min(
                     questionInput.scrollHeight,
                     150
-                ) + "px";
+                );
 
+            questionInput.style.height =
+                height + "px";
         }
-
 
         questionInput.addEventListener(
             "input",
@@ -2325,7 +1770,7 @@
 
 
         /* =========================================================
-           ENTER
+           ENTER TO SEND
         ========================================================= */
 
         questionInput.addEventListener(
@@ -2340,9 +1785,7 @@
                     event.preventDefault();
 
                     chatForm.requestSubmit();
-
                 }
-
             }
         );
 
@@ -2353,21 +1796,18 @@
 
         function scrollToBottom() {
 
-            setTimeout(
+            requestAnimationFrame(
                 function () {
 
                     chat.scrollTop =
                         chat.scrollHeight;
-
-                },
-                50
+                }
             );
-
         }
 
 
         /* =========================================================
-           MESSAGE
+           ADD MESSAGE
         ========================================================= */
 
         function addMessage(
@@ -2376,16 +1816,10 @@
             imageUrl = null
         ) {
 
-            welcome.classList.add(
-                "hidden"
-            );
-
+            welcome.classList.add("hidden");
 
             const message =
-                document.createElement(
-                    "div"
-                );
-
+                document.createElement("div");
 
             message.className =
                 "message " +
@@ -2395,179 +1829,116 @@
                         : "message-ai"
                 );
 
-
             const label =
-                document.createElement(
-                    "div"
-                );
-
+                document.createElement("div");
 
             label.className =
                 "message-label";
-
 
             label.textContent =
                 type === "user"
                     ? "أنت"
                     : "Aido AI";
 
-
             const bubble =
-                document.createElement(
-                    "div"
-                );
-
+                document.createElement("div");
 
             bubble.className =
                 "message-bubble";
 
-
             if (text) {
-
-                bubble.textContent =
-                    text;
-
+                bubble.textContent = text;
             }
 
-
-            message.appendChild(
-                label
-            );
-
-
-            message.appendChild(
-                bubble
-            );
-
+            message.appendChild(label);
+            message.appendChild(bubble);
 
             if (imageUrl) {
 
                 const image =
-                    document.createElement(
-                        "img"
-                    );
-
+                    document.createElement("img");
 
                 image.className =
                     "message-image";
 
-
                 image.src =
                     imageUrl;
-
 
                 image.alt =
                     "الصورة المرسلة";
 
-
-                message.appendChild(
-                    image
-                );
-
+                message.appendChild(image);
             }
-
 
             if (type === "ai") {
 
                 const actions =
-                    document.createElement(
-                        "div"
-                    );
-
+                    document.createElement("div");
 
                 actions.className =
                     "message-actions";
 
 
                 const copyButton =
-                    document.createElement(
-                        "button"
-                    );
-
+                    document.createElement("button");
 
                 copyButton.className =
                     "message-action";
 
-
                 copyButton.type =
                     "button";
-
 
                 copyButton.title =
                     "نسخ الإجابة";
 
-
                 copyButton.textContent =
                     "📋";
-
 
                 copyButton.addEventListener(
                     "click",
                     function () {
 
                         copyText(text);
-
                     }
                 );
 
 
                 const speakButton =
-                    document.createElement(
-                        "button"
-                    );
-
+                    document.createElement("button");
 
                 speakButton.className =
                     "message-action";
 
-
                 speakButton.type =
                     "button";
-
 
                 speakButton.title =
                     "قراءة الإجابة";
 
-
                 speakButton.textContent =
                     "🔊";
-
 
                 speakButton.addEventListener(
                     "click",
                     function () {
 
                         speakText(text);
-
                     }
                 );
 
 
-                actions.appendChild(
-                    copyButton
-                );
+                actions.appendChild(copyButton);
+                actions.appendChild(speakButton);
 
-
-                actions.appendChild(
-                    speakButton
-                );
-
-
-                message.appendChild(
-                    actions
-                );
-
+                message.appendChild(actions);
             }
-
 
             chatInner.insertBefore(
                 message,
                 typing
             );
 
-
             scrollToBottom();
-
         }
 
 
@@ -2578,16 +1949,45 @@
         async function copyText(text) {
 
             if (!text) {
-
                 return;
             }
 
-
             try {
 
-                await navigator.clipboard.writeText(
-                    text
-                );
+                if (
+                    navigator.clipboard &&
+                    window.isSecureContext
+                ) {
+
+                    await navigator.clipboard.writeText(
+                        text
+                    );
+
+                } else {
+
+                    const textarea =
+                        document.createElement("textarea");
+
+                    textarea.value = text;
+
+                    textarea.style.position =
+                        "fixed";
+
+                    textarea.style.opacity =
+                        "0";
+
+                    document.body.appendChild(
+                        textarea
+                    );
+
+                    textarea.select();
+
+                    document.execCommand(
+                        "copy"
+                    );
+
+                    textarea.remove();
+                }
 
                 alert(
                     "تم نسخ الإجابة."
@@ -2595,52 +1995,27 @@
 
             } catch (error) {
 
-                const textarea =
-                    document.createElement(
-                        "textarea"
-                    );
-
-
-                textarea.value =
-                    text;
-
-
-                document.body.appendChild(
-                    textarea
+                console.error(
+                    "Copy error:",
+                    error
                 );
-
-
-                textarea.select();
-
-
-                document.execCommand(
-                    "copy"
-                );
-
-
-                textarea.remove();
-
 
                 alert(
-                    "تم نسخ الإجابة."
+                    "تعذر نسخ الإجابة."
                 );
-
             }
-
         }
 
 
         /* =========================================================
-           SPEECH
+           TEXT TO SPEECH
         ========================================================= */
 
         function speakText(text) {
 
             if (!text) {
-
                 return;
             }
-
 
             if (
                 !("speechSynthesis" in window)
@@ -2653,32 +2028,20 @@
                 return;
             }
 
-
             window.speechSynthesis.cancel();
-
 
             const utterance =
                 new SpeechSynthesisUtterance(
                     text
                 );
 
-
-            utterance.lang =
-                "ar-SA";
-
-
-            utterance.rate =
-                0.95;
-
-
-            utterance.pitch =
-                1;
-
+            utterance.lang = "ar-SA";
+            utterance.rate = 0.95;
+            utterance.pitch = 1;
 
             window.speechSynthesis.speak(
                 utterance
             );
-
         }
 
 
@@ -2688,18 +2051,14 @@
 
                 if (lastAnswer) {
 
-                    speakText(
-                        lastAnswer
-                    );
+                    speakText(lastAnswer);
 
                 } else {
 
                     alert(
                         "لا توجد إجابة لقراءتها."
                     );
-
                 }
-
             }
         );
 
@@ -2710,28 +2069,17 @@
 
         function setTyping(show) {
 
-            if (show) {
-
-                typing.classList.add(
-                    "show"
-                );
-
-            } else {
-
-                typing.classList.remove(
-                    "show"
-                );
-
-            }
-
+            typing.classList.toggle(
+                "show",
+                show
+            );
 
             scrollToBottom();
-
         }
 
 
         /* =========================================================
-           STATUS
+           ONLINE STATUS
         ========================================================= */
 
         function setOnlineStatus(online) {
@@ -2741,11 +2089,9 @@
                 statusText.textContent =
                     "متصل";
 
-
                 statusDot.classList.remove(
                     "offline"
                 );
-
 
                 status.classList.remove(
                     "offline"
@@ -2756,23 +2102,19 @@
                 statusText.textContent =
                     "غير متصل";
 
-
                 statusDot.classList.add(
                     "offline"
                 );
 
-
                 status.classList.add(
                     "offline"
                 );
-
             }
-
         }
 
 
         /* =========================================================
-           SAVE
+           SAVE CONVERSATION
         ========================================================= */
 
         function saveConversation(
@@ -2780,52 +2122,32 @@
             answer
         ) {
 
-            if (
-                !question ||
-                !answer
-            ) {
-
+            if (!question || !answer) {
                 return;
             }
 
-
             conversations.unshift({
 
-                question:
-                    question,
+                question: question,
 
-                answer:
-                    answer,
+                answer: answer,
 
                 date:
                     new Date().toISOString()
-
             });
 
-
-            if (
-                conversations.length > 30
-            ) {
+            if (conversations.length > 30) {
 
                 conversations =
                     conversations.slice(
                         0,
                         30
                     );
-
             }
 
-
-            localStorage.setItem(
-                "aido_conversations",
-                JSON.stringify(
-                    conversations
-                )
-            );
-
+            saveConversations();
 
             renderHistory();
-
         }
 
 
@@ -2837,33 +2159,21 @@
 
             history.innerHTML = "";
 
-
-            if (
-                conversations.length === 0
-            ) {
+            if (conversations.length === 0) {
 
                 const empty =
-                    document.createElement(
-                        "div"
-                    );
-
+                    document.createElement("div");
 
                 empty.className =
                     "history-empty";
 
-
                 empty.textContent =
                     "لا توجد محادثات محفوظة";
 
-
-                history.appendChild(
-                    empty
-                );
-
+                history.appendChild(empty);
 
                 return;
             }
-
 
             conversations.forEach(
                 function (
@@ -2872,84 +2182,67 @@
                 ) {
 
                     const item =
-                        document.createElement(
-                            "div"
-                        );
-
+                        document.createElement("div");
 
                     item.className =
                         "history-item";
 
-
                     item.textContent =
-                        conversation.question;
-
+                        conversation.question ||
+                        "محادثة";
 
                     item.title =
-                        conversation.question;
-
+                        conversation.question ||
+                        "محادثة";
 
                     item.addEventListener(
                         "click",
                         function () {
 
-                            loadConversation(
-                                index
-                            );
-
+                            loadConversation(index);
 
                             sidebar.classList.remove(
                                 "open"
                             );
-
                         }
                     );
 
-
-                    history.appendChild(
-                        item
-                    );
-
+                    history.appendChild(item);
                 }
             );
-
         }
 
+
+        /* =========================================================
+           LOAD CONVERSATION
+        ========================================================= */
 
         function loadConversation(index) {
 
             const conversation =
                 conversations[index];
 
-
             if (!conversation) {
-
                 return;
             }
 
-
             clearChat(false);
-
 
             addMessage(
                 conversation.question,
                 "user"
             );
 
-
             addMessage(
                 conversation.answer,
                 "ai"
             );
 
-
             lastAnswer =
-                conversation.answer;
+                conversation.answer || "";
 
+            scrollToBottom();
         }
-
-
-        renderHistory();
 
 
         /* =========================================================
@@ -2965,27 +2258,21 @@
                     ".message"
                 );
 
-
             messages.forEach(
                 function (message) {
 
                     message.remove();
-
                 }
             );
 
-
             lastAnswer = "";
-
 
             if (showWelcome) {
 
                 welcome.classList.remove(
                     "hidden"
                 );
-
             }
-
         }
 
 
@@ -2999,24 +2286,17 @@
 
                 clearChat(true);
 
-
-                questionInput.value =
-                    "";
-
+                questionInput.value = "";
 
                 resizeTextarea();
 
-
                 removeImage.click();
 
-
                 questionInput.focus();
-
 
                 sidebar.classList.remove(
                     "open"
                 );
-
             }
         );
 
@@ -3034,28 +2314,67 @@
                         "هل تريد مسح جميع المحادثات المحفوظة؟"
                     );
 
-
                 if (!confirmed) {
-
                     return;
                 }
 
-
                 conversations = [];
 
+                try {
 
-                localStorage.removeItem(
-                    "aido_conversations"
-                );
+                    localStorage.removeItem(
+                        STORAGE_CONVERSATIONS
+                    );
 
+                } catch (error) {
+
+                    console.error(
+                        "History clear error:",
+                        error
+                    );
+                }
 
                 clearChat(true);
 
-
                 renderHistory();
-
             }
         );
+
+
+        /* =========================================================
+           READ SERVER RESPONSE
+        ========================================================= */
+
+        async function extractServerAnswer(
+            response
+        ) {
+
+            const html =
+                await response.text();
+
+            const parser =
+                new DOMParser();
+
+            const documentData =
+                parser.parseFromString(
+                    html,
+                    "text/html"
+                );
+
+            const answerElement =
+                documentData.querySelector(
+                    "#server-answer"
+                );
+
+            if (!answerElement) {
+
+                return "";
+            }
+
+            return (
+                answerElement.textContent || ""
+            ).trim();
+        }
 
 
         /* =========================================================
@@ -3068,10 +2387,12 @@
 
                 event.preventDefault();
 
+                if (sendBtn.disabled) {
+                    return;
+                }
 
                 const question =
                     questionInput.value.trim();
-
 
                 if (
                     !question &&
@@ -3083,14 +2404,10 @@
                     return;
                 }
 
-
                 const imageFile =
                     selectedImage;
 
-
-                let imagePreview =
-                    null;
-
+                let imagePreview = null;
 
                 if (imageFile) {
 
@@ -3098,9 +2415,7 @@
                         URL.createObjectURL(
                             imageFile
                         );
-
                 }
-
 
                 addMessage(
                     question ||
@@ -3109,41 +2424,31 @@
                     imagePreview
                 );
 
-
-                questionInput.value =
-                    "";
-
+                questionInput.value = "";
 
                 resizeTextarea();
 
-
                 removeImage.click();
-
 
                 setTyping(true);
 
-
-                sendBtn.disabled =
-                    true;
-
+                sendBtn.disabled = true;
 
                 setOnlineStatus(true);
-
 
                 try {
 
                     let answer = "";
 
 
-                    /* =================================================
+                    /* ============================================
                        IMAGE REQUEST
-                    ================================================== */
+                    ============================================ */
 
                     if (imageFile) {
 
                         const formData =
                             new FormData();
-
 
                         formData.append(
                             "question",
@@ -3151,25 +2456,19 @@
                             "حلل هذه الصورة واشرح لي ما الذي يظهر فيها."
                         );
 
-
                         formData.append(
                             "image",
                             imageFile
                         );
 
-
                         const response =
                             await fetch(
                                 "/",
                                 {
-                                    method:
-                                        "POST",
-
-                                    body:
-                                        formData
+                                    method: "POST",
+                                    body: formData
                                 }
                             );
-
 
                         if (!response.ok) {
 
@@ -3177,51 +2476,24 @@
                                 "HTTP " +
                                 response.status
                             );
-
                         }
 
-
-                        const html =
-                            await response.text();
-
-
-                        const parser =
-                            new DOMParser();
-
-
-                        const documentData =
-                            parser.parseFromString(
-                                html,
-                                "text/html"
+                        answer =
+                            await extractServerAnswer(
+                                response
                             );
 
-
-                        const answerElement =
-                            documentData.querySelector(
-                                "#server-answer"
-                            );
-
-
-                        if (answerElement) {
+                        if (!answer) {
 
                             answer =
-                                answerElement
-                                    .textContent
-                                    .trim();
-
-                        } else {
-
-                            answer =
-                                "تم إرسال الصورة، ولكن تعذر قراءة نتيجة التحليل.";
-
+                                "تم إرسال الصورة، ولكن تعذر الحصول على نتيجة التحليل.";
                         }
-
                     }
 
 
-                    /* =================================================
+                    /* ============================================
                        TEXT REQUEST
-                    ================================================== */
+                    ============================================ */
 
                     else {
 
@@ -3229,8 +2501,7 @@
                             await fetch(
                                 "/api/chat",
                                 {
-                                    method:
-                                        "POST",
+                                    method: "POST",
 
                                     headers: {
                                         "Content-Type":
@@ -3245,50 +2516,55 @@
                                 }
                             );
 
-
                         if (!response.ok) {
 
                             throw new Error(
                                 "HTTP " +
                                 response.status
                             );
-
                         }
-
 
                         const data =
                             await response.json();
-
 
                         answer =
                             data.answer ||
                             data.response ||
                             data.message ||
-                            "لم أجد إجابة حاليًا.";
-
+                            "";
                     }
 
+
+                    /* ============================================
+                       FINAL ANSWER
+                    ============================================ */
+
+                    if (
+                        typeof answer !== "string"
+                    ) {
+
+                        answer =
+                            String(answer);
+                    }
+
+                    answer =
+                        answer.trim();
 
                     if (!answer) {
 
                         answer =
                             "أنا Aido AI ولم أجد إجابة حاليًا.";
-
                     }
-
 
                     lastAnswer =
                         answer;
 
-
                     setTyping(false);
-
 
                     addMessage(
                         answer,
                         "ai"
                     );
-
 
                     saveConversation(
                         question ||
@@ -3296,9 +2572,7 @@
                         answer
                     );
 
-
                     setOnlineStatus(true);
-
 
                 } catch (error) {
 
@@ -3307,20 +2581,15 @@
                         error
                     );
 
-
                     setTyping(false);
 
-
                     setOnlineStatus(false);
-
 
                     const errorMessage =
                         "حدث خطأ أثناء الاتصال بـ Aido AI. تأكد من أن الخادم يعمل ثم حاول مرة أخرى.";
 
-
                     lastAnswer =
                         errorMessage;
-
 
                     addMessage(
                         errorMessage,
@@ -3329,9 +2598,7 @@
 
                 } finally {
 
-                    sendBtn.disabled =
-                        false;
-
+                    sendBtn.disabled = false;
 
                     if (imagePreview) {
 
@@ -3345,11 +2612,8 @@
                             },
                             1000
                         );
-
                     }
-
                 }
-
             }
         );
 
@@ -3364,114 +2628,137 @@
                 window.SpeechRecognition ||
                 window.webkitSpeechRecognition;
 
-
             if (!SpeechRecognition) {
 
                 return false;
             }
 
+            try {
 
-            recognition =
-                new SpeechRecognition();
+                recognition =
+                    new SpeechRecognition();
 
+                recognition.lang =
+                    "ar-MA";
 
-            recognition.lang =
-                "ar-MA";
+                recognition.continuous =
+                    false;
 
+                recognition.interimResults =
+                    true;
 
-            recognition.continuous =
-                false;
+                recognition.onstart =
+                    function () {
 
+                        isRecording = true;
 
-            recognition.interimResults =
-                true;
+                        micBtn.classList.add(
+                            "active"
+                        );
 
+                        if (voiceMode) {
 
-            recognition.onstart =
-                function () {
-
-                    isRecording = true;
-
-
-                    micBtn.classList.add(
-                        "active"
-                    );
-
-                };
-
-
-            recognition.onresult =
-                function (event) {
-
-                    let transcript = "";
+                            voiceStatus.textContent =
+                                "أستمع إليك الآن...";
+                        }
+                    };
 
 
-                    for (
-                        let i =
-                            event.resultIndex;
+                recognition.onresult =
+                    function (event) {
 
-                        i <
-                        event.results.length;
+                        let transcript = "";
 
-                        i++
-                    ) {
+                        for (
+                            let i = event.resultIndex;
+                            i < event.results.length;
+                            i++
+                        ) {
 
-                        transcript +=
-                            event.results[i][0]
-                                .transcript;
+                            transcript +=
+                                event.results[i][0]
+                                    .transcript;
+                        }
 
-                    }
+                        questionInput.value =
+                            transcript;
 
-
-                    questionInput.value =
-                        transcript;
-
-
-                    resizeTextarea();
-
-                };
+                        resizeTextarea();
+                    };
 
 
-            recognition.onerror =
-                function (event) {
+                recognition.onerror =
+                    function (event) {
 
-                    console.error(
-                        "Speech error:",
-                        event.error
-                    );
+                        console.error(
+                            "Speech error:",
+                            event.error
+                        );
 
+                        isRecording = false;
 
-                    isRecording =
-                        false;
+                        micBtn.classList.remove(
+                            "active"
+                        );
 
+                        if (voiceMode) {
 
-                    micBtn.classList.remove(
-                        "active"
-                    );
-
-                };
-
-
-            recognition.onend =
-                function () {
-
-                    isRecording =
-                        false;
+                            voiceStatus.textContent =
+                                "حدث خطأ أثناء الاستماع.";
+                        }
+                    };
 
 
-                    micBtn.classList.remove(
-                        "active"
-                    );
+                recognition.onend =
+                    function () {
 
-                };
+                        isRecording = false;
+
+                        micBtn.classList.remove(
+                            "active"
+                        );
+
+                        if (voiceMode) {
+
+                            voiceMode = false;
+
+                            voiceStart.classList.remove(
+                                "recording"
+                            );
+
+                            voiceStart.textContent =
+                                "بدء المحادثة";
+
+                            voiceStatus.textContent =
+                                "تم التقاط الكلام.";
+
+                            if (
+                                questionInput.value.trim()
+                            ) {
+
+                                chatForm.requestSubmit();
+                            }
+                        }
+                    };
 
 
-            return true;
+                return true;
 
+            } catch (error) {
+
+                console.error(
+                    "Speech setup error:",
+                    error
+                );
+
+                recognition = null;
+
+                return false;
+            }
         }
 
 
-        const speechAvailable =
+        speechAvailable =
             setupSpeechRecognition();
 
 
@@ -3492,6 +2779,9 @@
                     return;
                 }
 
+                if (!recognition) {
+                    return;
+                }
 
                 if (isRecording) {
 
@@ -3506,13 +2796,11 @@
                     } catch (error) {
 
                         console.error(
+                            "Recognition start error:",
                             error
                         );
-
                     }
-
                 }
-
             }
         );
 
@@ -3525,10 +2813,18 @@
             "click",
             function () {
 
+                if (!speechAvailable) {
+
+                    alert(
+                        "المتصفح لا يدعم المحادثة الصوتية."
+                    );
+
+                    return;
+                }
+
                 voicePanel.classList.add(
                     "show"
                 );
-
             }
         );
 
@@ -3539,11 +2835,9 @@
 
                 stopVoiceChat();
 
-
                 voicePanel.classList.remove(
                     "show"
                 );
-
             }
         );
 
@@ -3553,22 +2847,22 @@
             function (event) {
 
                 if (
-                    event.target ===
-                    voicePanel
+                    event.target === voicePanel
                 ) {
 
                     stopVoiceChat();
 
-
                     voicePanel.classList.remove(
                         "show"
                     );
-
                 }
-
             }
         );
 
+
+        /* =========================================================
+           START VOICE CHAT
+        ========================================================= */
 
         voiceStart.addEventListener(
             "click",
@@ -3583,6 +2877,9 @@
                     return;
                 }
 
+                if (!recognition) {
+                    return;
+                }
 
                 if (isRecording) {
 
@@ -3591,27 +2888,21 @@
                     return;
                 }
 
+                voiceMode = true;
 
-                voiceMode =
-                    true;
+                questionInput.value = "";
 
-
-                isRecording =
-                    true;
-
+                resizeTextarea();
 
                 voiceStart.classList.add(
                     "recording"
                 );
 
-
                 voiceStart.textContent =
                     "إيقاف";
 
-
                 voiceStatus.textContent =
                     "أستمع إليك الآن...";
-
 
                 try {
 
@@ -3620,126 +2911,35 @@
                 } catch (error) {
 
                     console.error(
+                        "Voice start error:",
                         error
                     );
 
-                }
-
-            }
-        );
-
-
-        /* =========================================================
-           VOICE RESULT
-        ========================================================= */
-
-        function handleVoiceResult(event) {
-
-            let transcript = "";
-
-
-            for (
-                let i =
-                    event.resultIndex;
-
-                i <
-                event.results.length;
-
-                i++
-            ) {
-
-                transcript +=
-                    event.results[i][0]
-                        .transcript;
-
-            }
-
-
-            questionInput.value =
-                transcript;
-
-
-            resizeTextarea();
-
-        }
-
-
-        if (recognition) {
-
-            recognition.addEventListener(
-                "result",
-                function (event) {
-
-                    if (voiceMode) {
-
-                        handleVoiceResult(
-                            event
-                        );
-
-                    }
-
-                }
-            );
-
-
-            recognition.addEventListener(
-                "end",
-                function () {
-
-                    if (!voiceMode) {
-
-                        return;
-                    }
-
-
-                    isRecording =
-                        false;
-
+                    voiceMode = false;
 
                     voiceStart.classList.remove(
                         "recording"
                     );
 
-
                     voiceStart.textContent =
                         "بدء المحادثة";
 
-
                     voiceStatus.textContent =
-                        "تم التقاط الكلام.";
-
-
-                    voiceMode =
-                        false;
-
-
-                    if (
-                        questionInput.value.trim()
-                    ) {
-
-                        chatForm.requestSubmit();
-
-                    }
-
+                        "تعذر بدء المحادثة الصوتية.";
                 }
-            );
-
-        }
+            }
+        );
 
 
         /* =========================================================
-           STOP VOICE
+           STOP VOICE CHAT
         ========================================================= */
 
         function stopVoiceChat() {
 
-            voiceMode =
-                false;
+            voiceMode = false;
 
-
-            isRecording =
-                false;
-
+            isRecording = false;
 
             if (recognition) {
 
@@ -3747,23 +2947,26 @@
 
                     recognition.stop();
 
-                } catch (error) {}
-
+                } catch (error) {
+                    console.debug(
+                        "Recognition already stopped."
+                    );
+                }
             }
 
+            micBtn.classList.remove(
+                "active"
+            );
 
             voiceStart.classList.remove(
                 "recording"
             );
 
-
             voiceStart.textContent =
                 "بدء المحادثة";
 
-
             voiceStatus.textContent =
                 "اضغط لبدء المحادثة";
-
         }
 
 
@@ -3775,24 +2978,18 @@
             "keydown",
             function (event) {
 
-                if (
-                    event.key === "Escape"
-                ) {
+                if (event.key === "Escape") {
 
                     stopVoiceChat();
-
 
                     voicePanel.classList.remove(
                         "show"
                     );
 
-
                     sidebar.classList.remove(
                         "open"
                     );
-
                 }
-
             }
         );
 
@@ -3801,19 +2998,16 @@
            INITIALIZATION
         ========================================================= */
 
-        setOnlineStatus(true);
+        loadConversations();
 
-
-        resizeTextarea();
-
+        loadTheme();
 
         renderHistory();
 
+        resizeTextarea();
 
-        questionInput.focus();
-
+        setOnlineStatus(true);
     </script>
-
 
 </body>
 

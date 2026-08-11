@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from brain import get_response
 
-
 api = Blueprint("api", __name__)
 
 
@@ -22,9 +21,22 @@ def chat_api():
             "answer": "اكتب رسالة"
         })
 
-    # إرسال الرسالة إلى عقل Ido AI
-    answer = get_response(message)
+    # =========================
+    # إرسال الرسالة إلى عقل Aido AI
+    # =========================
 
-    return jsonify({
-        "answer": answer
-    })
+    try:
+
+        answer = get_response(message)
+
+        return jsonify({
+            "answer": answer or "لم أجد إجابة حاليًا."
+        })
+
+    except Exception as e:
+
+        print("API CHAT ERROR:", e)
+
+        return jsonify({
+            "answer": f"حدث خطأ: {e}"
+        }), 500

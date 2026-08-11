@@ -4,11 +4,13 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+
 # =========================================================
 # تحميل ملف .env
 # =========================================================
 
 load_dotenv()
+
 
 # =========================================================
 # Gemini
@@ -19,7 +21,9 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 gemini_client = None
 
 if GEMINI_API_KEY:
+
     try:
+
         gemini_client = genai.Client(
             api_key=GEMINI_API_KEY
         )
@@ -27,9 +31,11 @@ if GEMINI_API_KEY:
         print("GEMINI CLIENT: READY")
 
     except Exception as e:
+
         print("GEMINI CLIENT ERROR:", e)
 
 else:
+
     print("GEMINI_API_KEY: NOT FOUND")
 
 
@@ -37,13 +43,20 @@ else:
 # OpenRouter
 # =========================================================
 
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+OPENROUTER_API_KEY = os.getenv(
+    "OPENROUTER_API_KEY"
+)
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+OPENROUTER_URL = (
+    "https://openrouter.ai/api/v1/chat/completions"
+)
 
 if OPENROUTER_API_KEY:
+
     print("OPENROUTER CLIENT: READY")
+
 else:
+
     print("OPENROUTER_API_KEY: NOT FOUND")
 
 
@@ -60,26 +73,34 @@ print(
 def ask_gemini(message):
 
     if gemini_client is None:
+
         print("Gemini ERROR: client غير جاهز.")
+
         return None
 
     try:
+
         print("Trying Gemini...")
 
         response = gemini_client.models.generate_content(
-            model="gemini-3.5-flash",
+            model="gemini-2.5-flash",
             contents=message
         )
 
         if response and response.text:
+
             print("Gemini response received.")
+
             return response.text.strip()
 
         print("Gemini returned empty response.")
+
         return None
 
     except Exception as e:
+
         print("Gemini ERROR:", e)
+
         return None
 
 
@@ -90,35 +111,65 @@ def ask_gemini(message):
 def ask_openrouter(message):
 
     if not OPENROUTER_API_KEY:
-        print("OpenRouter ERROR: API key غير موجود.")
+
+        print(
+            "OpenRouter ERROR: "
+            "API key غير موجود."
+        )
+
         return None
 
     try:
+
         print("Trying OpenRouter...")
 
         response = requests.post(
             OPENROUTER_URL,
+
             headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-                "X-Title": "Aido AI"
+                "Authorization":
+                    f"Bearer {OPENROUTER_API_KEY}",
+
+                "Content-Type":
+                    "application/json",
+
+                "X-Title":
+                    "Aido AI"
             },
+
             json={
-                "model": "openrouter/free",
+
+                "model":
+                    "openrouter/free",
+
                 "messages": [
+
                     {
-                        "role": "user",
-                        "content": message
+                        "role":
+                            "user",
+
+                        "content":
+                            message
                     }
+
                 ]
             },
-            timeout=(10, 25)
+
+            timeout=(10, 60)
         )
 
-        print("OpenRouter Status:", response.status_code)
+        print(
+            "OpenRouter Status:",
+            response.status_code
+        )
 
         if response.status_code != 200:
-            print("OpenRouter Response:", response.text)
+
+            print(
+                "OpenRouter Response:",
+                response.text
+            )
+
             return None
 
         data = response.json()
@@ -126,18 +177,37 @@ def ask_openrouter(message):
         choices = data.get("choices")
 
         if choices:
-            message_data = choices[0].get("message", {})
-            answer = message_data.get("content")
+
+            message_data = choices[0].get(
+                "message",
+                {}
+            )
+
+            answer = message_data.get(
+                "content"
+            )
 
             if answer:
-                print("OpenRouter response received.")
+
+                print(
+                    "OpenRouter response received."
+                )
+
                 return answer.strip()
 
-        print("OpenRouter returned empty response.")
+        print(
+            "OpenRouter returned empty response."
+        )
+
         return None
 
     except Exception as e:
-        print("OpenRouter ERROR:", e)
+
+        print(
+            "OpenRouter ERROR:",
+            e
+        )
+
         return None
 
 
@@ -152,34 +222,58 @@ def ask_gemini_image(
 ):
 
     if gemini_client is None:
-        print("Gemini ERROR: client غير جاهز.")
+
+        print(
+            "Gemini ERROR: "
+            "client غير جاهز."
+        )
+
         return None
 
     try:
-        print("Trying Gemini with image...")
+
+        print(
+            "Trying Gemini with image..."
+        )
 
         image_part = types.Part.from_bytes(
             data=image_bytes,
             mime_type=mime_type
         )
 
-        response = gemini_client.models.generate_content(
-            model="gemini-3.5-flash",
-            contents=[
-                message,
-                image_part
-            ]
+        response = (
+            gemini_client.models.generate_content(
+                model="gemini-2.5-flash",
+
+                contents=[
+                    message,
+                    image_part
+                ]
+            )
         )
 
         if response and response.text:
-            print("Gemini image response received.")
+
+            print(
+                "Gemini image response received."
+            )
+
             return response.text.strip()
 
-        print("Gemini returned empty image response.")
+        print(
+            "Gemini returned empty "
+            "image response."
+        )
+
         return None
 
     except Exception as e:
-        print("Gemini IMAGE ERROR:", e)
+
+        print(
+            "Gemini IMAGE ERROR:",
+            e
+        )
+
         return None
 
 
@@ -190,10 +284,13 @@ def ask_gemini_image(
 def get_response(message):
 
     if not message:
+
         return "اكتب رسالة أولًا."
 
     original_message = message.strip()
+
     message_lower = original_message.lower()
+
 
     # =====================================================
     # الردود السريعة والثابتة
@@ -202,16 +299,20 @@ def get_response(message):
     responses = {
 
         "hello":
-            "السلام عليكم ورحمة الله وبركاته. أنا Ido AI، كيف يمكنني مساعدتك؟",
+            "السلام عليكم ورحمة الله وبركاته. "
+            "أنا Ido AI، كيف يمكنني مساعدتك؟",
 
         "hi":
-            "السلام عليكم ورحمة الله وبركاته. أنا Ido AI، كيف يمكنني مساعدتك؟",
+            "السلام عليكم ورحمة الله وبركاته. "
+            "أنا Ido AI، كيف يمكنني مساعدتك؟",
 
         "مرحبا":
-            "السلام عليكم ورحمة الله وبركاته. مرحبًا بك، كيف يمكنني مساعدتك؟",
+            "السلام عليكم ورحمة الله وبركاته. "
+            "مرحبًا بك، كيف يمكنني مساعدتك؟",
 
         "سلام":
-            "وعليكم السلام ورحمة الله وبركاته. كيف يمكنني مساعدتك؟",
+            "وعليكم السلام ورحمة الله وبركاته. "
+            "كيف يمكنني مساعدتك؟",
 
         "اسمك":
             "أنا Ido AI.",
@@ -220,50 +321,64 @@ def get_response(message):
             "أنا Ido AI.",
 
         "كيف حالك":
-            "أنا بخير، شكرًا لسؤالك. كيف يمكنني مساعدتك؟",
+            "أنا بخير، شكرًا لسؤالك. "
+            "كيف يمكنني مساعدتك؟",
 
         # =================================================
         # هوية Ido AI
         # =================================================
 
         "من صنعك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من طورك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من بناك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من هو مطورك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من برمجك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من اخترعك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من انشاك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من أنشأك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من صممك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من صاحبك":
-            "أنا Ido AI، وقد تم تطويري وبنائي بواسطة Noufal Ouhadi.",
+            "أنا Ido AI، وقد تم تطويري "
+            "وبنائي بواسطة Noufal Ouhadi.",
 
         "من وراءك":
-            "تم تطويري وبنائي بواسطة Noufal Ouhadi، وأنا Ido AI.",
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI.",
 
         "من صنع ido ai":
-            "تم تطوير Ido AI وبناؤه بواسطة Noufal Ouhadi.",
+            "تم تطوير Ido AI وبناؤه "
+            "بواسطة Noufal Ouhadi.",
 
         "من طور ido ai":
-            "تم تطوير Ido AI بواسطة Noufal Ouhadi.",
+            "تم تطوير Ido AI بواسطة "
+            "Noufal Ouhadi.",
 
         # =================================================
         # معلومات عامة
@@ -273,13 +388,21 @@ def get_response(message):
             "يمكنك معرفة الوقت من النظام.",
 
         "كم عدد الناس في العالم":
-            "يبلغ عدد سكان العالم أكثر من 8 مليارات نسمة.",
+            "يبلغ عدد سكان العالم "
+            "أكثر من 8 مليارات نسمة.",
 
         "ما هو الذكاء الاصطناعي":
-            "الذكاء الاصطناعي هو مجال من علوم الحاسوب يهدف إلى تطوير أنظمة قادرة على فهم المعلومات والتعلم منها وتنفيذ مهام تحتاج عادةً إلى قدر من الذكاء البشري.",
+            "الذكاء الاصطناعي هو مجال من علوم "
+            "الحاسوب يهدف إلى تطوير أنظمة قادرة "
+            "على فهم المعلومات والتعلم منها "
+            "وتنفيذ مهام تحتاج عادةً إلى قدر "
+            "من الذكاء البشري.",
 
         "ما هي بايثون":
-            "Python هي لغة برمجة قوية وسهلة الاستخدام، وتُستخدم في تطوير البرامج والذكاء الاصطناعي وتحليل البيانات.",
+            "Python هي لغة برمجة قوية وسهلة "
+            "الاستخدام، وتُستخدم في تطوير "
+            "البرامج والذكاء الاصطناعي "
+            "وتحليل البيانات.",
 
         "ما هي عاصمة المغرب":
             "عاصمة المغرب هي الرباط.",
@@ -301,6 +424,7 @@ def get_response(message):
             "إلى اللقاء! أتمنى لك يومًا سعيدًا."
     }
 
+
     # =====================================================
     # البحث في الردود الجاهزة
     # =====================================================
@@ -308,33 +432,48 @@ def get_response(message):
     for key, value in responses.items():
 
         if key in message_lower:
+
             return value
+
 
     # =====================================================
     # Gemini أولًا
     # =====================================================
 
-    answer = ask_gemini(original_message)
+    answer = ask_gemini(
+        original_message
+    )
 
     if answer:
+
         return answer
+
 
     # =====================================================
     # OpenRouter ثانيًا
     # =====================================================
 
-    print("Gemini failed. Trying OpenRouter...")
+    print(
+        "Gemini failed. "
+        "Trying OpenRouter..."
+    )
 
-    answer = ask_openrouter(original_message)
+    answer = ask_openrouter(
+        original_message
+    )
 
     if answer:
+
         return answer
+
 
     # =====================================================
     # فشل Gemini و OpenRouter
     # =====================================================
 
-    return "أنا Ido AI ولم أجد إجابة حاليًا."
+    return (
+        "أنا Ido AI ولم أجد إجابة حاليًا."
+    )
 
 
 # =========================================================
@@ -348,10 +487,12 @@ def get_image_response(
 ):
 
     if not message or not message.strip():
+
         message = (
             "حلل هذه الصورة واشرح لي "
             "ما الذي يظهر فيها."
         )
+
 
     # =====================================================
     # Gemini مع الصورة
@@ -364,12 +505,18 @@ def get_image_response(
     )
 
     if answer:
+
         return answer
+
 
     # =====================================================
     # إذا فشل Gemini في الصورة
     # =====================================================
 
-    print("Gemini image failed.")
+    print(
+        "Gemini image failed."
+    )
 
-    return "تعذر تحليل الصورة حاليًا."
+    return (
+        "تعذر تحليل الصورة حاليًا."
+    )

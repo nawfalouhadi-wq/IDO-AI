@@ -7,7 +7,6 @@ from calculator import calculate
 from translator import translate
 from memory import get_answer
 
-
 # =========================
 # API
 # =========================
@@ -94,7 +93,7 @@ def ai_response(question):
             pass
 
         # =========================
-        # Gemini / Aido AI
+        # Gemini / OpenRouter / OpenAI
         # =========================
 
         answer = get_response(question)
