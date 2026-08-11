@@ -32,10 +32,13 @@
 
             --success: #22c55e;
             --danger: #ef4444;
+            --warning: #f59e0b;
 
             --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 
             --radius: 12px;
+
+            --custom-background: none;
         }
 
         body.dark {
@@ -58,13 +61,40 @@
 
         body {
             font-family: Arial, Tahoma, sans-serif;
-            background: var(--background);
+
+            background:
+                var(--custom-background),
+                var(--background);
+
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+
             color: var(--text);
+
             overflow: hidden;
 
             transition:
                 background 0.2s ease,
                 color 0.2s ease;
+        }
+
+        body.has-background::before {
+            content: "";
+
+            position: fixed;
+
+            inset: 0;
+
+            background: rgba(255, 255, 255, 0.72);
+
+            z-index: -1;
+
+            pointer-events: none;
+        }
+
+        body.dark.has-background::before {
+            background: rgba(0, 0, 0, 0.55);
         }
 
         button,
@@ -78,7 +108,8 @@
         }
 
         button:focus-visible,
-        textarea:focus-visible {
+        textarea:focus-visible,
+        input:focus-visible {
             outline: 2px solid var(--primary);
             outline-offset: 2px;
         }
@@ -104,7 +135,7 @@
 
             flex-shrink: 0;
 
-            background: var(--surface);
+            background: rgba(255, 255, 255, 0.94);
 
             border-left: 1px solid var(--border);
 
@@ -116,6 +147,12 @@
             z-index: 900;
 
             transition: right 0.25s ease;
+
+            backdrop-filter: blur(18px);
+        }
+
+        body.dark .sidebar {
+            background: rgba(31, 41, 55, 0.94);
         }
 
         .brand {
@@ -200,7 +237,7 @@
 
             color: #ffffff;
 
-            margin-bottom: 22px;
+            margin-bottom: 14px;
         }
 
         .new-chat:hover {
@@ -214,7 +251,8 @@
         .new-chat:active,
         .side-btn:active,
         .tool:active,
-        .send-btn:active {
+        .send-btn:active,
+        .message-action:active {
             transform: scale(0.97);
         }
 
@@ -246,7 +284,37 @@
 
             font-size: 13px;
 
+            margin-bottom: 8px;
+        }
+
+        /* =====================================================
+           HISTORY SEARCH
+        ===================================================== */
+
+        .history-search {
+            width: 100%;
+
+            height: 38px;
+
             margin-bottom: 10px;
+
+            padding: 0 11px;
+
+            border: 1px solid var(--border);
+
+            border-radius: 9px;
+
+            background: var(--surface);
+
+            color: var(--text);
+
+            font-size: 13px;
+
+            outline: none;
+        }
+
+        .history-search:focus {
+            border-color: var(--primary);
         }
 
         .history {
@@ -258,7 +326,9 @@
         }
 
         .history-item {
-            padding: 10px;
+            position: relative;
+
+            padding: 10px 34px 10px 10px;
 
             margin-bottom: 5px;
 
@@ -281,6 +351,59 @@
             background: var(--surface-2);
         }
 
+        .history-item-title {
+            overflow: hidden;
+
+            text-overflow: ellipsis;
+
+            white-space: nowrap;
+        }
+
+        .history-item-date {
+            color: var(--muted);
+
+            font-size: 10px;
+
+            margin-top: 3px;
+        }
+
+        .history-delete {
+            position: absolute;
+
+            left: 7px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            width: 25px;
+            height: 25px;
+
+            border-radius: 7px;
+
+            background: transparent;
+
+            color: var(--muted);
+
+            cursor: pointer;
+
+            opacity: 0;
+
+            transition:
+                opacity 0.2s ease,
+                background 0.2s ease,
+                color 0.2s ease;
+        }
+
+        .history-item:hover .history-delete {
+            opacity: 1;
+        }
+
+        .history-delete:hover {
+            background: rgba(239, 68, 68, 0.12);
+
+            color: var(--danger);
+        }
+
         .history-empty {
             color: var(--muted);
 
@@ -295,6 +418,8 @@
             border-top: 1px solid var(--border);
 
             padding-top: 12px;
+
+            margin-top: 8px;
         }
 
         /* =====================================================
@@ -324,7 +449,7 @@
 
             padding: 0 22px;
 
-            background: var(--surface);
+            background: rgba(255, 255, 255, 0.94);
 
             border-bottom: 1px solid var(--border);
 
@@ -333,6 +458,12 @@
             align-items: center;
 
             justify-content: space-between;
+
+            backdrop-filter: blur(18px);
+        }
+
+        body.dark .topbar {
+            background: rgba(31, 41, 55, 0.94);
         }
 
         .topbar-right {
@@ -388,13 +519,15 @@
 
             background: var(--success);
 
-            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+            box-shadow:
+                0 0 0 3px rgba(34, 197, 94, 0.12);
         }
 
         .status-dot.offline {
             background: var(--danger);
 
-            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+            box-shadow:
+                0 0 0 3px rgba(239, 68, 68, 0.12);
         }
 
         .mobile-menu {
@@ -469,7 +602,8 @@
 
             margin-bottom: 20px;
 
-            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.18);
+            box-shadow:
+                0 10px 30px rgba(37, 99, 235, 0.18);
         }
 
         .welcome h1 {
@@ -551,11 +685,17 @@
         }
 
         .message-ai .message-bubble {
-            background: var(--surface);
+            background: rgba(255, 255, 255, 0.94);
 
             border: 1px solid var(--border);
 
             border-bottom-left-radius: 4px;
+
+            backdrop-filter: blur(10px);
+        }
+
+        body.dark .message-ai .message-bubble {
+            background: rgba(31, 41, 55, 0.94);
         }
 
         .message-image {
@@ -571,21 +711,29 @@
             border: 1px solid var(--border);
         }
 
+        /* =====================================================
+           MESSAGE ACTIONS
+        ===================================================== */
+
         .message-actions {
             display: flex;
 
-            gap: 5px;
+            gap: 7px;
 
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
         .message-action {
-            width: 32px;
-            height: 32px;
+            min-width: 38px;
+            height: 36px;
 
-            border-radius: 8px;
+            padding: 0 10px;
 
-            background: var(--surface-2);
+            border: 1px solid var(--border);
+
+            border-radius: 9px;
+
+            background: var(--surface);
 
             color: var(--text);
 
@@ -596,17 +744,27 @@
             align-items: center;
             justify-content: center;
 
+            gap: 6px;
+
             transition:
                 background 0.2s ease,
-                transform 0.1s ease;
+                transform 0.1s ease,
+                border-color 0.2s ease;
         }
 
         .message-action:hover {
-            background: var(--border);
+            background: var(--surface-2);
+
+            border-color: var(--primary);
         }
 
-        .message-action:active {
-            transform: scale(0.94);
+        .message-action .icon {
+            width: 17px;
+            height: 17px;
+        }
+
+        .message-action-label {
+            font-size: 12px;
         }
 
         /* =====================================================
@@ -685,7 +843,7 @@
         }
 
         .input-box {
-            background: var(--surface);
+            background: rgba(255, 255, 255, 0.94);
 
             border: 1px solid var(--border);
 
@@ -694,6 +852,12 @@
             padding: 12px;
 
             box-shadow: var(--shadow);
+
+            backdrop-filter: blur(15px);
+        }
+
+        body.dark .input-box {
+            background: rgba(31, 41, 55, 0.94);
         }
 
         textarea {
@@ -724,6 +888,18 @@
             color: var(--muted);
         }
 
+        .composer-meta {
+            display: flex;
+
+            justify-content: flex-start;
+
+            padding: 0 7px 5px;
+
+            color: var(--muted);
+
+            font-size: 10px;
+        }
+
         .tools {
             display: flex;
 
@@ -734,8 +910,8 @@
 
         .tool,
         .send-btn {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
 
             border-radius: 10px;
 
@@ -756,10 +932,14 @@
             background: var(--surface-2);
 
             color: var(--text);
+
+            border: 1px solid transparent;
         }
 
         .tool:hover {
             background: var(--border);
+
+            border-color: var(--primary);
         }
 
         .tool.active {
@@ -790,7 +970,8 @@
            IMAGE
         ===================================================== */
 
-        #imageInput {
+        #imageInput,
+        #backgroundInput {
             display: none;
         }
 
@@ -842,7 +1023,69 @@
         }
 
         /* =====================================================
-           VOICE PANEL
+           TOAST
+        ===================================================== */
+
+        .toast-container {
+            position: fixed;
+
+            right: 20px;
+            bottom: 20px;
+
+            z-index: 5000;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 8px;
+
+            pointer-events: none;
+        }
+
+        .toast {
+            min-width: 220px;
+            max-width: 340px;
+
+            padding: 12px 15px;
+
+            border-radius: 12px;
+
+            background: rgba(31, 41, 55, 0.95);
+
+            color: #ffffff;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.18);
+
+            font-size: 13px;
+
+            animation:
+                toastIn 0.25s ease,
+                toastOut 0.25s ease 2.75s forwards;
+        }
+
+        @keyframes toastIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes toastOut {
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        /* =====================================================
+           VOICE EXPERIENCE
         ===================================================== */
 
         .voice-panel {
@@ -852,14 +1095,21 @@
 
             inset: 0;
 
-            z-index: 1000;
+            z-index: 2000;
 
-            padding: 20px;
-
-            background: rgba(0, 0, 0, 0.55);
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(37, 99, 235, 0.18),
+                    rgba(0, 0, 0, 0.92)
+                );
 
             align-items: center;
             justify-content: center;
+
+            padding: 20px;
+
+            backdrop-filter: blur(18px);
         }
 
         .voice-panel.show {
@@ -867,38 +1117,327 @@
         }
 
         .voice-box {
-            width: min(420px, 90%);
+            width: min(700px, 95%);
 
-            padding: 30px;
+            min-height: min(650px, 90vh);
 
-            border-radius: 20px;
+            padding: 45px 30px;
 
-            background: var(--surface);
+            border-radius: 32px;
 
-            color: var(--text);
+            background:
+                linear-gradient(
+                    145deg,
+                    rgba(255, 255, 255, 0.12),
+                    rgba(255, 255, 255, 0.04)
+                );
+
+            border: 1px solid rgba(255, 255, 255, 0.16);
+
+            color: #ffffff;
 
             text-align: center;
 
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+            box-shadow:
+                0 30px 100px rgba(0, 0, 0, 0.45);
+
+            display: flex;
+
+            flex-direction: column;
+
+            align-items: center;
+
+            justify-content: center;
+
+            position: relative;
+
+            overflow: hidden;
         }
 
-        .voice-box h2 {
-            margin-bottom: 12px;
+        .voice-title {
+            font-size: 30px;
+
+            font-weight: 700;
+
+            margin-bottom: 8px;
         }
 
-        .voice-box p {
-            color: var(--muted);
+        .voice-subtitle {
+            color: rgba(255, 255, 255, 0.65);
+
+            font-size: 15px;
+
+            margin-bottom: 45px;
         }
 
-        .voice-button {
-            width: 80px;
-            height: 80px;
+        .voice-ai {
+            position: relative;
 
-            margin: 25px auto;
+            width: 230px;
+            height: 230px;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            margin-bottom: 40px;
+        }
+
+        .voice-ai::before,
+        .voice-ai::after {
+            content: "";
+
+            position: absolute;
 
             border-radius: 50%;
 
-            background: var(--primary);
+            border: 1px solid rgba(96, 165, 250, 0.35);
+
+            opacity: 0;
+
+            transform: scale(0.7);
+        }
+
+        .voice-ai::before {
+            width: 180px;
+            height: 180px;
+        }
+
+        .voice-ai::after {
+            width: 230px;
+            height: 230px;
+        }
+
+        .voice-ai.active::before {
+            animation: voicePulse 1.8s infinite;
+        }
+
+        .voice-ai.active::after {
+            animation:
+                voicePulse 1.8s infinite 0.4s;
+        }
+
+        @keyframes voicePulse {
+            0% {
+                opacity: 0;
+                transform: scale(0.7);
+            }
+
+            35% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1.2);
+            }
+        }
+
+        .voice-core {
+            width: 125px;
+            height: 125px;
+
+            border-radius: 50%;
+
+            background:
+                radial-gradient(
+                    circle at 35% 30%,
+                    #ffffff,
+                    #60a5fa 28%,
+                    #2563eb 62%,
+                    #1e3a8a
+                );
+
+            box-shadow:
+                0 0 35px rgba(59, 130, 246, 0.55),
+                0 0 80px rgba(37, 99, 235, 0.25);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            position: relative;
+
+            z-index: 2;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .voice-core span {
+            font-size: 42px;
+
+            font-weight: 800;
+
+            letter-spacing: 2px;
+
+            color: #ffffff;
+
+            text-shadow:
+                0 2px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        .voice-ai.active .voice-core {
+            animation:
+                voiceCore 0.9s ease-in-out infinite alternate;
+        }
+
+        @keyframes voiceCore {
+            from {
+                transform: scale(0.94);
+
+                box-shadow:
+                    0 0 35px rgba(59, 130, 246, 0.55),
+                    0 0 70px rgba(37, 99, 235, 0.25);
+            }
+
+            to {
+                transform: scale(1.08);
+
+                box-shadow:
+                    0 0 55px rgba(96, 165, 250, 0.85),
+                    0 0 120px rgba(37, 99, 235, 0.45);
+            }
+        }
+
+        .voice-waves {
+            position: absolute;
+
+            inset: 0;
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            gap: 5px;
+
+            pointer-events: none;
+        }
+
+        .voice-wave {
+            width: 4px;
+            height: 20px;
+
+            border-radius: 10px;
+
+            background: rgba(147, 197, 253, 0.8);
+
+            opacity: 0.25;
+        }
+
+        .voice-ai.active .voice-wave {
+            animation:
+                wave 0.7s ease-in-out infinite alternate;
+        }
+
+        .voice-wave:nth-child(1) {
+            transform: translateX(-105px);
+            animation-delay: 0s;
+        }
+
+        .voice-wave:nth-child(2) {
+            transform: translateX(-85px);
+            animation-delay: 0.1s;
+        }
+
+        .voice-wave:nth-child(3) {
+            transform: translateX(-65px);
+            animation-delay: 0.2s;
+        }
+
+        .voice-wave:nth-child(4) {
+            transform: translateX(65px);
+            animation-delay: 0.2s;
+        }
+
+        .voice-wave:nth-child(5) {
+            transform: translateX(85px);
+            animation-delay: 0.1s;
+        }
+
+        .voice-wave:nth-child(6) {
+            transform: translateX(105px);
+            animation-delay: 0s;
+        }
+
+        @keyframes wave {
+            from {
+                height: 15px;
+                opacity: 0.35;
+            }
+
+            to {
+                height: 65px;
+                opacity: 1;
+            }
+        }
+
+        .voice-status {
+            min-height: 25px;
+
+            color: rgba(255, 255, 255, 0.85);
+
+            font-size: 16px;
+
+            margin-bottom: 28px;
+        }
+
+        .voice-start {
+            min-width: 190px;
+
+            height: 50px;
+
+            padding: 0 25px;
+
+            border-radius: 14px;
+
+            background: #ffffff;
+
+            color: #111827;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            transition:
+                transform 0.15s ease,
+                background 0.2s ease;
+        }
+
+        .voice-start:hover {
+            background: #dbeafe;
+        }
+
+        .voice-start:active {
+            transform: scale(0.96);
+        }
+
+        .voice-start.recording {
+            background: #ef4444;
+
+            color: #ffffff;
+        }
+
+        .voice-close {
+            position: absolute;
+
+            top: 20px;
+            left: 20px;
+
+            width: 40px;
+            height: 40px;
+
+            border-radius: 50%;
+
+            background: rgba(255, 255, 255, 0.1);
+
+            border: 1px solid rgba(255, 255, 255, 0.12);
 
             color: #ffffff;
 
@@ -909,35 +1448,23 @@
             align-items: center;
             justify-content: center;
 
-            font-size: 14px;
-
-            transition:
-                background 0.2s ease,
-                transform 0.1s ease;
+            font-size: 22px;
         }
 
-        .voice-button:hover {
-            background: var(--primary-hover);
+        .voice-close:hover {
+            background: rgba(255, 255, 255, 0.18);
         }
 
-        .voice-button:active {
-            transform: scale(0.96);
-        }
+        /* =====================================================
+           BACKGROUND
+        ===================================================== */
 
-        .voice-button.recording {
-            background: var(--danger);
-        }
+        .background-info {
+            font-size: 12px;
 
-        .voice-close {
-            padding: 8px 15px;
+            color: var(--muted);
 
-            border-radius: 8px;
-
-            background: var(--danger);
-
-            color: #ffffff;
-
-            cursor: pointer;
+            margin-top: 4px;
         }
 
         /* =====================================================
@@ -953,7 +1480,8 @@
                 right: -280px;
                 bottom: 0;
 
-                box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
+                box-shadow:
+                    -10px 0 30px rgba(0, 0, 0, 0.12);
             }
 
             .sidebar.open {
@@ -997,6 +1525,35 @@
                 width: 36px;
                 height: 36px;
             }
+
+            .message-action-label {
+                display: none;
+            }
+
+            .voice-box {
+                min-height: 90vh;
+
+                padding: 30px 20px;
+            }
+
+            .voice-title {
+                font-size: 24px;
+            }
+
+            .voice-ai {
+                transform: scale(0.82);
+            }
+
+            .toast-container {
+                right: 10px;
+                left: 10px;
+                bottom: 10px;
+            }
+
+            .toast {
+                width: 100%;
+                max-width: none;
+            }
         }
     </style>
 </head>
@@ -1038,12 +1595,10 @@
             >
 
                 <span class="icon">
-
                     <svg viewBox="0 0 24 24">
                         <path d="M12 5v14"></path>
                         <path d="M5 12h14"></path>
                     </svg>
-
                 </span>
 
                 <span>
@@ -1056,6 +1611,16 @@
                 المحادثات
             </div>
 
+            <!-- البحث في المحادثات -->
+            <input
+                type="search"
+                class="history-search"
+                id="historySearch"
+                placeholder="ابحث في المحادثات..."
+                aria-label="البحث في المحادثات"
+                autocomplete="off"
+            >
+
             <div
                 class="history"
                 id="history"
@@ -1065,20 +1630,115 @@
 
                 <button
                     class="side-btn"
+                    id="exportBtn"
+                    type="button"
+                >
+
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M12 3v12"></path>
+                            <path d="M7 10l5 5 5-5"></path>
+                            <path d="M5 21h14"></path>
+                        </svg>
+                    </span>
+
+                    <span>
+                        تصدير المحادثة
+                    </span>
+
+                </button>
+
+                <button
+                    class="side-btn"
+                    id="copyChatBtn"
+                    type="button"
+                >
+
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect
+                                x="8"
+                                y="8"
+                                width="11"
+                                height="11"
+                                rx="2"
+                            ></rect>
+
+                            <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+                        </svg>
+                    </span>
+
+                    <span>
+                        نسخ المحادثة
+                    </span>
+
+                </button>
+
+                <button
+                    class="side-btn"
                     id="themeBtn"
                     type="button"
                 >
 
                     <span class="icon">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3A6.7 6.7 0 0 0 21 12.8z"></path>
                         </svg>
-
                     </span>
 
                     <span id="themeText">
                         الوضع الليلي
+                    </span>
+
+                </button>
+
+                <button
+                    class="side-btn"
+                    id="backgroundBtn"
+                    type="button"
+                >
+
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect
+                                x="3"
+                                y="4"
+                                width="18"
+                                height="16"
+                                rx="2"
+                            ></rect>
+
+                            <circle
+                                cx="8.5"
+                                cy="9"
+                                r="1.5"
+                            ></circle>
+
+                            <path d="M21 15l-5-5L5 20"></path>
+                        </svg>
+                    </span>
+
+                    <span>
+                        خلفية الجهاز
+                    </span>
+
+                </button>
+
+                <button
+                    class="side-btn"
+                    id="clearBackgroundBtn"
+                    type="button"
+                >
+
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M4 4l16 16"></path>
+                            <path d="M20 4L4 20"></path>
+                        </svg>
+                    </span>
+
+                    <span>
+                        إزالة الخلفية
                     </span>
 
                 </button>
@@ -1090,7 +1750,6 @@
                 >
 
                     <span class="icon">
-
                         <svg viewBox="0 0 24 24">
                             <path d="M3 6h18"></path>
                             <path d="M8 6V4h8v2"></path>
@@ -1098,7 +1757,6 @@
                             <path d="M10 11v6"></path>
                             <path d="M14 11v6"></path>
                         </svg>
-
                     </span>
 
                     <span>
@@ -1282,8 +1940,15 @@
                             aria-label="رسالتك"
                         ></textarea>
 
+                        <div class="composer-meta">
+                            <span id="characterCount">
+                                0 / 4000
+                            </span>
+                        </div>
+
                         <div class="tools">
 
+                            <!-- صورة -->
                             <button
                                 type="button"
                                 class="tool"
@@ -1312,6 +1977,7 @@
 
                             </button>
 
+                            <!-- تحويل الكلام إلى نص -->
                             <button
                                 type="button"
                                 class="tool"
@@ -1336,6 +2002,7 @@
 
                             </button>
 
+                            <!-- المحادثة الصوتية -->
                             <button
                                 type="button"
                                 class="tool"
@@ -1354,6 +2021,7 @@
 
                             </button>
 
+                            <!-- قراءة آخر إجابة -->
                             <button
                                 type="button"
                                 class="tool"
@@ -1370,6 +2038,7 @@
 
                             </button>
 
+                            <!-- إرسال -->
                             <button
                                 type="submit"
                                 class="send-btn"
@@ -1398,6 +2067,25 @@
     </div>
 
     <!-- =========================================================
+         BACKGROUND INPUT
+    ========================================================== -->
+
+    <input
+        type="file"
+        id="backgroundInput"
+        accept="image/*"
+    >
+
+    <!-- =========================================================
+         TOAST CONTAINER
+    ========================================================== -->
+
+    <div
+        class="toast-container"
+        id="toastContainer"
+    ></div>
+
+    <!-- =========================================================
          VOICE PANEL
     ========================================================== -->
 
@@ -1408,30 +2096,61 @@
 
         <div class="voice-box">
 
-            <h2>
-                المحادثة الصوتية
-            </h2>
-
-            <p id="voiceStatus">
-                اضغط لبدء المحادثة
-            </p>
-
-            <button
-                class="voice-button"
-                id="voiceStart"
-                type="button"
-            >
-                بدء المحادثة
-            </button>
-
-            <br>
-
             <button
                 class="voice-close"
                 id="voiceClose"
                 type="button"
+                aria-label="إغلاق"
+                title="إغلاق"
             >
-                إغلاق
+                ×
+            </button>
+
+            <div class="voice-title">
+                المحادثة الصوتية
+            </div>
+
+            <div class="voice-subtitle">
+                تحدث مع Aido AI بالصوت
+            </div>
+
+            <div
+                class="voice-ai"
+                id="voiceAI"
+            >
+
+                <div class="voice-waves">
+
+                    <span class="voice-wave"></span>
+                    <span class="voice-wave"></span>
+                    <span class="voice-wave"></span>
+                    <span class="voice-wave"></span>
+                    <span class="voice-wave"></span>
+                    <span class="voice-wave"></span>
+
+                </div>
+
+                <div class="voice-core">
+                    <span>
+                        IA
+                    </span>
+                </div>
+
+            </div>
+
+            <div
+                class="voice-status"
+                id="voiceStatus"
+            >
+                اضغط لبدء المحادثة
+            </div>
+
+            <button
+                class="voice-start"
+                id="voiceStart"
+                type="button"
+            >
+                بدء المحادثة
             </button>
 
         </div>
@@ -1477,6 +2196,15 @@
         const themeText = document.getElementById("themeText");
         const clearBtn = document.getElementById("clearBtn");
         const history = document.getElementById("history");
+        const historySearch = document.getElementById("historySearch");
+
+        const exportBtn = document.getElementById("exportBtn");
+        const copyChatBtn = document.getElementById("copyChatBtn");
+
+        const backgroundBtn = document.getElementById("backgroundBtn");
+        const backgroundInput = document.getElementById("backgroundInput");
+        const clearBackgroundBtn =
+            document.getElementById("clearBackgroundBtn");
 
         const mobileMenu = document.getElementById("mobileMenu");
         const sidebar = document.getElementById("sidebar");
@@ -1489,10 +2217,17 @@
         const voiceStart = document.getElementById("voiceStart");
         const voiceClose = document.getElementById("voiceClose");
         const voiceStatus = document.getElementById("voiceStatus");
+        const voiceAI = document.getElementById("voiceAI");
 
         const status = document.getElementById("status");
         const statusText = document.getElementById("statusText");
         const statusDot = document.getElementById("statusDot");
+
+        const characterCount =
+            document.getElementById("characterCount");
+
+        const toastContainer =
+            document.getElementById("toastContainer");
 
 
         /* =========================================================
@@ -1510,6 +2245,8 @@
 
         let conversations = [];
 
+        const MAX_MESSAGE_LENGTH = 4000;
+
 
         /* =========================================================
            STORAGE KEYS
@@ -1517,6 +2254,37 @@
 
         const STORAGE_CONVERSATIONS = "aido_conversations";
         const STORAGE_THEME = "aido_theme";
+        const STORAGE_BACKGROUND = "aido_background";
+
+
+        /* =========================================================
+           TOAST
+        ========================================================= */
+
+        function showToast(message) {
+
+            if (!message) {
+                return;
+            }
+
+            const toast =
+                document.createElement("div");
+
+            toast.className = "toast";
+
+            toast.textContent = message;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(
+                function () {
+
+                    toast.remove();
+
+                },
+                3100
+            );
+        }
 
 
         /* =========================================================
@@ -1571,6 +2339,10 @@
                 console.error(
                     "Conversation save error:",
                     error
+                );
+
+                showToast(
+                    "تعذر حفظ المحادثة في المتصفح."
                 );
             }
         }
@@ -1642,6 +2414,161 @@
                     dark
                         ? "الوضع النهاري"
                         : "الوضع الليلي";
+
+                showToast(
+                    dark
+                        ? "تم تفعيل الوضع الليلي."
+                        : "تم تفعيل الوضع النهاري."
+                );
+            }
+        );
+
+
+        /* =========================================================
+           BACKGROUND
+        ========================================================= */
+
+        function loadBackground() {
+
+            try {
+
+                const saved =
+                    localStorage.getItem(
+                        STORAGE_BACKGROUND
+                    );
+
+                if (!saved) {
+                    return;
+                }
+
+                document.documentElement.style.setProperty(
+                    "--custom-background",
+                    `url("${saved}")`
+                );
+
+                document.body.classList.add(
+                    "has-background"
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Background load error:",
+                    error
+                );
+            }
+        }
+
+
+        backgroundBtn.addEventListener(
+            "click",
+            function () {
+
+                backgroundInput.click();
+            }
+        );
+
+
+        backgroundInput.addEventListener(
+            "change",
+            function () {
+
+                const file =
+                    backgroundInput.files &&
+                    backgroundInput.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                if (!file.type.startsWith("image/")) {
+
+                    showToast(
+                        "الملف المختار ليس صورة."
+                    );
+
+                    backgroundInput.value = "";
+
+                    return;
+                }
+
+                const reader =
+                    new FileReader();
+
+                reader.onload =
+                    function (event) {
+
+                        const imageData =
+                            event.target.result;
+
+                        document.documentElement.style.setProperty(
+                            "--custom-background",
+                            `url("${imageData}")`
+                        );
+
+                        document.body.classList.add(
+                            "has-background"
+                        );
+
+                        try {
+
+                            localStorage.setItem(
+                                STORAGE_BACKGROUND,
+                                imageData
+                            );
+
+                            showToast(
+                                "تم تغيير الخلفية."
+                            );
+
+                        } catch (error) {
+
+                            console.error(
+                                "Background save error:",
+                                error
+                            );
+
+                            showToast(
+                                "الصورة كبيرة جدًا ولا يمكن حفظها."
+                            );
+                        }
+                    };
+
+                reader.readAsDataURL(file);
+            }
+        );
+
+
+        clearBackgroundBtn.addEventListener(
+            "click",
+            function () {
+
+                document.documentElement.style.setProperty(
+                    "--custom-background",
+                    "none"
+                );
+
+                document.body.classList.remove(
+                    "has-background"
+                );
+
+                try {
+
+                    localStorage.removeItem(
+                        STORAGE_BACKGROUND
+                    );
+
+                    showToast(
+                        "تمت إزالة الخلفية."
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Background clear error:",
+                        error
+                    );
+                }
             }
         );
 
@@ -1686,7 +2613,7 @@
 
                 if (!file.type.startsWith("image/")) {
 
-                    alert(
+                    showToast(
                         "الملف المختار ليس صورة."
                     );
 
@@ -1710,12 +2637,16 @@
                         imageContainer.classList.add(
                             "show"
                         );
+
+                        showToast(
+                            "تم اختيار الصورة."
+                        );
                     };
 
                 reader.onerror =
                     function () {
 
-                        alert(
+                        showToast(
                             "تعذر قراءة الصورة."
                         );
 
@@ -1763,9 +2694,48 @@
                 height + "px";
         }
 
+
+        function updateCharacterCount() {
+
+            const length =
+                questionInput.value.length;
+
+            characterCount.textContent =
+                `${length} / ${MAX_MESSAGE_LENGTH}`;
+
+            if (length >= MAX_MESSAGE_LENGTH) {
+
+                characterCount.style.color =
+                    "var(--danger)";
+
+            } else {
+
+                characterCount.style.color =
+                    "var(--muted)";
+            }
+        }
+
+
         questionInput.addEventListener(
             "input",
-            resizeTextarea
+            function () {
+
+                if (
+                    questionInput.value.length >
+                    MAX_MESSAGE_LENGTH
+                ) {
+
+                    questionInput.value =
+                        questionInput.value.slice(
+                            0,
+                            MAX_MESSAGE_LENGTH
+                        );
+                }
+
+                resizeTextarea();
+
+                updateCharacterCount();
+            }
         );
 
 
@@ -1879,6 +2849,8 @@
                     "message-actions";
 
 
+                /* COPY */
+
                 const copyButton =
                     document.createElement("button");
 
@@ -1891,8 +2863,25 @@
                 copyButton.title =
                     "نسخ الإجابة";
 
-                copyButton.textContent =
-                    "📋";
+                copyButton.innerHTML = `
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <rect
+                                x="8"
+                                y="8"
+                                width="11"
+                                height="11"
+                                rx="2"
+                            ></rect>
+
+                            <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
+                        </svg>
+                    </span>
+
+                    <span class="message-action-label">
+                        نسخ
+                    </span>
+                `;
 
                 copyButton.addEventListener(
                     "click",
@@ -1902,6 +2891,8 @@
                     }
                 );
 
+
+                /* SPEAK */
 
                 const speakButton =
                     document.createElement("button");
@@ -1915,8 +2906,19 @@
                 speakButton.title =
                     "قراءة الإجابة";
 
-                speakButton.textContent =
-                    "🔊";
+                speakButton.innerHTML = `
+                    <span class="icon">
+                        <svg viewBox="0 0 24 24">
+                            <path d="M11 5L6 9H3v6h3l5 4z"></path>
+                            <path d="M15 9a4 4 0 0 1 0 6"></path>
+                            <path d="M18 6a8 8 0 0 1 0 12"></path>
+                        </svg>
+                    </span>
+
+                    <span class="message-action-label">
+                        قراءة
+                    </span>
+                `;
 
                 speakButton.addEventListener(
                     "click",
@@ -1989,7 +2991,7 @@
                     textarea.remove();
                 }
 
-                alert(
+                showToast(
                     "تم نسخ الإجابة."
                 );
 
@@ -2000,11 +3002,178 @@
                     error
                 );
 
-                alert(
+                showToast(
                     "تعذر نسخ الإجابة."
                 );
             }
         }
+
+
+        /* =========================================================
+           COPY CURRENT CHAT
+        ========================================================= */
+
+        async function copyCurrentChat() {
+
+            const messages =
+                chatInner.querySelectorAll(
+                    ".message"
+                );
+
+            if (!messages.length) {
+
+                showToast(
+                    "لا توجد محادثة لنسخها."
+                );
+
+                return;
+            }
+
+            const parts = [];
+
+            messages.forEach(
+                function (message) {
+
+                    const label =
+                        message.querySelector(
+                            ".message-label"
+                        );
+
+                    const bubble =
+                        message.querySelector(
+                            ".message-bubble"
+                        );
+
+                    if (
+                        label &&
+                        bubble &&
+                        bubble.textContent.trim()
+                    ) {
+
+                        parts.push(
+                            label.textContent.trim() +
+                            ":\n" +
+                            bubble.textContent.trim()
+                        );
+                    }
+                }
+            );
+
+            const text =
+                parts.join("\n\n");
+
+            await copyText(text);
+        }
+
+
+        copyChatBtn.addEventListener(
+            "click",
+            copyCurrentChat
+        );
+
+
+        /* =========================================================
+           EXPORT CURRENT CHAT
+        ========================================================= */
+
+        function exportCurrentChat() {
+
+            const messages =
+                chatInner.querySelectorAll(
+                    ".message"
+                );
+
+            if (!messages.length) {
+
+                showToast(
+                    "لا توجد محادثة لتصديرها."
+                );
+
+                return;
+            }
+
+            const parts = [];
+
+            messages.forEach(
+                function (message) {
+
+                    const label =
+                        message.querySelector(
+                            ".message-label"
+                        );
+
+                    const bubble =
+                        message.querySelector(
+                            ".message-bubble"
+                        );
+
+                    if (
+                        label &&
+                        bubble &&
+                        bubble.textContent.trim()
+                    ) {
+
+                        parts.push(
+                            label.textContent.trim() +
+                            ":\n" +
+                            bubble.textContent.trim()
+                        );
+                    }
+                }
+            );
+
+            const content =
+                "Aido AI\n" +
+                "====================\n\n" +
+                parts.join("\n\n") +
+                "\n\n====================\n" +
+                new Date().toLocaleString("ar-MA");
+
+            const blob =
+                new Blob(
+                    [content],
+                    {
+                        type:
+                            "text/plain;charset=utf-8"
+                    }
+                );
+
+            const url =
+                URL.createObjectURL(blob);
+
+            const link =
+                document.createElement("a");
+
+            link.href = url;
+
+            link.download =
+                "aido-ai-conversation.txt";
+
+            document.body.appendChild(link);
+
+            link.click();
+
+            link.remove();
+
+            setTimeout(
+                function () {
+
+                    URL.revokeObjectURL(url);
+
+                },
+                1000
+            );
+
+            showToast(
+                "تم تصدير المحادثة."
+            );
+        }
+
+
+        exportBtn.addEventListener(
+            "click",
+            exportCurrentChat
+        );
 
 
         /* =========================================================
@@ -2021,7 +3190,7 @@
                 !("speechSynthesis" in window)
             ) {
 
-                alert(
+                showToast(
                     "المتصفح لا يدعم قراءة النص صوتيًا."
                 );
 
@@ -2039,6 +3208,30 @@
             utterance.rate = 0.95;
             utterance.pitch = 1;
 
+            utterance.onstart =
+                function () {
+
+                    voiceAI.classList.add(
+                        "active"
+                    );
+                };
+
+            utterance.onend =
+                function () {
+
+                    voiceAI.classList.remove(
+                        "active"
+                    );
+                };
+
+            utterance.onerror =
+                function () {
+
+                    voiceAI.classList.remove(
+                        "active"
+                    );
+                };
+
             window.speechSynthesis.speak(
                 utterance
             );
@@ -2055,7 +3248,7 @@
 
                 } else {
 
-                    alert(
+                    showToast(
                         "لا توجد إجابة لقراءتها."
                     );
                 }
@@ -2152,6 +3345,66 @@
 
 
         /* =========================================================
+           FORMAT DATE
+        ========================================================= */
+
+        function formatConversationDate(date) {
+
+            if (!date) {
+                return "";
+            }
+
+            try {
+
+                return new Date(
+                    date
+                ).toLocaleString(
+                    "ar-MA",
+                    {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit"
+                    }
+                );
+
+            } catch (error) {
+
+                return "";
+            }
+        }
+
+
+        /* =========================================================
+           DELETE ONE HISTORY ITEM
+        ========================================================= */
+
+        function deleteConversation(index) {
+
+            if (
+                index < 0 ||
+                index >= conversations.length
+            ) {
+
+                return;
+            }
+
+            conversations.splice(
+                index,
+                1
+            );
+
+            saveConversations();
+
+            renderHistory();
+
+            showToast(
+                "تم حذف المحادثة."
+            );
+        }
+
+
+        /* =========================================================
            HISTORY
         ========================================================= */
 
@@ -2159,7 +3412,46 @@
 
             history.innerHTML = "";
 
-            if (conversations.length === 0) {
+            const search =
+                historySearch
+                    ? historySearch.value
+                        .trim()
+                        .toLowerCase()
+                    : "";
+
+            const filtered =
+                conversations
+                    .map(
+                        function (
+                            conversation,
+                            index
+                        ) {
+
+                            return {
+                                conversation,
+                                index
+                            };
+                        }
+                    )
+                    .filter(
+                        function (item) {
+
+                            if (!search) {
+                                return true;
+                            }
+
+                            return (
+                                (
+                                    item.conversation.question ||
+                                    ""
+                                )
+                                .toLowerCase()
+                                .includes(search)
+                            );
+                        }
+                    );
+
+            if (filtered.length === 0) {
 
                 const empty =
                     document.createElement("div");
@@ -2168,34 +3460,88 @@
                     "history-empty";
 
                 empty.textContent =
-                    "لا توجد محادثات محفوظة";
+                    search
+                        ? "لا توجد نتائج."
+                        : "لا توجد محادثات محفوظة";
 
                 history.appendChild(empty);
 
                 return;
             }
 
-            conversations.forEach(
-                function (
-                    conversation,
-                    index
-                ) {
+            filtered.forEach(
+                function (item) {
 
-                    const item =
+                    const conversation =
+                        item.conversation;
+
+                    const index =
+                        item.index;
+
+                    const historyItem =
                         document.createElement("div");
 
-                    item.className =
+                    historyItem.className =
                         "history-item";
 
-                    item.textContent =
+                    const title =
+                        document.createElement("div");
+
+                    title.className =
+                        "history-item-title";
+
+                    title.textContent =
                         conversation.question ||
                         "محادثة";
 
-                    item.title =
-                        conversation.question ||
-                        "محادثة";
+                    const date =
+                        document.createElement("div");
 
-                    item.addEventListener(
+                    date.className =
+                        "history-item-date";
+
+                    date.textContent =
+                        formatConversationDate(
+                            conversation.date
+                        );
+
+                    const deleteButton =
+                        document.createElement("button");
+
+                    deleteButton.className =
+                        "history-delete";
+
+                    deleteButton.type =
+                        "button";
+
+                    deleteButton.title =
+                        "حذف المحادثة";
+
+                    deleteButton.innerHTML = `
+                        <svg viewBox="0 0 24 24">
+                            <path d="M3 6h18"></path>
+                            <path d="M8 6V4h8v2"></path>
+                            <path d="M19 6l-1 15H6L5 6"></path>
+                        </svg>
+                    `;
+
+                    deleteButton.addEventListener(
+                        "click",
+                        function (event) {
+
+                            event.stopPropagation();
+
+                            deleteConversation(
+                                index
+                            );
+                        }
+                    );
+
+                    historyItem.appendChild(title);
+                    historyItem.appendChild(date);
+                    historyItem.appendChild(deleteButton);
+
+                    historyItem.addEventListener(
                         "click",
                         function () {
 
@@ -2207,10 +3553,25 @@
                         }
                     );
 
-                    history.appendChild(item);
+                    history.appendChild(
+                        historyItem
+                    );
                 }
             );
         }
+
+
+        /* =========================================================
+           HISTORY SEARCH
+        ========================================================= */
+
+        historySearch.addEventListener(
+            "input",
+            function () {
+
+                renderHistory();
+            }
+        );
 
 
         /* =========================================================
@@ -2242,6 +3603,10 @@
                 conversation.answer || "";
 
             scrollToBottom();
+
+            showToast(
+                "تم تحميل المحادثة."
+            );
         }
 
 
@@ -2290,12 +3655,18 @@
 
                 resizeTextarea();
 
+                updateCharacterCount();
+
                 removeImage.click();
 
                 questionInput.focus();
 
                 sidebar.classList.remove(
                     "open"
+                );
+
+                showToast(
+                    "تم بدء محادثة جديدة."
                 );
             }
         );
@@ -2308,6 +3679,15 @@
         clearBtn.addEventListener(
             "click",
             function () {
+
+                if (conversations.length === 0) {
+
+                    showToast(
+                        "لا توجد محادثات محفوظة."
+                    );
+
+                    return;
+                }
 
                 const confirmed =
                     confirm(
@@ -2337,6 +3717,10 @@
                 clearChat(true);
 
                 renderHistory();
+
+                showToast(
+                    "تم مسح جميع المحادثات."
+                );
             }
         );
 
@@ -2427,6 +3811,8 @@
                 questionInput.value = "";
 
                 resizeTextarea();
+
+                updateCharacterCount();
 
                 removeImage.click();
 
@@ -2658,6 +4044,10 @@
 
                         if (voiceMode) {
 
+                            voiceAI.classList.add(
+                                "active"
+                            );
+
                             voiceStatus.textContent =
                                 "أستمع إليك الآن...";
                         }
@@ -2684,6 +4074,8 @@
                             transcript;
 
                         resizeTextarea();
+
+                        updateCharacterCount();
                     };
 
 
@@ -2701,6 +4093,10 @@
                             "active"
                         );
 
+                        voiceAI.classList.remove(
+                            "active"
+                        );
+
                         if (voiceMode) {
 
                             voiceStatus.textContent =
@@ -2715,6 +4111,10 @@
                         isRecording = false;
 
                         micBtn.classList.remove(
+                            "active"
+                        );
+
+                        voiceAI.classList.remove(
                             "active"
                         );
 
@@ -2772,7 +4172,7 @@
 
                 if (!speechAvailable) {
 
-                    alert(
+                    showToast(
                         "المتصفح لا يدعم تحويل الكلام إلى نص."
                     );
 
@@ -2815,7 +4215,7 @@
 
                 if (!speechAvailable) {
 
-                    alert(
+                    showToast(
                         "المتصفح لا يدعم المحادثة الصوتية."
                     );
 
@@ -2870,7 +4270,7 @@
 
                 if (!speechAvailable) {
 
-                    alert(
+                    showToast(
                         "المتصفح لا يدعم المحادثة الصوتية."
                     );
 
@@ -2894,15 +4294,21 @@
 
                 resizeTextarea();
 
+                updateCharacterCount();
+
                 voiceStart.classList.add(
                     "recording"
                 );
 
                 voiceStart.textContent =
-                    "إيقاف";
+                    "إيقاف المحادثة";
 
                 voiceStatus.textContent =
                     "أستمع إليك الآن...";
+
+                voiceAI.classList.add(
+                    "active"
+                );
 
                 try {
 
@@ -2916,6 +4322,10 @@
                     );
 
                     voiceMode = false;
+
+                    voiceAI.classList.remove(
+                        "active"
+                    );
 
                     voiceStart.classList.remove(
                         "recording"
@@ -2941,6 +4351,10 @@
 
             isRecording = false;
 
+            voiceAI.classList.remove(
+                "active"
+            );
+
             if (recognition) {
 
                 try {
@@ -2948,6 +4362,7 @@
                     recognition.stop();
 
                 } catch (error) {
+
                     console.debug(
                         "Recognition already stopped."
                     );
@@ -2971,12 +4386,44 @@
 
 
         /* =========================================================
-           ESC
+           KEYBOARD SHORTCUTS
         ========================================================= */
 
         document.addEventListener(
             "keydown",
             function (event) {
+
+                if (
+                    (event.ctrlKey || event.metaKey) &&
+                    event.key.toLowerCase() === "k"
+                ) {
+
+                    event.preventDefault();
+
+                    questionInput.focus();
+
+                    return;
+                }
+
+                if (
+                    (event.ctrlKey || event.metaKey) &&
+                    event.key.toLowerCase() === "n"
+                ) {
+
+                    event.preventDefault();
+
+                    clearChat(true);
+
+                    questionInput.value = "";
+
+                    resizeTextarea();
+
+                    updateCharacterCount();
+
+                    questionInput.focus();
+
+                    return;
+                }
 
                 if (event.key === "Escape") {
 
@@ -3002,9 +4449,13 @@
 
         loadTheme();
 
+        loadBackground();
+
         renderHistory();
 
         resizeTextarea();
+
+        updateCharacterCount();
 
         setOnlineStatus(true);
     </script>

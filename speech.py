@@ -11,7 +11,10 @@ def listen():
 
             print("🎤 تحدث الآن...")
 
-            recognizer.adjust_for_ambient_noise(source, duration=0.5)
+            recognizer.adjust_for_ambient_noise(
+                source,
+                duration=0.5
+            )
 
             audio = recognizer.listen(
                 source,
@@ -19,28 +22,20 @@ def listen():
                 phrase_time_limit=10
             )
 
-
         text = recognizer.recognize_google(
             audio,
             language="ar-SA"
         )
 
-
         return text
-
-
 
     except sr.WaitTimeoutError:
 
         return "لم يتم اكتشاف صوت."
 
-
-
     except sr.UnknownValueError:
 
         return "لم أفهم الصوت."
-
-
 
     except Exception as e:
 

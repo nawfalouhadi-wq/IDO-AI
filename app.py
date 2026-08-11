@@ -7,16 +7,20 @@ from calculator import calculate
 from translator import translate
 from memory import get_answer
 
+
 # =========================
 # API
 # =========================
 
 try:
     from api import api
+
     api_available = True
+
 except Exception as e:
     print("API error:", e)
     api_available = False
+
 
 # =========================
 # إنشاء تطبيق Flask
@@ -27,12 +31,14 @@ app = Flask(
     template_folder="templates"
 )
 
+
 # =========================
 # تسجيل API
 # =========================
 
 if api_available:
     app.register_blueprint(api)
+
 
 # =========================
 # Ido AI Response
@@ -41,49 +47,63 @@ if api_available:
 def ai_response(question):
 
     try:
+
         question = question.strip()
 
         if not question:
             return "اكتب سؤالاً أولاً"
+
 
         # =========================
         # الحاسبة
         # =========================
 
         try:
+
             result = calculate(question)
 
             if result is not None:
                 return f"النتيجة: {result}"
 
         except Exception as e:
+
             print("CALCULATOR ERROR:", e)
+
 
         # =========================
         # الترجمة
         # =========================
 
         try:
+
             translated = translate(question)
 
-            if translated and translated.lower() != question.lower():
+            if (
+                translated
+                and translated.lower() != question.lower()
+            ):
                 return translated
 
         except Exception as e:
+
             print("TRANSLATOR ERROR:", e)
+
 
         # =========================
         # الذاكرة
         # =========================
 
         try:
+
             memory_answer = get_answer(question)
 
             if memory_answer:
                 return memory_answer
 
         except Exception as e:
+
             print("MEMORY ERROR:", e)
+
 
         # =========================
         # Gemini / OpenRouter / OpenAI
@@ -92,6 +112,7 @@ def ai_response(question):
         answer = get_response(question)
 
         return answer or "لم أجد إجابة حاليًا."
+
 
     except Exception as e:
 
@@ -111,6 +132,7 @@ def home():
 
     current_time = datetime.now().strftime("%H:%M:%S")
 
+
     if request.method == "POST":
 
         question = request.form.get(
@@ -118,11 +140,13 @@ def home():
             ""
         ).strip()
 
+
         # =========================
         # رفع صورة
         # =========================
 
         image = request.files.get("image")
+
 
         if image and image.filename:
 
@@ -132,9 +156,12 @@ def home():
 
                 mime_type = image.mimetype
 
+
                 if not image_bytes:
 
-                    answer = "لم يتم اختيار صورة صالحة."
+                    answer = (
+                        "لم يتم اختيار صورة صالحة."
+                    )
 
                 else:
 
@@ -149,14 +176,25 @@ def home():
                             "ما الذي يظهر فيها."
                         )
 
+
+                    # =========================
+                    # تحليل الصورة
+                    # يتم التعامل معه داخل brain.py
+                    # =========================
+
                     answer = get_image_response(
                         image_question,
                         image_bytes,
                         mime_type
                     )
 
+
                     if not answer:
-                        answer = "تعذر تحليل الصورة حاليًا."
+
+                        answer = (
+                            "تعذر تحليل الصورة حاليًا."
+                        )
+
 
             except Exception as e:
 
@@ -167,6 +205,7 @@ def home():
                     f"{e}"
                 )
 
+
         # =========================
         # سؤال نصي عادي
         # =========================
@@ -174,6 +213,7 @@ def home():
         elif question:
 
             answer = ai_response(question)
+
 
     return render_template(
         "page.html",
