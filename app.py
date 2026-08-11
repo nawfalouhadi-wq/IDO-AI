@@ -4,8 +4,7 @@ import os
 
 from brain import (
     get_response,
-    get_image_response,
-    generate_image
+    get_image_response
 )
 
 from calculator import calculate
@@ -133,125 +132,100 @@ def home():
         ).strip()
 
         # =====================================================
-        # طلب إنشاء صورة
+        # رفع صورة
         # =====================================================
 
-        image_generation_request = request.form.get(
-            "generate_image",
-            ""
+        image = request.files.get(
+            "image"
         )
 
-        if image_generation_request == "1":
+        if image and image.filename:
 
-            if not question:
+            try:
 
-                answer = (
-                    "اكتب وصف الصورة التي تريد إنشاءها."
-                )
+                print("IMAGE REQUEST RECEIVED")
 
-            else:
+                image_bytes = image.read()
+                mime_type = image.mimetype
 
-                try:
-                    print(
-                        "IMAGE GENERATION REQUEST:"
-                    )
-
-                    print(question)
-
-                    generated_image = generate_image(
-                        question
-                    )
-
-                    if not generated_image:
-                        answer = (
-                            "تعذر إنشاء الصورة حاليًا."
-                        )
-
-                except Exception as e:
-
-                    print(
-                        "IMAGE GENERATION ERROR:",
-                        e
-                    )
+                if not image_bytes:
 
                     answer = (
-                        "حدث خطأ أثناء إنشاء الصورة: "
-                        f"{e}"
+                        "لم يتم اختيار صورة صالحة."
                     )
 
-        else:
+                else:
 
-            # =================================================
-            # رفع صورة
-            # =================================================
+                    # =========================================
+                    # سؤال الصورة
+                    # =========================================
 
-            image = request.files.get(
-                "image"
-            )
+                    if question:
 
-            if image and image.filename:
-
-                try:
-
-                    image_bytes = image.read()
-                    mime_type = image.mimetype
-
-                    if not image_bytes:
-
-                        answer = (
-                            "لم يتم اختيار صورة صالحة."
-                        )
+                        image_question = question
 
                     else:
 
-                        if question:
-
-                            image_question = question
-
-                        else:
-
-                            image_question = (
-                                "حلل هذه الصورة واشرح لي "
-                                "بالتفصيل ما الذي يظهر فيها."
-                            )
-
-                        # =====================================
-                        # تحليل الصورة
-                        # =====================================
-
-                        answer = get_image_response(
-                            image_question,
-                            image_bytes,
-                            mime_type
+                        image_question = (
+                            "حلل هذه الصورة واشرح لي "
+                            "بالتفصيل ما الذي يظهر فيها."
                         )
 
-                        if not answer:
-
-                            answer = (
-                                "تعذر تحليل الصورة حاليًا."
-                            )
-
-                except Exception as e:
+                    print(
+                        "IMAGE MIME TYPE:",
+                        mime_type
+                    )
 
                     print(
-                        "IMAGE ERROR:",
-                        e
+                        "IMAGE SIZE:",
+                        len(image_bytes),
+                        "bytes"
                     )
 
-                    answer = (
-                        "حدث خطأ أثناء تحليل الصورة: "
-                        f"{e}"
+                    print(
+                        "IMAGE QUESTION:",
+                        image_question
                     )
 
-            # =================================================
-            # سؤال نصي عادي
-            # =================================================
+                    # =========================================
+                    # تحليل الصورة
+                    #
+                    # brain.py يتولى اختيار Mistral/Pixtral
+                    # =========================================
 
-            elif question:
+                    answer = get_image_response(
+                        image_question,
+                        image_bytes,
+                        mime_type
+                    )
 
-                answer = ai_response(
-                    question
+                    if not answer:
+
+                        answer = (
+                            "تعذر تحليل الصورة حاليًا."
+                        )
+
+            except Exception as e:
+
+                print(
+                    "IMAGE ERROR:",
+                    e
                 )
+
+                answer = (
+                    "حدث خطأ أثناء تحليل الصورة: "
+                    f"{e}"
+                )
+
+        # =====================================================
+        # سؤال نصي عادي
+        # =====================================================
+
+        elif question:
+
+            answer = ai_response(
+                question
+            )
 
     return render_template(
         "page.html",
