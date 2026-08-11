@@ -3,9 +3,11 @@ import requests
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
-from openai import OpenAI
 
+# =========================================================
 # تحميل ملف .env
+# =========================================================
+
 load_dotenv()
 
 # =========================================================
@@ -32,30 +34,6 @@ else:
 
 
 # =========================================================
-# OpenAI
-# =========================================================
-
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-
-openai_client = None
-
-if OPENAI_API_KEY:
-    try:
-        openai_client = OpenAI(
-            api_key=OPENAI_API_KEY,
-            timeout=30.0
-        )
-
-        print("OPENAI CLIENT: READY")
-
-    except Exception as e:
-        print("OPENAI CLIENT ERROR:", e)
-
-else:
-    print("OPENAI_API_KEY: NOT FOUND")
-
-
-# =========================================================
 # OpenRouter
 # =========================================================
 
@@ -69,18 +47,9 @@ else:
     print("OPENROUTER_API_KEY: NOT FOUND")
 
 
-# =========================================================
-# Ollama
-# =========================================================
-
-OLLAMA_URL = os.getenv(
-    "OLLAMA_URL",
-    "http://localhost:11434"
-)
-
 print(
     "BRAIN.PY LOADED - "
-    "GEMINI + OPENAI + OPENROUTER + OLLAMA READY"
+    "GEMINI + OPENROUTER READY"
 )
 
 
@@ -173,36 +142,6 @@ def ask_openrouter(message):
 
 
 # =========================================================
-# OpenAI - نص
-# =========================================================
-
-def ask_openai(message):
-
-    if openai_client is None:
-        print("OpenAI ERROR: client غير جاهز.")
-        return None
-
-    try:
-        print("Trying OpenAI...")
-
-        response = openai_client.responses.create(
-            model="gpt-5",
-            input=message
-        )
-
-        if response and response.output_text:
-            print("OpenAI response received.")
-            return response.output_text.strip()
-
-        print("OpenAI returned empty response.")
-        return None
-
-    except Exception as e:
-        print("OpenAI ERROR:", e)
-        return None
-
-
-# =========================================================
 # Gemini - صورة
 # =========================================================
 
@@ -241,47 +180,6 @@ def ask_gemini_image(
 
     except Exception as e:
         print("Gemini IMAGE ERROR:", e)
-        return None
-
-
-# =========================================================
-# Ollama
-# =========================================================
-
-def ask_ollama(message):
-
-    try:
-        print("Trying Ollama...")
-
-        response = requests.post(
-            f"{OLLAMA_URL}/api/generate",
-            json={
-                "model": "llama3.1:8b",
-                "prompt": message,
-                "stream": False
-            },
-            timeout=(5, 20)
-        )
-
-        print("Ollama Status:", response.status_code)
-
-        if response.status_code != 200:
-            print("Ollama Response:", response.text)
-            return None
-
-        data = response.json()
-
-        answer = data.get("response")
-
-        if answer:
-            print("Ollama response received.")
-            return answer.strip()
-
-        print("Ollama returned empty response.")
-        return None
-
-    except Exception as e:
-        print("Ollama ERROR:", e)
         return None
 
 
@@ -433,29 +331,7 @@ def get_response(message):
         return answer
 
     # =====================================================
-    # OpenAI ثالثًا
-    # =====================================================
-
-    print("OpenRouter failed. Trying OpenAI...")
-
-    answer = ask_openai(original_message)
-
-    if answer:
-        return answer
-
-    # =====================================================
-    # Ollama رابعًا
-    # =====================================================
-
-    print("OpenAI failed. Trying Ollama...")
-
-    answer = ask_ollama(original_message)
-
-    if answer:
-        return answer
-
-    # =====================================================
-    # فشل الجميع
+    # فشل Gemini و OpenRouter
     # =====================================================
 
     return "أنا Ido AI ولم أجد إجابة حاليًا."
