@@ -3,3 +3,5 @@ gunicorn
 requests
 python-dotenv
 google-genai
+mistralai
+groq
