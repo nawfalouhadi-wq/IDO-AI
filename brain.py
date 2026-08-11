@@ -1,7 +1,6 @@
 import os
 import base64
 import uuid
-import re
 from pathlib import Path
 
 import requests
@@ -276,13 +275,13 @@ if mistral_client is not None:
                     "Ido AI image generation agent."
                 ),
                 instructions=(
-                    "Generate high-quality images "
-                    "from detailed prompts. "
-                    "When the prompt describes an "
-                    "existing scene and asks for a "
-                    "modification, recreate the scene "
-                    "while applying the requested "
-                    "visual change."
+                    "Use the image generation tool "
+                    "whenever the user explicitly asks "
+                    "to create, generate, draw, make, "
+                    "or produce an image. "
+                    "Generate photorealistic images "
+                    "when the user requests realistic "
+                    "images."
                 ),
                 tools=[
                     {
@@ -346,6 +345,83 @@ def clean_answer(answer):
     except Exception:
 
         return None
+
+
+# =========================================================
+# تطبيع النص العربي والإنجليزي
+# =========================================================
+
+def normalize_text(text):
+
+    if not text:
+        return ""
+
+    text = str(
+        text
+    ).strip().lower()
+
+    replacements = {
+        "أ": "ا",
+        "إ": "ا",
+        "آ": "ا",
+        "ى": "ي",
+        "ة": "ه",
+        "ؤ": "و",
+        "ئ": "ي"
+    }
+
+    for old, new in replacements.items():
+        text = text.replace(
+            old,
+            new
+        )
+
+    text = (
+        text.replace(
+            "ـ",
+            ""
+        )
+        .replace(
+            "ً",
+            ""
+        )
+        .replace(
+            "ٌ",
+            ""
+        )
+        .replace(
+            "ٍ",
+            ""
+        )
+        .replace(
+            "َ",
+            ""
+        )
+        .replace(
+            "ُ",
+            ""
+        )
+        .replace(
+            "ِ",
+            ""
+        )
+        .replace(
+            "ّ",
+            ""
+        )
+        .replace(
+            "ْ",
+            ""
+        )
+    )
+
+    while "  " in text:
+        text = text.replace(
+            "  ",
+            " "
+        )
+
+    return text
 
 
 # =========================================================
@@ -623,11 +699,9 @@ def ask_openrouter(message):
 
             return None
 
-        data = response.json()
-
         answer = (
             extract_response_content(
-                data
+                response.json()
             )
         )
 
@@ -751,11 +825,9 @@ def ask_groq(message):
 
             return None
 
-        data = response.json()
-
         answer = (
             extract_response_content(
-                data
+                response.json()
             )
         )
 
@@ -878,11 +950,9 @@ def ask_mistral(message):
 
             return None
 
-        data = response.json()
-
         answer = (
             extract_response_content(
-                data
+                response.json()
             )
         )
 
@@ -952,7 +1022,9 @@ def ask_groq_image(
         image_base64 = (
             base64.b64encode(
                 image_bytes
-            ).decode("utf-8")
+            ).decode(
+                "utf-8"
+            )
         )
 
         image_data_url = (
@@ -1074,7 +1146,9 @@ def ask_mistral_image(
         image_base64 = (
             base64.b64encode(
                 image_bytes
-            ).decode("utf-8")
+            ).decode(
+                "utf-8"
+            )
         )
 
         image_data_url = (
@@ -1188,15 +1262,32 @@ def generate_image(prompt):
         return None
 
     if mistral_client is None:
+
+        print(
+            "IMAGE GENERATION ERROR: "
+            "Mistral client غير جاهز."
+        )
+
         return None
 
     if mistral_image_agent is None:
+
+        print(
+            "IMAGE GENERATION ERROR: "
+            "Mistral image agent غير جاهز."
+        )
+
         return None
 
     try:
 
         print(
-            "Trying Mistral image generation..."
+            "IMAGE GENERATION STARTED"
+        )
+
+        print(
+            "IMAGE PROMPT:",
+            prompt
         )
 
         response = (
@@ -1224,7 +1315,7 @@ def generate_image(prompt):
         file_id = file_ids[0]
 
         print(
-            "Mistral generated file:",
+            "MISTRAL GENERATED FILE:",
             file_id
         )
 
@@ -1243,9 +1334,22 @@ def generate_image(prompt):
             else downloaded
         )
 
-        return save_generated_image(
-            image_bytes
+        image_url = (
+            save_generated_image(
+                image_bytes
+            )
         )
+
+        if image_url:
+
+            print(
+                "GENERATED IMAGE SAVED:",
+                image_url
+            )
+
+            return image_url
+
+        return None
 
     except Exception as e:
 
@@ -1258,6 +1362,304 @@ def generate_image(prompt):
 
 
 # =========================================================
+# كشف طلب إنشاء صورة
+# =========================================================
+
+def is_image_generation_request(
+    message
+):
+
+    text = normalize_text(
+        message
+    )
+
+    if not text:
+        return False
+
+    generation_phrases = [
+
+        # عربي
+        "ولد صوره",
+        "ولد لي صوره",
+        "ولد لي صورة",
+        "ولد صوره لي",
+        "ولّد صوره",
+        "ولّد لي صوره",
+        "ولّد لي صورة",
+        "انشئ صوره",
+        "انشئ لي صوره",
+        "انشئ لي صورة",
+        "انشئ صوره لي",
+        "انشاء صوره",
+        "انشاء صوره لي",
+        "انشئ صورة",
+        "أنشئ صورة",
+        "أنشئ لي صورة",
+        "اصنع صوره",
+        "اصنع لي صوره",
+        "اصنع لي صورة",
+        "صنع صوره",
+        "ارسم صوره",
+        "ارسم لي صوره",
+        "ارسم لي صورة",
+        "صمم صوره",
+        "صمم لي صوره",
+        "صمم لي صورة",
+        "اعمل صوره",
+        "اعمل لي صوره",
+        "اعمل لي صورة",
+        "سوي صوره",
+        "سوي لي صوره",
+        "سوي لي صورة",
+        "ابغى صوره",
+        "اريد صوره",
+        "اريد صورة",
+        "اريدك تولد صورة",
+        "اريدك ان تولد صورة",
+        "اريدك تصنع صورة",
+        "توليد صوره",
+        "توليد صورة",
+        "توليد لي صورة",
+        "انشاء صورة",
+        "إنشاء صورة",
+
+        # إنجليزي
+        "generate an image",
+        "generate image",
+        "generate a picture",
+        "generate picture",
+        "create an image",
+        "create image",
+        "create a picture",
+        "create picture",
+        "make an image",
+        "make image",
+        "make a picture",
+        "make picture",
+        "draw an image",
+        "draw image",
+        "draw a picture",
+        "draw picture",
+        "create artwork",
+        "generate artwork"
+    ]
+
+    for phrase in generation_phrases:
+
+        normalized_phrase = (
+            normalize_text(
+                phrase
+            )
+        )
+
+        if normalized_phrase in text:
+
+            print(
+                "IMAGE GENERATION INTENT DETECTED:",
+                text
+            )
+
+            return True
+
+    # =====================================================
+    # كشف مرن إضافي
+    # =====================================================
+
+    has_image_word = any(
+        word in text
+        for word in (
+            "صوره",
+            "صورة",
+            "picture",
+            "image"
+        )
+    )
+
+    has_generation_word = any(
+        word in text
+        for word in (
+            "ولد",
+            "ولّد",
+            "انشئ",
+            "أنشئ",
+            "انشاء",
+            "إنشاء",
+            "اصنع",
+            "ارسم",
+            "صمم",
+            "اعمل",
+            "توليد",
+            "generate",
+            "create",
+            "make",
+            "draw"
+        )
+    )
+
+    if (
+        has_image_word
+        and has_generation_word
+    ):
+
+        print(
+            "FLEXIBLE IMAGE GENERATION "
+            "INTENT DETECTED:",
+            text
+        )
+
+        return True
+
+    return False
+
+
+# =========================================================
+# استخراج وصف الصورة
+# =========================================================
+
+def get_image_prompt(
+    message
+):
+
+    if not message:
+        return ""
+
+    text = str(
+        message
+    ).strip()
+
+    prefixes = [
+
+        "ولد لي صورة",
+        "ولّد لي صورة",
+        "ولد صورة",
+        "ولّد صورة",
+        "أنشئ لي صورة",
+        "أنشئ صورة",
+        "انشئ لي صورة",
+        "انشئ صورة",
+        "اصنع لي صورة",
+        "اصنع صورة",
+        "ارسم لي صورة",
+        "ارسم صورة",
+        "صمم لي صورة",
+        "صمم صورة",
+        "اعمل لي صورة",
+        "اعمل صورة",
+        "توليد صورة",
+        "توليد لي صورة",
+
+        "generate an image of",
+        "generate image of",
+        "generate a picture of",
+        "create an image of",
+        "create image of",
+        "create a picture of",
+        "make an image of",
+        "make image of",
+        "make a picture of",
+        "draw an image of",
+        "draw image of",
+        "draw a picture of"
+    ]
+
+    for prefix in prefixes:
+
+        if normalize_text(
+            text
+        ).startswith(
+            normalize_text(
+                prefix
+            )
+        ):
+
+            return text[
+                len(prefix):
+            ].strip()
+
+    # =====================================================
+    # إزالة العبارات العامة
+    # =====================================================
+
+    cleaned = text
+
+    cleanup_prefixes = [
+
+        "ولد",
+        "ولّد",
+        "انشئ",
+        "أنشئ",
+        "انشاء",
+        "إنشاء",
+        "اصنع",
+        "ارسم",
+        "صمم",
+        "اعمل",
+        "توليد",
+
+        "generate",
+        "create",
+        "make",
+        "draw"
+    ]
+
+    for prefix in cleanup_prefixes:
+
+        normalized_cleaned = normalize_text(
+            cleaned
+        )
+
+        normalized_prefix = normalize_text(
+            prefix
+        )
+
+        if normalized_cleaned.startswith(
+            normalized_prefix + " "
+        ):
+
+            cleaned = cleaned[
+                len(prefix):
+            ].strip()
+
+            break
+
+    # =====================================================
+    # إزالة "صورة" / "صوره" من البداية
+    # =====================================================
+
+    for image_word in (
+        "صورة",
+        "صوره",
+        "picture",
+        "image"
+    ):
+
+        normalized_cleaned = normalize_text(
+            cleaned
+        )
+
+        normalized_image_word = normalize_text(
+            image_word
+        )
+
+        if normalized_cleaned.startswith(
+            normalized_image_word
+        ):
+
+            cleaned = cleaned[
+                len(image_word):
+            ].strip()
+
+            break
+
+    cleaned = cleaned.strip()
+
+    if not cleaned:
+        return text
+
+    return cleaned
+
+
+# =========================================================
 # كشف طلب تعديل صورة
 # =========================================================
 
@@ -1265,31 +1667,25 @@ def is_image_edit_request(
     message
 ):
 
-    if not message:
-        return False
-
-    text = str(
+    text = normalize_text(
         message
-    ).strip().lower()
+    )
+
+    if not text:
+        return False
 
     edit_words = [
 
         "اجعل",
         "خلي",
-        "خلّي",
         "بدل",
         "استبدل",
         "غير",
-        "غيّر",
         "تغيير",
-        "عدّل",
         "عدل",
         "تعديل",
-        "حوّل",
         "حول",
-        "استبدل السيارة",
-        "غيّر السيارة",
-        "اجعل السيارة",
+        "حوّل",
 
         "edit",
         "modify",
@@ -1302,7 +1698,10 @@ def is_image_edit_request(
 
     for word in edit_words:
 
-        if word in text:
+        if normalize_text(
+            word
+        ) in text:
+
             return True
 
     return False
@@ -1318,13 +1717,16 @@ def build_image_edit_prompt(
 ):
 
     description = (
-        image_description or
-        "A realistic scene containing the "
-        "main subject shown in the original image."
+        image_description
+        or
+        "A realistic scene containing "
+        "the main subject shown in "
+        "the original image."
     )
 
     request = (
-        edit_request or
+        edit_request
+        or
         "Keep the scene unchanged."
     )
 
@@ -1419,17 +1821,21 @@ def edit_image(
     # إنشاء Prompt جديد
     # =====================================================
 
-    edit_prompt = build_image_edit_prompt(
-        image_description,
-        edit_request
+    edit_prompt = (
+        build_image_edit_prompt(
+            image_description,
+            edit_request
+        )
     )
 
     # =====================================================
     # توليد الصورة المعدلة
     # =====================================================
 
-    generated_image = generate_image(
-        edit_prompt
+    generated_image = (
+        generate_image(
+            edit_prompt
+        )
     )
 
     if generated_image:
@@ -1449,102 +1855,6 @@ def edit_image(
 
 
 # =========================================================
-# التحقق من طلب إنشاء صورة
-# =========================================================
-
-def is_image_generation_request(
-    message
-):
-
-    if not message:
-        return False
-
-    text = str(
-        message
-    ).strip().lower()
-
-    image_words = [
-
-        "أنشئ صورة",
-        "انشئ صورة",
-        "اصنع صورة",
-        "صنع صورة",
-        "إنشاء صورة",
-        "انشاء صورة",
-        "ولد صورة",
-        "ولّد صورة",
-        "ارسم صورة",
-        "ارسم لي",
-        "صورة لي",
-
-        "generate an image",
-        "generate image",
-        "create an image",
-        "create image",
-        "make an image",
-        "make image",
-        "draw an image",
-        "draw image"
-    ]
-
-    for word in image_words:
-
-        if word in text:
-            return True
-
-    return False
-
-
-# =========================================================
-# استخراج وصف الصورة
-# =========================================================
-
-def get_image_prompt(
-    message
-):
-
-    if not message:
-        return ""
-
-    text = str(
-        message
-    ).strip()
-
-    prefixes = [
-
-        "أنشئ لي صورة",
-        "أنشئ صورة",
-        "انشئ لي صورة",
-        "انشئ صورة",
-        "اصنع لي صورة",
-        "اصنع صورة",
-        "إنشاء صورة",
-        "انشاء صورة",
-        "ارسم لي",
-        "ارسم صورة",
-
-        "generate an image of",
-        "generate image of",
-        "create an image of",
-        "create image of",
-        "make an image of",
-        "make image of"
-    ]
-
-    for prefix in prefixes:
-
-        if text.lower().startswith(
-            prefix.lower()
-        ):
-
-            return text[
-                len(prefix):
-            ].strip()
-
-    return text
-
-
-# =========================================================
 # Ido AI - الرد الرئيسي
 # =========================================================
 
@@ -1553,26 +1863,39 @@ def get_response(
 ):
 
     if not message:
-        return "اكتب رسالة أولًا."
+
+        return (
+            "اكتب رسالة أولًا."
+        )
 
     original_message = str(
         message
     ).strip()
 
     if not original_message:
-        return "اكتب رسالة أولًا."
 
-    message_lower = (
-        original_message.lower()
+        return (
+            "اكتب رسالة أولًا."
+        )
+
+    message_lower = normalize_text(
+        original_message
     )
 
     # =====================================================
-    # طلب إنشاء صورة
+    # إنشاء صورة من الصفر
+    #
+    # يجب أن يكون هذا قبل أي نموذج نصي
     # =====================================================
 
     if is_image_generation_request(
         original_message
     ):
+
+        print(
+            "DIRECT IMAGE GENERATION REQUEST:",
+            original_message
+        )
 
         image_prompt = (
             get_image_prompt(
@@ -1582,13 +1905,14 @@ def get_response(
 
         if not image_prompt:
 
-            return (
-                "اكتب لي وصف الصورة "
-                "التي تريد إنشاءها."
+            image_prompt = (
+                original_message
             )
 
-        generated = generate_image(
-            image_prompt
+        generated = (
+            generate_image(
+                image_prompt
+            )
         )
 
         if generated:
@@ -1599,8 +1923,11 @@ def get_response(
             )
 
         return (
-            "تعذر إنشاء الصورة حاليًا."
+            "تعذر إنشاء الصورة حاليًا. "
+            "تحقق من أن Mistral Image Agent "
+            "يعمل بشكل صحيح."
         )
+
 
     # =====================================================
     # الردود السريعة والثابتة
@@ -1705,8 +2032,12 @@ def get_response(
 
     for key, value in responses.items():
 
-        if key in message_lower:
+        if normalize_text(
+            key
+        ) in message_lower:
+
             return value
+
 
     # =====================================================
     # Gemini أولًا
@@ -1717,7 +2048,9 @@ def get_response(
     )
 
     if answer:
+
         return answer
+
 
     # =====================================================
     # OpenRouter ثانيًا
@@ -1733,7 +2066,9 @@ def get_response(
     )
 
     if answer:
+
         return answer
+
 
     # =====================================================
     # Groq ثالثًا
@@ -1749,7 +2084,9 @@ def get_response(
     )
 
     if answer:
+
         return answer
+
 
     # =====================================================
     # Mistral رابعًا
@@ -1765,7 +2102,13 @@ def get_response(
     )
 
     if answer:
+
         return answer
+
+
+    # =====================================================
+    # فشل جميع الخوادم
+    # =====================================================
 
     return (
         "أنا Ido AI ولم أجد إجابة حاليًا."
@@ -1820,10 +2163,12 @@ def get_image_response(
         message
     ):
 
-        generated_image = edit_image(
-            message,
-            image_bytes,
-            mime_type
+        generated_image = (
+            edit_image(
+                message,
+                image_bytes,
+                mime_type
+            )
         )
 
         if generated_image:
@@ -1836,6 +2181,7 @@ def get_image_response(
         return (
             "تعذر تعديل الصورة حاليًا."
         )
+
 
     # =====================================================
     # تحليل الصورة بـ Mistral
@@ -1850,6 +2196,7 @@ def get_image_response(
     if answer:
 
         return answer
+
 
     # =====================================================
     # Groq كاحتياط
@@ -1869,6 +2216,11 @@ def get_image_response(
     if answer:
 
         return answer
+
+
+    # =====================================================
+    # فشل جميع خوادم تحليل الصور
+    # =====================================================
 
     return (
         "تعذر تحليل الصورة حاليًا."
