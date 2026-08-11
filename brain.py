@@ -4,7 +4,6 @@ import requests
 
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
 from google.genai.types import HttpOptions
 
 
@@ -16,12 +15,12 @@ load_dotenv()
 
 
 # =========================================================
-# إعدادات عامة - سرعة عالية
+# إعدادات عامة
 # =========================================================
 
 REQUEST_TIMEOUT = (
-    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "2")),
-    int(os.getenv("REQUEST_READ_TIMEOUT", "2"))
+    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "5")),
+    int(os.getenv("REQUEST_READ_TIMEOUT", "30"))
 )
 
 
@@ -29,14 +28,7 @@ REQUEST_TIMEOUT = (
 # Gemini
 # =========================================================
 
-GEMINI_API_KEY = os.getenv(
-    "GEMINI_API_KEY"
-)
-
-
-# =========================================================
-# Gemini Model
-# =========================================================
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
@@ -48,7 +40,6 @@ gemini_client = None
 if GEMINI_API_KEY:
 
     try:
-
         gemini_client = genai.Client(
             api_key=GEMINI_API_KEY,
             http_options=HttpOptions(
@@ -56,29 +47,17 @@ if GEMINI_API_KEY:
             )
         )
 
-        print(
-            "GEMINI CLIENT: READY"
-        )
-
-        print(
-            "GEMINI MODEL:",
-            GEMINI_MODEL
-        )
+        print("GEMINI CLIENT: READY")
+        print("GEMINI MODEL:", GEMINI_MODEL)
 
     except Exception as e:
 
-        print(
-            "GEMINI CLIENT ERROR:",
-            e
-        )
-
+        print("GEMINI CLIENT ERROR:", e)
         gemini_client = None
 
 else:
 
-    print(
-        "GEMINI_API_KEY: NOT FOUND"
-    )
+    print("GEMINI_API_KEY: NOT FOUND")
 
 
 # =========================================================
@@ -95,15 +74,11 @@ OPENROUTER_URL = (
 
 if OPENROUTER_API_KEY:
 
-    print(
-        "OPENROUTER CLIENT: READY"
-    )
+    print("OPENROUTER CLIENT: READY")
 
 else:
 
-    print(
-        "OPENROUTER_API_KEY: NOT FOUND"
-    )
+    print("OPENROUTER_API_KEY: NOT FOUND")
 
 
 # =========================================================
@@ -123,22 +98,20 @@ GROQ_MODEL = os.getenv(
     "openai/gpt-oss-20b"
 )
 
+GROQ_VISION_MODEL = os.getenv(
+    "GROQ_VISION_MODEL",
+    "meta-llama/llama-4-scout-17b-16e-instruct"
+)
+
 if GROQ_API_KEY:
 
-    print(
-        "GROQ CLIENT: READY"
-    )
-
-    print(
-        "GROQ MODEL:",
-        GROQ_MODEL
-    )
+    print("GROQ CLIENT: READY")
+    print("GROQ MODEL:", GROQ_MODEL)
+    print("GROQ VISION MODEL:", GROQ_VISION_MODEL)
 
 else:
 
-    print(
-        "GROQ_API_KEY: NOT FOUND"
-    )
+    print("GROQ_API_KEY: NOT FOUND")
 
 
 # =========================================================
@@ -158,22 +131,23 @@ MISTRAL_MODEL = os.getenv(
     "mistral-small-latest"
 )
 
+MISTRAL_VISION_MODEL = os.getenv(
+    "MISTRAL_VISION_MODEL",
+    "pixtral-12b-2409"
+)
+
 if MISTRAL_API_KEY:
 
+    print("MISTRAL CLIENT: READY")
+    print("MISTRAL MODEL:", MISTRAL_MODEL)
     print(
-        "MISTRAL CLIENT: READY"
-    )
-
-    print(
-        "MISTRAL MODEL:",
-        MISTRAL_MODEL
+        "MISTRAL VISION MODEL:",
+        MISTRAL_VISION_MODEL
     )
 
 else:
 
-    print(
-        "MISTRAL_API_KEY: NOT FOUND"
-    )
+    print("MISTRAL_API_KEY: NOT FOUND")
 
 
 # =========================================================
@@ -187,13 +161,12 @@ print(
 
 
 # =========================================================
-# أداة تنظيف النص
+# تنظيف الإجابة
 # =========================================================
 
 def clean_answer(answer):
 
     if answer is None:
-
         return None
 
     try:
@@ -201,7 +174,6 @@ def clean_answer(answer):
         answer = str(answer).strip()
 
         if not answer:
-
             return None
 
         return answer
@@ -220,27 +192,21 @@ def ask_gemini(message):
     if gemini_client is None:
 
         print(
-            "Gemini ERROR: "
-            "client غير جاهز."
+            "Gemini ERROR: client غير جاهز."
         )
 
         return None
 
     if not message:
-
         return None
 
     try:
 
-        print(
-            "Trying Gemini..."
-        )
+        print("Trying Gemini...")
 
         response = (
             gemini_client.models.generate_content(
-
                 model=GEMINI_MODEL,
-
                 contents=message
             )
         )
@@ -291,14 +257,11 @@ def ask_openrouter(message):
         return None
 
     if not message:
-
         return None
 
     try:
 
-        print(
-            "Trying OpenRouter..."
-        )
+        print("Trying OpenRouter...")
 
         response = requests.post(
 
@@ -313,7 +276,7 @@ def ask_openrouter(message):
                     "application/json",
 
                 "X-Title":
-                    "Aido AI"
+                    "Ido AI"
             },
 
             json={
@@ -351,18 +314,7 @@ def ask_openrouter(message):
 
             return None
 
-        try:
-
-            data = response.json()
-
-        except Exception as e:
-
-            print(
-                "OpenRouter JSON ERROR:",
-                e
-            )
-
-            return None
+        data = response.json()
 
         choices = data.get(
             "choices",
@@ -399,8 +351,7 @@ def ask_openrouter(message):
     except requests.exceptions.Timeout:
 
         print(
-            "OpenRouter ERROR: "
-            "2 second timeout."
+            "OpenRouter ERROR: timeout."
         )
 
         return None
@@ -408,8 +359,7 @@ def ask_openrouter(message):
     except requests.exceptions.ConnectionError:
 
         print(
-            "OpenRouter ERROR: "
-            "connection failed."
+            "OpenRouter ERROR: connection failed."
         )
 
         return None
@@ -440,14 +390,11 @@ def ask_groq(message):
         return None
 
     if not message:
-
         return None
 
     try:
 
-        print(
-            "Trying Groq..."
-        )
+        print("Trying Groq...")
 
         response = requests.post(
 
@@ -503,18 +450,7 @@ def ask_groq(message):
 
             return None
 
-        try:
-
-            data = response.json()
-
-        except Exception as e:
-
-            print(
-                "Groq JSON ERROR:",
-                e
-            )
-
-            return None
+        data = response.json()
 
         choices = data.get(
             "choices",
@@ -551,8 +487,7 @@ def ask_groq(message):
     except requests.exceptions.Timeout:
 
         print(
-            "Groq ERROR: "
-            "2 second timeout."
+            "Groq ERROR: timeout."
         )
 
         return None
@@ -560,8 +495,7 @@ def ask_groq(message):
     except requests.exceptions.ConnectionError:
 
         print(
-            "Groq ERROR: "
-            "connection failed."
+            "Groq ERROR: connection failed."
         )
 
         return None
@@ -592,14 +526,11 @@ def ask_mistral(message):
         return None
 
     if not message:
-
         return None
 
     try:
 
-        print(
-            "Trying Mistral..."
-        )
+        print("Trying Mistral...")
 
         response = requests.post(
 
@@ -655,18 +586,7 @@ def ask_mistral(message):
 
             return None
 
-        try:
-
-            data = response.json()
-
-        except Exception as e:
-
-            print(
-                "Mistral JSON ERROR:",
-                e
-            )
-
-            return None
+        data = response.json()
 
         choices = data.get(
             "choices",
@@ -703,8 +623,7 @@ def ask_mistral(message):
     except requests.exceptions.Timeout:
 
         print(
-            "Mistral ERROR: "
-            "2 second timeout."
+            "Mistral ERROR: timeout."
         )
 
         return None
@@ -712,8 +631,7 @@ def ask_mistral(message):
     except requests.exceptions.ConnectionError:
 
         print(
-            "Mistral ERROR: "
-            "connection failed."
+            "Mistral ERROR: connection failed."
         )
 
         return None
@@ -729,105 +647,19 @@ def ask_mistral(message):
 
 
 # =========================================================
-# Gemini - صورة
+# Groq - تحليل صورة
 # =========================================================
 
-def ask_gemini_image(
+def ask_groq_image(
     message,
     image_bytes,
     mime_type
 ):
 
-    if gemini_client is None:
+    if not GROQ_API_KEY:
 
         print(
-            "Gemini ERROR: "
-            "client غير جاهز."
-        )
-
-        return None
-
-    if not image_bytes:
-
-        print(
-            "Gemini IMAGE ERROR: "
-            "الصورة فارغة."
-        )
-
-        return None
-
-    try:
-
-        print(
-            "Trying Gemini with image..."
-        )
-
-        image_part = types.Part.from_bytes(
-
-            data=image_bytes,
-
-            mime_type=mime_type
-        )
-
-        response = (
-            gemini_client.models.generate_content(
-
-                model=GEMINI_MODEL,
-
-                contents=[
-
-                    message,
-
-                    image_part
-                ]
-            )
-        )
-
-        if response:
-
-            answer = clean_answer(
-                response.text
-            )
-
-            if answer:
-
-                print(
-                    "Gemini image response received."
-                )
-
-                return answer
-
-        print(
-            "Gemini returned empty "
-            "image response."
-        )
-
-        return None
-
-    except Exception as e:
-
-        print(
-            "Gemini IMAGE ERROR:",
-            e
-        )
-
-        return None
-
-
-# =========================================================
-# OpenRouter - صورة
-# =========================================================
-
-def ask_openrouter_image(
-    message,
-    image_bytes,
-    mime_type
-):
-
-    if not OPENROUTER_API_KEY:
-
-        print(
-            "OpenRouter ERROR: "
+            "Groq IMAGE ERROR: "
             "API key غير موجود."
         )
 
@@ -836,7 +668,7 @@ def ask_openrouter_image(
     if not image_bytes:
 
         print(
-            "OpenRouter IMAGE ERROR: "
+            "Groq IMAGE ERROR: "
             "الصورة فارغة."
         )
 
@@ -845,14 +677,12 @@ def ask_openrouter_image(
     try:
 
         print(
-            "Trying OpenRouter with image..."
+            "Trying Groq with image..."
         )
 
         image_base64 = base64.b64encode(
             image_bytes
-        ).decode(
-            "utf-8"
-        )
+        ).decode("utf-8")
 
         image_data_url = (
             f"data:{mime_type};base64,"
@@ -861,24 +691,21 @@ def ask_openrouter_image(
 
         response = requests.post(
 
-            OPENROUTER_URL,
+            GROQ_URL,
 
             headers={
 
                 "Authorization":
-                    f"Bearer {OPENROUTER_API_KEY}",
+                    f"Bearer {GROQ_API_KEY}",
 
                 "Content-Type":
-                    "application/json",
-
-                "X-Title":
-                    "Aido AI"
+                    "application/json"
             },
 
             json={
 
                 "model":
-                    "openrouter/free",
+                    GROQ_VISION_MODEL,
 
                 "messages": [
 
@@ -911,38 +738,33 @@ def ask_openrouter_image(
                             }
                         ]
                     }
-                ]
+                ],
+
+                "temperature":
+                    0.7,
+
+                "max_completion_tokens":
+                    1024
             },
 
             timeout=REQUEST_TIMEOUT
         )
 
         print(
-            "OpenRouter Image Status:",
+            "Groq Image Status:",
             response.status_code
         )
 
         if response.status_code != 200:
 
             print(
-                "OpenRouter Image Response:",
+                "Groq Image Response:",
                 response.text[:2000]
             )
 
             return None
 
-        try:
-
-            data = response.json()
-
-        except Exception as e:
-
-            print(
-                "OpenRouter Image JSON ERROR:",
-                e
-            )
-
-            return None
+        data = response.json()
 
         choices = data.get(
             "choices",
@@ -965,15 +787,13 @@ def ask_openrouter_image(
             if answer:
 
                 print(
-                    "OpenRouter image response "
-                    "received."
+                    "Groq image response received."
                 )
 
                 return answer
 
         print(
-            "OpenRouter returned empty "
-            "image response."
+            "Groq returned empty image response."
         )
 
         return None
@@ -981,8 +801,7 @@ def ask_openrouter_image(
     except requests.exceptions.Timeout:
 
         print(
-            "OpenRouter IMAGE ERROR: "
-            "2 second timeout."
+            "Groq IMAGE ERROR: timeout."
         )
 
         return None
@@ -990,8 +809,7 @@ def ask_openrouter_image(
     except requests.exceptions.ConnectionError:
 
         print(
-            "OpenRouter IMAGE ERROR: "
-            "connection failed."
+            "Groq IMAGE ERROR: connection failed."
         )
 
         return None
@@ -999,7 +817,7 @@ def ask_openrouter_image(
     except Exception as e:
 
         print(
-            "OpenRouter IMAGE ERROR:",
+            "Groq IMAGE ERROR:",
             e
         )
 
@@ -1007,7 +825,7 @@ def ask_openrouter_image(
 
 
 # =========================================================
-# Mistral - صورة
+# Mistral - تحليل صورة
 # =========================================================
 
 def ask_mistral_image(
@@ -1019,7 +837,7 @@ def ask_mistral_image(
     if not MISTRAL_API_KEY:
 
         print(
-            "Mistral ERROR: "
+            "Mistral IMAGE ERROR: "
             "API key غير موجود."
         )
 
@@ -1042,9 +860,7 @@ def ask_mistral_image(
 
         image_base64 = base64.b64encode(
             image_bytes
-        ).decode(
-            "utf-8"
-        )
+        ).decode("utf-8")
 
         image_data_url = (
             f"data:{mime_type};base64,"
@@ -1067,7 +883,7 @@ def ask_mistral_image(
             json={
 
                 "model":
-                    MISTRAL_MODEL,
+                    MISTRAL_VISION_MODEL,
 
                 "messages": [
 
@@ -1092,8 +908,11 @@ def ask_mistral_image(
                                 "type":
                                     "image_url",
 
-                                "image_url":
-                                    image_data_url
+                                "image_url": {
+
+                                    "url":
+                                        image_data_url
+                                }
                             }
                         ]
                     }
@@ -1123,18 +942,7 @@ def ask_mistral_image(
 
             return None
 
-        try:
-
-            data = response.json()
-
-        except Exception as e:
-
-            print(
-                "Mistral Image JSON ERROR:",
-                e
-            )
-
-            return None
+        data = response.json()
 
         choices = data.get(
             "choices",
@@ -1157,15 +965,13 @@ def ask_mistral_image(
             if answer:
 
                 print(
-                    "Mistral image response "
-                    "received."
+                    "Mistral image response received."
                 )
 
                 return answer
 
         print(
-            "Mistral returned empty "
-            "image response."
+            "Mistral returned empty image response."
         )
 
         return None
@@ -1173,8 +979,7 @@ def ask_mistral_image(
     except requests.exceptions.Timeout:
 
         print(
-            "Mistral IMAGE ERROR: "
-            "2 second timeout."
+            "Mistral IMAGE ERROR: timeout."
         )
 
         return None
@@ -1182,8 +987,7 @@ def ask_mistral_image(
     except requests.exceptions.ConnectionError:
 
         print(
-            "Mistral IMAGE ERROR: "
-            "connection failed."
+            "Mistral IMAGE ERROR: connection failed."
         )
 
         return None
@@ -1199,13 +1003,100 @@ def ask_mistral_image(
 
 
 # =========================================================
-# Ido AI
+# التحقق من طلب إنشاء صورة
+# =========================================================
+
+def is_image_generation_request(message):
+
+    if not message:
+        return False
+
+    text = str(message).strip().lower()
+
+    image_words = [
+
+        "أنشئ صورة",
+        "انشئ صورة",
+        "اصنع صورة",
+        "صنع صورة",
+        "إنشاء صورة",
+        "انشاء صورة",
+        "ولد صورة",
+        "ولّد صورة",
+        "ارسم صورة",
+        "ارسم لي",
+        "صورة لي",
+
+        "generate an image",
+        "generate image",
+        "create an image",
+        "create image",
+        "make an image",
+        "make image",
+        "draw an image",
+        "draw image"
+    ]
+
+    for word in image_words:
+
+        if word in text:
+            return True
+
+    return False
+
+
+# =========================================================
+# استخراج وصف الصورة
+# =========================================================
+
+def get_image_prompt(message):
+
+    if not message:
+        return ""
+
+    text = str(message).strip()
+
+    prefixes = [
+
+        "أنشئ لي صورة",
+        "أنشئ صورة",
+        "انشئ لي صورة",
+        "انشئ صورة",
+        "اصنع لي صورة",
+        "اصنع صورة",
+        "إنشاء صورة",
+        "انشاء صورة",
+        "ارسم لي",
+        "ارسم صورة",
+
+        "generate an image of",
+        "generate image of",
+        "create an image of",
+        "create image of",
+        "make an image of",
+        "make image of"
+    ]
+
+    for prefix in prefixes:
+
+        if text.lower().startswith(
+            prefix.lower()
+        ):
+
+            return text[
+                len(prefix):
+            ].strip()
+
+    return text
+
+
+# =========================================================
+# Ido AI - الرد الرئيسي
 # =========================================================
 
 def get_response(message):
 
     if not message:
-
         return "اكتب رسالة أولًا."
 
     original_message = str(
@@ -1213,12 +1104,36 @@ def get_response(message):
     ).strip()
 
     if not original_message:
-
         return "اكتب رسالة أولًا."
 
     message_lower = (
         original_message.lower()
     )
+
+
+    # =====================================================
+    # طلب إنشاء صورة
+    # =====================================================
+
+    if is_image_generation_request(
+        original_message
+    ):
+
+        image_prompt = get_image_prompt(
+            original_message
+        )
+
+        if not image_prompt:
+
+            return (
+                "اكتب لي وصف الصورة التي "
+                "تريد إنشاءها."
+            )
+
+        return (
+            "إنشاء الصور غير مفعّل حاليًا "
+            "في Groq وMistral داخل هذا الإصدار."
+        )
 
 
     # =====================================================
@@ -1349,7 +1264,6 @@ def get_response(message):
     for key, value in responses.items():
 
         if key in message_lower:
-
             return value
 
 
@@ -1362,7 +1276,6 @@ def get_response(message):
     )
 
     if answer:
-
         return answer
 
 
@@ -1380,7 +1293,6 @@ def get_response(message):
     )
 
     if answer:
-
         return answer
 
 
@@ -1398,7 +1310,6 @@ def get_response(message):
     )
 
     if answer:
-
         return answer
 
 
@@ -1416,7 +1327,6 @@ def get_response(message):
     )
 
     if answer:
-
         return answer
 
 
@@ -1449,13 +1359,18 @@ def get_image_response(
 
         mime_type = "image/jpeg"
 
-    if not mime_type.startswith("image/"):
+    if not mime_type.startswith(
+        "image/"
+    ):
 
         return (
             "الملف المرسل ليس صورة صالحة."
         )
 
-    if not message or not message.strip():
+    if (
+        not message
+        or not message.strip()
+    ):
 
         message = (
             "حلل هذه الصورة واشرح لي "
@@ -1466,71 +1381,40 @@ def get_image_response(
 
 
     # =====================================================
-    # Gemini مع الصورة أولًا
+    # Mistral مع الصورة أولًا
     # =====================================================
-
-    answer = ask_gemini_image(
-
-        message,
-
-        image_bytes,
-
-        mime_type
-    )
-
-    if answer:
-
-        return answer
-
-
-    # =====================================================
-    # OpenRouter مع الصورة ثانيًا
-    # =====================================================
-
-    print(
-        "Gemini image failed. "
-        "Trying OpenRouter image..."
-    )
-
-    answer = ask_openrouter_image(
-
-        message,
-
-        image_bytes,
-
-        mime_type
-    )
-
-    if answer:
-
-        return answer
-
-
-    # =====================================================
-    # Mistral مع الصورة ثالثًا
-    # =====================================================
-
-    print(
-        "OpenRouter image failed. "
-        "Trying Mistral image..."
-    )
 
     answer = ask_mistral_image(
-
         message,
-
         image_bytes,
-
         mime_type
     )
 
     if answer:
-
         return answer
 
 
     # =====================================================
-    # فشل جميع خوادم الصور
+    # Groq مع الصورة ثانيًا
+    # =====================================================
+
+    print(
+        "Mistral image failed. "
+        "Trying Groq image..."
+    )
+
+    answer = ask_groq_image(
+        message,
+        image_bytes,
+        mime_type
+    )
+
+    if answer:
+        return answer
+
+
+    # =====================================================
+    # فشل جميع خوادم تحليل الصور
     # =====================================================
 
     return (

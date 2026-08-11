@@ -2,15 +2,20 @@ from flask import Flask, render_template, request
 from datetime import datetime
 import os
 
-from brain import get_response, get_image_response
+from brain import (
+    get_response,
+    get_image_response,
+    generate_image
+)
+
 from calculator import calculate
 from translator import translate
 from memory import get_answer
 
 
-# =========================
+# =========================================================
 # API
-# =========================
+# =========================================================
 
 try:
     from api import api
@@ -22,9 +27,9 @@ except Exception as e:
     api_available = False
 
 
-# =========================
+# =========================================================
 # إنشاء تطبيق Flask
-# =========================
+# =========================================================
 
 app = Flask(
     __name__,
@@ -32,50 +37,44 @@ app = Flask(
 )
 
 
-# =========================
+# =========================================================
 # تسجيل API
-# =========================
+# =========================================================
 
 if api_available:
     app.register_blueprint(api)
 
 
-# =========================
+# =========================================================
 # Ido AI Response
-# =========================
+# =========================================================
 
 def ai_response(question):
 
     try:
-
         question = question.strip()
 
         if not question:
             return "اكتب سؤالاً أولاً"
 
-
-        # =========================
+        # =====================================================
         # الحاسبة
-        # =========================
+        # =====================================================
 
         try:
-
             result = calculate(question)
 
             if result is not None:
                 return f"النتيجة: {result}"
 
         except Exception as e:
-
             print("CALCULATOR ERROR:", e)
 
-
-        # =========================
+        # =====================================================
         # الترجمة
-        # =========================
+        # =====================================================
 
         try:
-
             translated = translate(question)
 
             if (
@@ -85,53 +84,46 @@ def ai_response(question):
                 return translated
 
         except Exception as e:
-
             print("TRANSLATOR ERROR:", e)
 
-
-        # =========================
+        # =====================================================
         # الذاكرة
-        # =========================
+        # =====================================================
 
         try:
-
             memory_answer = get_answer(question)
 
             if memory_answer:
                 return memory_answer
 
         except Exception as e:
-
             print("MEMORY ERROR:", e)
 
-
-        # =========================
-        # Gemini / OpenRouter / OpenAI
-        # =========================
+        # =====================================================
+        # Gemini / OpenRouter / Groq / Mistral
+        # =====================================================
 
         answer = get_response(question)
 
         return answer or "لم أجد إجابة حاليًا."
 
-
     except Exception as e:
-
         print("AI RESPONSE ERROR:", e)
 
         return f"خطأ: {e}"
 
 
-# =========================
+# =========================================================
 # الصفحة الرئيسية
-# =========================
+# =========================================================
 
 @app.route("/", methods=["GET", "POST"])
 def home():
 
     answer = ""
+    generated_image = None
 
     current_time = datetime.now().strftime("%H:%M:%S")
-
 
     if request.method == "POST":
 
@@ -140,91 +132,138 @@ def home():
             ""
         ).strip()
 
+        # =====================================================
+        # طلب إنشاء صورة
+        # =====================================================
 
-        # =========================
-        # رفع صورة
-        # =========================
+        image_generation_request = request.form.get(
+            "generate_image",
+            ""
+        )
 
-        image = request.files.get("image")
+        if image_generation_request == "1":
 
+            if not question:
 
-        if image and image.filename:
+                answer = (
+                    "اكتب وصف الصورة التي تريد إنشاءها."
+                )
 
-            try:
+            else:
 
-                image_bytes = image.read()
-
-                mime_type = image.mimetype
-
-
-                if not image_bytes:
-
-                    answer = (
-                        "لم يتم اختيار صورة صالحة."
+                try:
+                    print(
+                        "IMAGE GENERATION REQUEST:"
                     )
 
-                else:
+                    print(question)
 
-                    if question:
+                    generated_image = generate_image(
+                        question
+                    )
 
-                        image_question = question
+                    if not generated_image:
+                        answer = (
+                            "تعذر إنشاء الصورة حاليًا."
+                        )
+
+                except Exception as e:
+
+                    print(
+                        "IMAGE GENERATION ERROR:",
+                        e
+                    )
+
+                    answer = (
+                        "حدث خطأ أثناء إنشاء الصورة: "
+                        f"{e}"
+                    )
+
+        else:
+
+            # =================================================
+            # رفع صورة
+            # =================================================
+
+            image = request.files.get(
+                "image"
+            )
+
+            if image and image.filename:
+
+                try:
+
+                    image_bytes = image.read()
+                    mime_type = image.mimetype
+
+                    if not image_bytes:
+
+                        answer = (
+                            "لم يتم اختيار صورة صالحة."
+                        )
 
                     else:
 
-                        image_question = (
-                            "حلل هذه الصورة واشرح لي بالتفصيل "
-                            "ما الذي يظهر فيها."
+                        if question:
+
+                            image_question = question
+
+                        else:
+
+                            image_question = (
+                                "حلل هذه الصورة واشرح لي "
+                                "بالتفصيل ما الذي يظهر فيها."
+                            )
+
+                        # =====================================
+                        # تحليل الصورة
+                        # =====================================
+
+                        answer = get_image_response(
+                            image_question,
+                            image_bytes,
+                            mime_type
                         )
 
+                        if not answer:
 
-                    # =========================
-                    # تحليل الصورة
-                    # يتم التعامل معه داخل brain.py
-                    # =========================
+                            answer = (
+                                "تعذر تحليل الصورة حاليًا."
+                            )
 
-                    answer = get_image_response(
-                        image_question,
-                        image_bytes,
-                        mime_type
+                except Exception as e:
+
+                    print(
+                        "IMAGE ERROR:",
+                        e
                     )
 
+                    answer = (
+                        "حدث خطأ أثناء تحليل الصورة: "
+                        f"{e}"
+                    )
 
-                    if not answer:
+            # =================================================
+            # سؤال نصي عادي
+            # =================================================
 
-                        answer = (
-                            "تعذر تحليل الصورة حاليًا."
-                        )
+            elif question:
 
-
-            except Exception as e:
-
-                print("IMAGE ERROR:", e)
-
-                answer = (
-                    "حدث خطأ أثناء تحليل الصورة: "
-                    f"{e}"
+                answer = ai_response(
+                    question
                 )
-
-
-        # =========================
-        # سؤال نصي عادي
-        # =========================
-
-        elif question:
-
-            answer = ai_response(question)
-
 
     return render_template(
         "page.html",
         answer=answer,
+        generated_image=generated_image,
         time=current_time
     )
 
 
-# =========================
+# =========================================================
 # تشغيل التطبيق
-# =========================
+# =========================================================
 
 if __name__ == "__main__":
 
