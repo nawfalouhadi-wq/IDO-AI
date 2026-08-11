@@ -6,7 +6,6 @@ from google.genai import types
 from openai import OpenAI
 
 # تحميل ملف .env
-
 load_dotenv()
 
 # =========================================================
@@ -109,6 +108,7 @@ def ask_gemini(message):
         print("Gemini ERROR:", e)
         return None
 
+
 # =========================================================
 # OpenRouter - نص
 # =========================================================
@@ -130,7 +130,7 @@ def ask_openrouter(message):
                 "X-Title": "Aido AI"
             },
             json={
-                "model": "openai/gpt-5.1-chat",
+                "model": "openai/gpt-5.6-luna",
                 "messages": [
                     {
                         "role": "user",
@@ -166,6 +166,7 @@ def ask_openrouter(message):
         print("OpenRouter ERROR:", e)
         return None
 
+
 # =========================================================
 # OpenAI - نص
 # =========================================================
@@ -194,6 +195,7 @@ def ask_openai(message):
     except Exception as e:
         print("OpenAI ERROR:", e)
         return None
+
 
 # =========================================================
 # Gemini - صورة
@@ -236,6 +238,7 @@ def ask_gemini_image(
         print("Gemini IMAGE ERROR:", e)
         return None
 
+
 # =========================================================
 # Ollama
 # =========================================================
@@ -275,6 +278,7 @@ def ask_ollama(message):
     except Exception as e:
         print("Ollama ERROR:", e)
         return None
+
 
 # =========================================================
 # Ido AI
@@ -450,6 +454,7 @@ def get_response(message):
     # =====================================================
 
     return "أنا Ido AI ولم أجد إجابة حاليًا."
+
 
 # =========================================================
 # تحليل صورة
