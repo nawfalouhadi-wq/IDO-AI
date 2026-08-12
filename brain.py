@@ -1,35 +1,40 @@
+# ============================================================
 # brain.py
 # ============================================================
 # Ido AI - Unified Multi-Provider AI Brain
 #
-# PROVIDER ORDER:
-#   1. Groq
-#   2. Mistral
-#   3. OpenRouter
-#   4. Gemini
-#   5. xAI / Grok
-#   6. Pollinations
+# FEATURES
+# ------------------------------------------------------------
+# TEXT:
+#   Groq -> Mistral -> OpenRouter -> Gemini -> xAI -> Pollinations
 #
-# CAPABILITIES:
-#   TEXT       -> all available text providers
-#   VISION     -> all available vision providers
-#   GENERATE   -> every configured image-generation provider
-#   EDIT       -> every configured image-edit provider
+# VISION:
+#   Mistral -> Groq -> OpenRouter -> xAI
+#
+# IMAGE GENERATION:
+#   xAI -> OpenRouter -> Pollinations
+#
+# IMAGE EDITING:
+#   xAI -> OpenRouter
 #
 # IMPORTANT:
-#   - Providers are never treated as one single model.
-#   - Every provider is attempted independently.
-#   - A failure moves the request to the next provider.
-#   - TEXT, VISION, GENERATE and EDIT are separate routes.
-#   - conversation_id is accepted for compatibility with app.py
-#     and api.py.
+#   Vision is ONLY for understanding/analyzing images.
+#   Image editing uses real image-editing endpoints.
+#
+# Compatible with:
+#   app.py
+#   api.py
+#
+# get_response(message, conversation_id=None)
+# get_image_response(message, image_bytes, mime_type,
+#                     conversation_id=None)
 # ============================================================
 
 import os
 import base64
 import time
-import re
 import requests
+from urllib.parse import quote
 
 from dotenv import load_dotenv
 
@@ -55,7 +60,7 @@ CONNECT_TIMEOUT = float(
 READ_TIMEOUT = float(
     os.getenv(
         "REQUEST_READ_TIMEOUT",
-        "60"
+        "30"
     )
 )
 
@@ -69,7 +74,7 @@ REQUEST_TIMEOUT = (
 # PROVIDER COOLDOWN
 # ============================================================
 
-COOLDOWN_SECONDS = int(
+CIRCUIT_BREAK_SECONDS = int(
     os.getenv(
         "PROVIDER_COOLDOWN_SECONDS",
         "60"
@@ -80,84 +85,59 @@ _provider_disabled_until = {}
 
 
 def provider_available(name):
-    """
-    Return True when the provider is available.
-    """
-
-    disabled_until = _provider_disabled_until.get(
+    until = _provider_disabled_until.get(
         name,
         0
     )
 
-    return time.time() >= disabled_until
+    return time.time() >= until
 
 
 def disable_provider(
     name,
     reason="temporary failure"
 ):
-    """
-    Temporarily disable a provider.
-    """
-
     _provider_disabled_until[name] = (
         time.time()
-        + COOLDOWN_SECONDS
+        + CIRCUIT_BREAK_SECONDS
     )
 
     print(
         f"{name}: TEMPORARILY DISABLED "
-        f"for {COOLDOWN_SECONDS}s - {reason}"
+        f"for {CIRCUIT_BREAK_SECONDS}s "
+        f"({reason})"
     )
 
 
 def provider_failure(
     name,
-    status_code=None,
-    reason=None
+    status_code=None
 ):
-    """
-    Disable a provider for authentication,
-    quota or serious HTTP errors.
-    """
-
     if status_code in (
         401,
         403,
+        404,
         429
     ):
         disable_provider(
             name,
-            reason or f"HTTP {status_code}"
-        )
-
-    elif status_code in (
-        408,
-        500,
-        502,
-        503,
-        504
-    ):
-        disable_provider(
-            name,
-            reason or f"HTTP {status_code}"
+            f"HTTP {status_code}"
         )
 
 
 # ============================================================
-# GENERAL HELPERS
+# HELPERS
 # ============================================================
 
 def clean_answer(value):
-    """
-    Safely convert a provider response to text.
-    """
 
     if value is None:
         return None
 
     try:
-        value = str(value).strip()
+        value = str(
+            value
+        ).strip()
     except Exception:
         return None
 
@@ -168,11 +148,9 @@ def request_json(
     response,
     provider
 ):
-    """
-    Safely decode JSON.
-    """
 
     try:
+
         return response.json()
 
     except Exception as exc:
@@ -182,28 +160,30 @@ def request_json(
             exc
         )
 
-        try:
-            print(
-                f"{provider}: BODY:",
-                response.text[:1500]
-            )
-        except Exception:
-            pass
+        print(
+            f"{provider}: RESPONSE:",
+            response.text[:1500]
+        )
 
         return None
 
 
-def make_data_url(
+def image_to_data_url(
     image_bytes,
     mime_type
 ):
-    """
-    Convert raw image bytes to a data URL.
-    """
+
+    if not image_bytes:
+        return None
+
+    if not mime_type:
+        mime_type = "image/jpeg"
 
     encoded = base64.b64encode(
         image_bytes
-    ).decode("utf-8")
+    ).decode(
+        "utf-8"
+    )
 
     return (
         f"data:{mime_type};base64,"
@@ -211,65 +191,14 @@ def make_data_url(
     )
 
 
-def extract_text_content(content):
-    """
-    Handle normal string content and
-    some providers returning content arrays.
-    """
+def extract_text_from_response(
+    data
+):
 
-    if content is None:
-        return None
-
-    if isinstance(content, str):
-        return clean_answer(content)
-
-    if isinstance(content, list):
-
-        parts = []
-
-        for item in content:
-
-            if isinstance(item, str):
-                parts.append(item)
-                continue
-
-            if not isinstance(item, dict):
-                continue
-
-            text = (
-                item.get("text")
-                or item.get("content")
-            )
-
-            if text:
-                parts.append(
-                    str(text)
-                )
-
-        if parts:
-            return clean_answer(
-                "\n".join(parts)
-            )
-
-    if isinstance(content, dict):
-
-        text = (
-            content.get("text")
-            or content.get("content")
-        )
-
-        if text:
-            return clean_answer(text)
-
-    return None
-
-
-def extract_openai_text(data):
-    """
-    Extract text from OpenAI-compatible responses.
-    """
-
-    if not isinstance(data, dict):
+    if not isinstance(
+        data,
+        dict
+    ):
         return None
 
     choices = data.get(
@@ -280,100 +209,178 @@ def extract_openai_text(data):
     if not choices:
         return None
 
-    first = choices[0]
-
-    if not isinstance(first, dict):
-        return None
-
-    message = first.get(
+    message = choices[0].get(
         "message",
         {}
     )
 
-    if not isinstance(message, dict):
+    if not isinstance(
+        message,
+        dict
+    ):
         return None
 
-    return extract_text_content(
-        message.get("content")
+    content = message.get(
+        "content"
     )
+
+    if isinstance(
+        content,
+        str
+    ):
+        return clean_answer(
+            content
+        )
+
+    if isinstance(
+        content,
+        list
+    ):
+
+        parts = []
+
+        for item in content:
+
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+            text = item.get(
+                "text"
+            )
+
+            if text:
+                parts.append(
+                    str(text)
+                )
+
+        if parts:
+
+            return clean_answer(
+                "\n".join(parts)
+            )
+
+    return None
 
 
 def extract_image_from_response(
     data
 ):
-    """
-    Extract an image URL or base64 image
-    from common image API response formats.
-    """
 
-    if not isinstance(data, dict):
+    if not isinstance(
+        data,
+        dict
+    ):
         return None
+
+    # --------------------------------------------------------
+    # Standard image API response
+    # --------------------------------------------------------
 
     items = data.get(
-        "data",
-        []
-    )
-
-    if not isinstance(items, list):
-        return None
-
-    if not items:
-        return None
-
-    item = items[0]
-
-    if not isinstance(item, dict):
-        return None
-
-    # --------------------------------------------------------
-    # URL
-    # --------------------------------------------------------
-
-    image_url = item.get(
-        "url"
-    )
-
-    if image_url:
-        return image_url
-
-    # --------------------------------------------------------
-    # Base64
-    # --------------------------------------------------------
-
-    b64 = item.get(
-        "b64_json"
-    )
-
-    if b64:
-
-        media_type = item.get(
-            "media_type",
-            "image/png"
-        )
-
-        return (
-            f"data:{media_type};base64,"
-            f"{b64}"
-        )
-
-    # --------------------------------------------------------
-    # Some APIs use image_url
-    # --------------------------------------------------------
-
-    image_url = item.get(
-        "image_url"
+        "data"
     )
 
     if isinstance(
-        image_url,
-        dict
+        items,
+        list
     ):
-        image_url = image_url.get(
-            "url"
-        )
 
-    if image_url:
-        return image_url
+        for item in items:
+
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+            url = item.get(
+                "url"
+            )
+
+            if url:
+                return url
+
+            b64 = item.get(
+                "b64_json"
+            )
+
+            if b64:
+
+                media_type = item.get(
+                    "media_type",
+                    "image/png"
+                )
+
+                return (
+                    f"data:{media_type};base64,"
+                    f"{b64}"
+                )
+
+    # --------------------------------------------------------
+    # Responses containing output
+    # --------------------------------------------------------
+
+    output = data.get(
+        "output"
+    )
+
+    if isinstance(
+        output,
+        list
+    ):
+
+        for block in output:
+
+            if not isinstance(
+                block,
+                dict
+            ):
+                continue
+
+            content = block.get(
+                "content",
+                []
+            )
+
+            if not isinstance(
+                content,
+                list
+            ):
+                continue
+
+            for item in content:
+
+                if not isinstance(
+                    item,
+                    dict
+                ):
+                    continue
+
+                url = item.get(
+                    "url"
+                )
+
+                if url:
+                    return url
+
+                b64 = item.get(
+                    "b64_json"
+                )
+
+                if b64:
+
+                    media_type = item.get(
+                        "media_type",
+                        "image/png"
+                    )
+
+                    return (
+                        f"data:{media_type};base64,"
+                        f"{b64}"
+                    )
 
     return None
 
@@ -388,7 +395,7 @@ GEMINI_API_KEY = os.getenv(
 
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
-    "gemini-2.5-flash"
+    "gemini-3.1-flash"
 )
 
 ENABLE_GEMINI = (
@@ -399,15 +406,20 @@ ENABLE_GEMINI = (
     == "true"
 )
 
-gemini_client = None
 
+# Gemini SDK is optional.
 try:
 
     from google import genai
+    from google.genai.types import HttpOptions
 
 except Exception:
 
     genai = None
+    HttpOptions = None
+
+
+gemini_client = None
 
 
 if (
@@ -444,17 +456,18 @@ else:
 
     print(
         "GEMINI: SKIPPED "
-        "(disabled, key unavailable, "
-        "or SDK unavailable)"
+        "(disabled or API key unavailable)"
     )
 
 
 def ask_gemini(
-    message,
-    conversation_id=None
+    message
 ):
 
-    if not gemini_client:
+    if not ENABLE_GEMINI:
+        return None
+
+    if gemini_client is None:
         return None
 
     if not message:
@@ -505,7 +518,9 @@ def ask_gemini(
             exc
         )
 
-        text = str(exc)
+        text = str(
+            exc
+        )
 
         if (
             "429" in text
@@ -516,7 +531,7 @@ def ask_gemini(
 
             disable_provider(
                 "GEMINI",
-                "quota exceeded"
+                "quota"
             )
 
         return None
@@ -537,13 +552,15 @@ GROQ_URL = (
 
 GROQ_MODEL = os.getenv(
     "GROQ_MODEL",
-    "openai/gpt-oss-20b"
+    "openai/gpt-oss-120b"
 )
 
+# IMPORTANT:
+# Keep this configurable because availability can differ
+# between Groq accounts.
 GROQ_VISION_MODEL = os.getenv(
     "GROQ_VISION_MODEL",
-    "meta-llama/"
-    "llama-4-scout-17b-16e-instruct"
+    "meta-llama/llama-4-scout-17b-16e-instruct"
 )
 
 
@@ -570,20 +587,8 @@ else:
     )
 
 
-def groq_headers():
-
-    return {
-        "Authorization":
-            f"Bearer {GROQ_API_KEY}",
-
-        "Content-Type":
-            "application/json"
-    }
-
-
 def ask_groq(
-    message,
-    conversation_id=None
+    message
 ):
 
     if not GROQ_API_KEY:
@@ -607,14 +612,33 @@ def ask_groq(
 
             GROQ_URL,
 
-            headers=groq_headers(),
+            headers={
+                "Authorization":
+                    f"Bearer {GROQ_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
 
             json={
-
                 "model":
                     GROQ_MODEL,
 
                 "messages": [
+
+                    {
+                        "role":
+                            "system",
+
+                        "content":
+                            (
+                                "You are Ido AI. "
+                                "Answer clearly and helpfully. "
+                                "If the user speaks Arabic, "
+                                "answer in Arabic."
+                            )
+                    },
+
                     {
                         "role":
                             "user",
@@ -658,7 +682,10 @@ def ask_groq(
             "Groq"
         )
 
-        answer = extract_openai_text(
+        if not data:
+            return None
+
+        answer = extract_text_from_response(
             data
         )
 
@@ -682,125 +709,6 @@ def ask_groq(
         return None
 
 
-def ask_groq_vision(
-    message,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    if not GROQ_API_KEY:
-        return None
-
-    if not image_bytes:
-        return None
-
-    if not provider_available(
-        "GROQ_VISION"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying Groq Vision..."
-        )
-
-        image_url = make_data_url(
-            image_bytes,
-            mime_type
-        )
-
-        response = requests.post(
-
-            GROQ_URL,
-
-            headers=groq_headers(),
-
-            json={
-
-                "model":
-                    GROQ_VISION_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content": [
-
-                            {
-                                "type":
-                                    "text",
-
-                                "text":
-                                    message
-                            },
-
-                            {
-                                "type":
-                                    "image_url",
-
-                                "image_url": {
-                                    "url":
-                                        image_url
-                                }
-                            }
-                        ]
-                    }
-                ],
-
-                "max_completion_tokens":
-                    2048
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "Groq Vision Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            print(
-                "Groq Vision Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "GROQ_VISION",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "Groq Vision"
-        )
-
-        answer = extract_openai_text(
-            data
-        )
-
-        if answer:
-            return answer
-
-        return None
-
-    except Exception as exc:
-
-        print(
-            "Groq Vision ERROR:",
-            exc
-        )
-
-        return None
-
-
 # ============================================================
 # MISTRAL
 # ============================================================
@@ -814,14 +722,15 @@ MISTRAL_URL = (
     "chat/completions"
 )
 
+# Current 2026 multimodal Mistral model.
 MISTRAL_MODEL = os.getenv(
     "MISTRAL_MODEL",
-    "mistral-small-latest"
+    "mistral-medium-3-5"
 )
 
 MISTRAL_VISION_MODEL = os.getenv(
     "MISTRAL_VISION_MODEL",
-    "pixtral-12b-2409"
+    "mistral-medium-3-5"
 )
 
 
@@ -848,20 +757,8 @@ else:
     )
 
 
-def mistral_headers():
-
-    return {
-        "Authorization":
-            f"Bearer {MISTRAL_API_KEY}",
-
-        "Content-Type":
-            "application/json"
-    }
-
-
 def ask_mistral(
-    message,
-    conversation_id=None
+    message
 ):
 
     if not MISTRAL_API_KEY:
@@ -885,14 +782,31 @@ def ask_mistral(
 
             MISTRAL_URL,
 
-            headers=mistral_headers(),
+            headers={
+                "Authorization":
+                    f"Bearer {MISTRAL_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
 
             json={
-
                 "model":
                     MISTRAL_MODEL,
 
                 "messages": [
+
+                    {
+                        "role":
+                            "system",
+
+                        "content":
+                            (
+                                "You are Ido AI. "
+                                "Be accurate, helpful, "
+                                "and natural."
+                            )
+                    },
 
                     {
                         "role":
@@ -937,7 +851,10 @@ def ask_mistral(
             "Mistral"
         )
 
-        answer = extract_openai_text(
+        if not data:
+            return None
+
+        answer = extract_text_from_response(
             data
         )
 
@@ -955,125 +872,6 @@ def ask_mistral(
 
         print(
             "Mistral ERROR:",
-            exc
-        )
-
-        return None
-
-
-def ask_mistral_vision(
-    message,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    if not MISTRAL_API_KEY:
-        return None
-
-    if not image_bytes:
-        return None
-
-    if not provider_available(
-        "MISTRAL_VISION"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying Mistral Vision..."
-        )
-
-        image_url = make_data_url(
-            image_bytes,
-            mime_type
-        )
-
-        response = requests.post(
-
-            MISTRAL_URL,
-
-            headers=mistral_headers(),
-
-            json={
-
-                "model":
-                    MISTRAL_VISION_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content": [
-
-                            {
-                                "type":
-                                    "text",
-
-                                "text":
-                                    message
-                            },
-
-                            {
-                                "type":
-                                    "image_url",
-
-                                "image_url": {
-                                    "url":
-                                        image_url
-                                }
-                            }
-                        ]
-                    }
-                ],
-
-                "max_tokens":
-                    2048
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "Mistral Vision Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            print(
-                "Mistral Vision Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "MISTRAL_VISION",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "Mistral Vision"
-        )
-
-        answer = extract_openai_text(
-            data
-        )
-
-        if answer:
-            return answer
-
-        return None
-
-    except Exception as exc:
-
-        print(
-            "Mistral Vision ERROR:",
             exc
         )
 
@@ -1099,17 +897,17 @@ OPENROUTER_IMAGE_URL = (
 
 OPENROUTER_TEXT_MODEL = os.getenv(
     "OPENROUTER_TEXT_MODEL",
-    "openai/gpt-oss-20b"
+    "openai/gpt-5.4"
 )
 
 OPENROUTER_VISION_MODEL = os.getenv(
     "OPENROUTER_VISION_MODEL",
-    "google/gemini-2.5-flash"
+    "openai/gpt-5.4"
 )
 
 OPENROUTER_IMAGE_MODEL = os.getenv(
     "OPENROUTER_IMAGE_MODEL",
-    "openai/gpt-image-1"
+    "openai/gpt-5.4-image-2"
 )
 
 
@@ -1151,14 +949,16 @@ def openrouter_headers():
         "Content-Type":
             "application/json",
 
+        "HTTP-Referer":
+            "https://ido-ai-production.up.railway.app",
+
         "X-Title":
             "Ido AI"
     }
 
 
 def ask_openrouter(
-    message,
-    conversation_id=None
+    message
 ):
 
     if not OPENROUTER_API_KEY:
@@ -1190,6 +990,18 @@ def ask_openrouter(
                     OPENROUTER_TEXT_MODEL,
 
                 "messages": [
+
+                    {
+                        "role":
+                            "system",
+
+                        "content":
+                            (
+                                "You are Ido AI. "
+                                "Answer naturally and "
+                                "helpfully."
+                            )
+                    },
 
                     {
                         "role":
@@ -1228,7 +1040,10 @@ def ask_openrouter(
             "OpenRouter"
         )
 
-        answer = extract_openai_text(
+        if not data:
+            return None
+
+        answer = extract_text_from_response(
             data
         )
 
@@ -1252,214 +1067,6 @@ def ask_openrouter(
         return None
 
 
-def ask_openrouter_vision(
-    message,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    if not OPENROUTER_API_KEY:
-        return None
-
-    if not image_bytes:
-        return None
-
-    if not provider_available(
-        "OPENROUTER_VISION"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying OpenRouter Vision..."
-        )
-
-        image_url = make_data_url(
-            image_bytes,
-            mime_type
-        )
-
-        response = requests.post(
-
-            OPENROUTER_CHAT_URL,
-
-            headers=openrouter_headers(),
-
-            json={
-
-                "model":
-                    OPENROUTER_VISION_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content": [
-
-                            {
-                                "type":
-                                    "text",
-
-                                "text":
-                                    message
-                            },
-
-                            {
-                                "type":
-                                    "image_url",
-
-                                "image_url": {
-                                    "url":
-                                        image_url
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "OpenRouter Vision Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            provider_failure(
-                "OPENROUTER_VISION",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "OpenRouter Vision"
-        )
-
-        answer = extract_openai_text(
-            data
-        )
-
-        if answer:
-            return answer
-
-        return None
-
-    except Exception as exc:
-
-        print(
-            "OpenRouter Vision ERROR:",
-            exc
-        )
-
-        return None
-
-
-def generate_image_openrouter(
-    prompt,
-    image_bytes=None,
-    mime_type=None
-):
-
-    if not OPENROUTER_API_KEY:
-        return None
-
-    if not provider_available(
-        "OPENROUTER_IMAGE"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying OpenRouter Image..."
-        )
-
-        payload = {
-
-            "model":
-                OPENROUTER_IMAGE_MODEL,
-
-            "prompt":
-                prompt,
-
-            "n":
-                1
-        }
-
-        # ----------------------------------------------------
-        # Reference image support
-        # ----------------------------------------------------
-
-        if image_bytes:
-
-            payload[
-                "input_references"
-            ] = [
-
-                make_data_url(
-                    image_bytes,
-                    mime_type or "image/png"
-                )
-            ]
-
-        response = requests.post(
-
-            OPENROUTER_IMAGE_URL,
-
-            headers=openrouter_headers(),
-
-            json=payload,
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "OpenRouter Image Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            print(
-                "OpenRouter Image Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "OPENROUTER_IMAGE",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "OpenRouter Image"
-        )
-
-        return extract_image_from_response(
-            data
-        )
-
-    except Exception as exc:
-
-        print(
-            "OpenRouter Image ERROR:",
-            exc
-        )
-
-        return None
-
-
 # ============================================================
 # XAI / GROK
 # ============================================================
@@ -1468,7 +1075,7 @@ XAI_API_KEY = os.getenv(
     "XAI_API_KEY"
 )
 
-XAI_URL = (
+XAI_CHAT_URL = (
     "https://api.x.ai/v1/"
     "chat/completions"
 )
@@ -1483,7 +1090,7 @@ XAI_IMAGE_URL = (
     "images/generations"
 )
 
-XAI_EDIT_URL = (
+XAI_IMAGE_EDIT_URL = (
     "https://api.x.ai/v1/"
     "images/edits"
 )
@@ -1517,21 +1124,8 @@ else:
     )
 
 
-def xai_headers():
-
-    return {
-
-        "Authorization":
-            f"Bearer {XAI_API_KEY}",
-
-        "Content-Type":
-            "application/json"
-    }
-
-
 def ask_xai(
-    message,
-    conversation_id=None
+    message
 ):
 
     if not XAI_API_KEY:
@@ -1548,14 +1142,20 @@ def ask_xai(
     try:
 
         print(
-            "Trying xAI / Grok..."
+            "Trying xAI..."
         )
 
         response = requests.post(
 
-            XAI_URL,
+            XAI_CHAT_URL,
 
-            headers=xai_headers(),
+            headers={
+                "Authorization":
+                    f"Bearer {XAI_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
 
             json={
 
@@ -1604,7 +1204,10 @@ def ask_xai(
             "xAI"
         )
 
-        answer = extract_openai_text(
+        if not data:
+            return None
+
+        answer = extract_text_from_response(
             data
         )
 
@@ -1622,283 +1225,6 @@ def ask_xai(
 
         print(
             "xAI ERROR:",
-            exc
-        )
-
-        return None
-
-
-def ask_xai_vision(
-    message,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    if not XAI_API_KEY:
-        return None
-
-    if not image_bytes:
-        return None
-
-    if not provider_available(
-        "XAI_VISION"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying xAI Vision..."
-        )
-
-        image_url = make_data_url(
-            image_bytes,
-            mime_type
-        )
-
-        response = requests.post(
-
-            XAI_URL,
-
-            headers=xai_headers(),
-
-            json={
-
-                "model":
-                    XAI_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content": [
-
-                            {
-                                "type":
-                                    "text",
-
-                                "text":
-                                    message
-                            },
-
-                            {
-                                "type":
-                                    "image_url",
-
-                                "image_url": {
-                                    "url":
-                                        image_url
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "xAI Vision Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            provider_failure(
-                "XAI_VISION",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "xAI Vision"
-        )
-
-        answer = extract_openai_text(
-            data
-        )
-
-        if answer:
-            return answer
-
-        return None
-
-    except Exception as exc:
-
-        print(
-            "xAI Vision ERROR:",
-            exc
-        )
-
-        return None
-
-
-def generate_image_xai(
-    prompt
-):
-
-    if not XAI_API_KEY:
-        return None
-
-    if not provider_available(
-        "XAI_IMAGE"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying xAI Image Generation..."
-        )
-
-        response = requests.post(
-
-            XAI_IMAGE_URL,
-
-            headers=xai_headers(),
-
-            json={
-
-                "model":
-                    XAI_IMAGE_MODEL,
-
-                "prompt":
-                    prompt,
-
-                "n":
-                    1
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "xAI Image Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            print(
-                "xAI Image Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "XAI_IMAGE",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "xAI Image"
-        )
-
-        return extract_image_from_response(
-            data
-        )
-
-    except Exception as exc:
-
-        print(
-            "xAI Image ERROR:",
-            exc
-        )
-
-        return None
-
-
-def edit_image_xai(
-    prompt,
-    image_bytes,
-    mime_type
-):
-
-    if not XAI_API_KEY:
-        return None
-
-    if not image_bytes:
-        return None
-
-    if not provider_available(
-        "XAI_EDIT"
-    ):
-        return None
-
-    try:
-
-        print(
-            "Trying xAI Image Editing..."
-        )
-
-        image_url = make_data_url(
-            image_bytes,
-            mime_type
-        )
-
-        response = requests.post(
-
-            XAI_EDIT_URL,
-
-            headers=xai_headers(),
-
-            json={
-
-                "model":
-                    XAI_IMAGE_MODEL,
-
-                "prompt":
-                    prompt,
-
-                "image": {
-                    "url":
-                        image_url
-                }
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-        print(
-            "xAI Edit Status:",
-            response.status_code
-        )
-
-        if response.status_code != 200:
-
-            print(
-                "xAI Edit Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "XAI_EDIT",
-                response.status_code
-            )
-
-            return None
-
-        data = request_json(
-            response,
-            "xAI Edit"
-        )
-
-        return extract_image_from_response(
-            data
-        )
-
-    except Exception as exc:
-
-        print(
-            "xAI EDIT ERROR:",
             exc
         )
 
@@ -1947,8 +1273,7 @@ else:
 
 
 def ask_pollinations(
-    message,
-    conversation_id=None
+    message
 ):
 
     if not POLLINATIONS_API_KEY:
@@ -2008,6 +1333,11 @@ def ask_pollinations(
 
         if response.status_code != 200:
 
+            print(
+                "Pollinations Response:",
+                response.text[:1500]
+            )
+
             provider_failure(
                 "POLLINATIONS",
                 response.status_code
@@ -2020,11 +1350,19 @@ def ask_pollinations(
             "Pollinations"
         )
 
-        answer = extract_openai_text(
+        if not data:
+            return None
+
+        answer = extract_text_from_response(
             data
         )
 
         if answer:
+
+            print(
+                "Pollinations response received."
+            )
+
             return answer
 
         return None
@@ -2033,6 +1371,196 @@ def ask_pollinations(
 
         print(
             "Pollinations ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# IMAGE GENERATION
+# ============================================================
+
+def generate_image_xai(
+    prompt
+):
+
+    if not XAI_API_KEY:
+        return None
+
+    if not provider_available(
+        "XAI_IMAGE"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying xAI IMAGE GENERATION..."
+        )
+
+        response = requests.post(
+
+            XAI_IMAGE_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {XAI_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    XAI_IMAGE_MODEL,
+
+                "prompt":
+                    prompt,
+
+                "n":
+                    1
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "xAI IMAGE STATUS:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "xAI IMAGE RESPONSE:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "XAI_IMAGE",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "xAI IMAGE"
+        )
+
+        if not data:
+            return None
+
+        image = extract_image_from_response(
+            data
+        )
+
+        if image:
+
+            print(
+                "xAI IMAGE GENERATION: SUCCESS"
+            )
+
+            return image
+
+        return None
+
+    except Exception as exc:
+
+        print(
+            "xAI IMAGE ERROR:",
+            exc
+        )
+
+        return None
+
+
+def generate_image_openrouter(
+    prompt
+):
+
+    if not OPENROUTER_API_KEY:
+        return None
+
+    if not provider_available(
+        "OPENROUTER_IMAGE"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying OpenRouter IMAGE GENERATION..."
+        )
+
+        response = requests.post(
+
+            OPENROUTER_IMAGE_URL,
+
+            headers=openrouter_headers(),
+
+            json={
+
+                "model":
+                    OPENROUTER_IMAGE_MODEL,
+
+                "prompt":
+                    prompt,
+
+                "n":
+                    1
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "OpenRouter IMAGE STATUS:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "OpenRouter IMAGE RESPONSE:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "OPENROUTER_IMAGE",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "OpenRouter IMAGE"
+        )
+
+        if not data:
+            return None
+
+        image = extract_image_from_response(
+            data
+        )
+
+        if image:
+
+            print(
+                "OpenRouter IMAGE: SUCCESS"
+            )
+
+            return image
+
+        return None
+
+    except Exception as exc:
+
+        print(
+            "OpenRouter IMAGE ERROR:",
             exc
         )
 
@@ -2054,20 +1582,16 @@ def generate_image_pollinations(
     try:
 
         print(
-            "Trying Pollinations Image..."
-        )
-
-        encoded_prompt = (
-            requests.utils.quote(
-                prompt,
-                safe=""
-            )
+            "Trying Pollinations IMAGE..."
         )
 
         url = (
             POLLINATIONS_IMAGE_URL
             +
-            encoded_prompt
+            quote(
+                prompt,
+                safe=""
+            )
         )
 
         response = requests.get(
@@ -2075,7 +1599,6 @@ def generate_image_pollinations(
             url,
 
             headers={
-
                 "Authorization":
                     f"Bearer {POLLINATIONS_API_KEY}"
             },
@@ -2096,11 +1619,16 @@ def generate_image_pollinations(
         )
 
         print(
-            "Pollinations Image Status:",
+            "Pollinations IMAGE STATUS:",
             response.status_code
         )
 
         if response.status_code != 200:
+
+            print(
+                "Pollinations IMAGE RESPONSE:",
+                response.text[:1000]
+            )
 
             provider_failure(
                 "POLLINATIONS_IMAGE",
@@ -2112,13 +1640,24 @@ def generate_image_pollinations(
         content_type = (
             response.headers.get(
                 "Content-Type",
-                "image/png"
+                "image/jpeg"
             )
         )
 
+        if not content_type.startswith(
+            "image/"
+        ):
+            return None
+
         encoded = base64.b64encode(
             response.content
-        ).decode("utf-8")
+        ).decode(
+            "utf-8"
+        )
+
+        print(
+            "Pollinations IMAGE: SUCCESS"
+        )
 
         return (
             f"data:{content_type};base64,"
@@ -2128,7 +1667,1012 @@ def generate_image_pollinations(
     except Exception as exc:
 
         print(
-            "Pollinations Image ERROR:",
+            "Pollinations IMAGE ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# IMAGE GENERATION ROUTER
+# ============================================================
+
+def generate_image(
+    prompt
+):
+
+    prompt = clean_answer(
+        prompt
+    )
+
+    if not prompt:
+
+        return {
+
+            "answer":
+                "اكتب وصف الصورة "
+                "التي تريد إنشاءها.",
+
+            "imageUrl":
+                "",
+
+            "provider":
+                None
+        }
+
+    print("=" * 60)
+
+    print(
+        "IMAGE GENERATION STARTED"
+    )
+
+    print(
+        "PROMPT:",
+        prompt
+    )
+
+    print("=" * 60)
+
+
+    # --------------------------------------------------------
+    # 1. xAI
+    # --------------------------------------------------------
+
+    image = generate_image_xai(
+        prompt
+    )
+
+    if image:
+
+        return {
+
+            "answer":
+                "تم إنشاء الصورة بنجاح.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "xAI"
+        }
+
+
+    # --------------------------------------------------------
+    # 2. OpenRouter
+    # --------------------------------------------------------
+
+    image = generate_image_openrouter(
+        prompt
+    )
+
+    if image:
+
+        return {
+
+            "answer":
+                "تم إنشاء الصورة بنجاح.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "OpenRouter"
+        }
+
+
+    # --------------------------------------------------------
+    # 3. Pollinations
+    # --------------------------------------------------------
+
+    image = generate_image_pollinations(
+        prompt
+    )
+
+    if image:
+
+        return {
+
+            "answer":
+                "تم إنشاء الصورة بنجاح.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "Pollinations"
+        }
+
+
+    return {
+
+        "answer":
+            "تعذر إنشاء الصورة حاليًا. "
+            "تمت تجربة مولدات الصور المتاحة "
+            "ولكن لم يُرجع أي مولد صورة.",
+
+        "imageUrl":
+            "",
+
+        "provider":
+            None
+    }
+
+
+# ============================================================
+# IMAGE EDITING - xAI
+# ============================================================
+
+def edit_image_xai(
+    prompt,
+    image_bytes,
+    mime_type
+):
+
+    if not XAI_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "XAI_IMAGE_EDIT"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying xAI IMAGE EDIT..."
+        )
+
+        image_data_url = image_to_data_url(
+            image_bytes,
+            mime_type
+        )
+
+        if not image_data_url:
+            return None
+
+        response = requests.post(
+
+            XAI_IMAGE_EDIT_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {XAI_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    XAI_IMAGE_MODEL,
+
+                "prompt":
+                    prompt,
+
+                "image":
+                    {
+                        "url":
+                            image_data_url
+                    }
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "xAI IMAGE EDIT STATUS:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "xAI IMAGE EDIT RESPONSE:",
+                response.text[:2000]
+            )
+
+            provider_failure(
+                "XAI_IMAGE_EDIT",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "xAI IMAGE EDIT"
+        )
+
+        if not data:
+            return None
+
+        image = extract_image_from_response(
+            data
+        )
+
+        if image:
+
+            print(
+                "xAI IMAGE EDIT: SUCCESS"
+            )
+
+            return image
+
+        print(
+            "xAI IMAGE EDIT returned no image."
+        )
+
+        return None
+
+    except Exception as exc:
+
+        print(
+            "xAI IMAGE EDIT ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# IMAGE EDITING - OPENROUTER
+# ============================================================
+
+def edit_image_openrouter(
+    prompt,
+    image_bytes,
+    mime_type
+):
+
+    if not OPENROUTER_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "OPENROUTER_IMAGE_EDIT"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying OpenRouter IMAGE EDIT..."
+        )
+
+        image_data_url = image_to_data_url(
+            image_bytes,
+            mime_type
+        )
+
+        if not image_data_url:
+            return None
+
+        # OpenRouter's image endpoint accepts
+        # reference images for image-to-image work.
+
+        response = requests.post(
+
+            OPENROUTER_IMAGE_URL,
+
+            headers=openrouter_headers(),
+
+            json={
+
+                "model":
+                    OPENROUTER_IMAGE_MODEL,
+
+                "prompt":
+                    prompt,
+
+                "images": [
+
+                    image_data_url
+
+                ],
+
+                "n":
+                    1
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "OpenRouter IMAGE EDIT STATUS:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "OpenRouter IMAGE EDIT RESPONSE:",
+                response.text[:2000]
+            )
+
+            provider_failure(
+                "OPENROUTER_IMAGE_EDIT",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "OpenRouter IMAGE EDIT"
+        )
+
+        if not data:
+            return None
+
+        image = extract_image_from_response(
+            data
+        )
+
+        if image:
+
+            print(
+                "OpenRouter IMAGE EDIT: SUCCESS"
+            )
+
+            return image
+
+        return None
+
+    except Exception as exc:
+
+        print(
+            "OpenRouter IMAGE EDIT ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# IMAGE EDITING ROUTER
+# ============================================================
+
+def edit_image(
+    prompt,
+    image_bytes,
+    mime_type
+):
+
+    prompt = clean_answer(
+        prompt
+    )
+
+    if not image_bytes:
+
+        return {
+
+            "answer":
+                "لم يتم إرسال صورة صالحة.",
+
+            "imageUrl":
+                "",
+
+            "provider":
+                None
+        }
+
+
+    if not prompt:
+
+        prompt = (
+            "حافظ على الصورة كما هي "
+            "وعدّلها حسب الطلب."
+        )
+
+
+    print("=" * 60)
+
+    print(
+        "IMAGE EDITING STARTED"
+    )
+
+    print(
+        "EDIT PROMPT:",
+        prompt
+    )
+
+    print(
+        "IMAGE SIZE:",
+        len(image_bytes),
+        "bytes"
+    )
+
+    print("=" * 60)
+
+
+    # --------------------------------------------------------
+    # 1. xAI
+    # --------------------------------------------------------
+
+    image = edit_image_xai(
+
+        prompt,
+        image_bytes,
+        mime_type
+    )
+
+    if image:
+
+        return {
+
+            "answer":
+                "تم تعديل الصورة بنجاح.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "xAI"
+        }
+
+
+    print(
+        "xAI IMAGE EDIT failed."
+    )
+
+
+    # --------------------------------------------------------
+    # 2. OpenRouter
+    # --------------------------------------------------------
+
+    image = edit_image_openrouter(
+
+        prompt,
+        image_bytes,
+        mime_type
+    )
+
+    if image:
+
+        return {
+
+            "answer":
+                "تم تعديل الصورة بنجاح.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "OpenRouter"
+        }
+
+
+    print(
+        "OpenRouter IMAGE EDIT failed."
+    )
+
+
+    return {
+
+        "answer":
+            "تعذر تعديل الصورة حاليًا. "
+            "تمت تجربة خدمات تعديل الصور "
+            "المتاحة ولم تُرجع صورة.",
+
+        "imageUrl":
+            "",
+
+        "provider":
+            None
+    }
+
+
+# ============================================================
+# IMAGE UNDERSTANDING
+# ============================================================
+
+def ask_mistral_image(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not MISTRAL_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "MISTRAL_VISION"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying Mistral Vision..."
+        )
+
+        image_url = image_to_data_url(
+            image_bytes,
+            mime_type
+        )
+
+        response = requests.post(
+
+            MISTRAL_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {MISTRAL_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    MISTRAL_VISION_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+
+                                "type":
+                                    "image_url",
+
+                                "image_url": {
+
+                                    "url":
+                                        image_url
+                                }
+                            }
+                        ]
+                    }
+                ],
+
+                "max_tokens":
+                    2048
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Mistral Vision Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Mistral Vision Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "MISTRAL_VISION",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "Mistral Vision"
+        )
+
+        if not data:
+            return None
+
+        answer = extract_text_from_response(
+            data
+        )
+
+        return answer
+
+    except Exception as exc:
+
+        print(
+            "Mistral Vision ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# GROQ VISION
+# ============================================================
+
+def ask_groq_image(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not GROQ_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "GROQ_VISION"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying Groq Vision..."
+        )
+
+        image_url = image_to_data_url(
+            image_bytes,
+            mime_type
+        )
+
+        response = requests.post(
+
+            GROQ_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {GROQ_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    GROQ_VISION_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+
+                                "type":
+                                    "image_url",
+
+                                "image_url": {
+
+                                    "url":
+                                        image_url
+                                }
+                            }
+                        ]
+                    }
+                ],
+
+                "max_completion_tokens":
+                    2048
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Groq Vision Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Groq Vision Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "GROQ_VISION",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "Groq Vision"
+        )
+
+        if not data:
+            return None
+
+        return extract_text_from_response(
+            data
+        )
+
+    except Exception as exc:
+
+        print(
+            "Groq Vision ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# OPENROUTER VISION
+# ============================================================
+
+def ask_openrouter_image(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not OPENROUTER_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "OPENROUTER_VISION"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying OpenRouter Vision..."
+        )
+
+        image_url = image_to_data_url(
+            image_bytes,
+            mime_type
+        )
+
+        response = requests.post(
+
+            OPENROUTER_CHAT_URL,
+
+            headers=openrouter_headers(),
+
+            json={
+
+                "model":
+                    OPENROUTER_VISION_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+
+                                "type":
+                                    "image_url",
+
+                                "image_url": {
+
+                                    "url":
+                                        image_url
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "OpenRouter Vision Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "OpenRouter Vision Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "OPENROUTER_VISION",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "OpenRouter Vision"
+        )
+
+        if not data:
+            return None
+
+        return extract_text_from_response(
+            data
+        )
+
+    except Exception as exc:
+
+        print(
+            "OpenRouter Vision ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# xAI VISION
+# ============================================================
+
+def ask_xai_image(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not XAI_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "XAI_VISION"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying xAI Vision..."
+        )
+
+        image_url = image_to_data_url(
+            image_bytes,
+            mime_type
+        )
+
+        response = requests.post(
+
+            XAI_CHAT_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {XAI_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+
+                "model":
+                    XAI_MODEL,
+
+                "messages": [
+
+                    {
+
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+
+                                "type":
+                                    "image_url",
+
+                                "image_url": {
+
+                                    "url":
+                                        image_url
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "xAI Vision Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "xAI Vision Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "XAI_VISION",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "xAI Vision"
+        )
+
+        if not data:
+            return None
+
+        return extract_text_from_response(
+            data
+        )
+
+    except Exception as exc:
+
+        print(
+            "xAI Vision ERROR:",
             exc
         )
 
@@ -2176,8 +2720,8 @@ IMAGE_GENERATION_WORDS = [
     "draw an image",
     "draw image",
 
-    "generate a picture",
-    "create a picture"
+    "create a picture",
+    "generate a picture"
 ]
 
 
@@ -2196,47 +2740,23 @@ IMAGE_EDIT_WORDS = [
     "غير لون",
     "غيّر لون",
 
-    "اجعل السيارة",
-    "خل السيارة",
-
-    "احذف من الصورة",
-    "أزل من الصورة",
-    "ازالة من الصورة",
-
-    "أضف إلى الصورة",
-    "اضف الى الصورة",
-
-    "بدل في الصورة",
-    "بدّل في الصورة",
-
-    "edit the image",
-    "edit image",
-
-    "modify the image",
-    "modify image",
+    "غيّر السيارة",
+    "غير السيارة",
 
     "change the image",
-    "change image",
+    "edit the image",
+
+    "edit image",
+    "modify image",
 
     "change the color",
-    "remove from the image",
+    "change color",
 
+    "remove from the image",
     "add to the image",
+
     "replace in the image"
 ]
-
-
-def contains_any(
-    text,
-    words
-):
-
-    lower = text.lower()
-
-    return any(
-        word.lower() in lower
-        for word in words
-    )
 
 
 def is_image_generation_request(
@@ -2246,15 +2766,18 @@ def is_image_generation_request(
     if not message:
         return False
 
-    return contains_any(
-        str(message),
-        IMAGE_GENERATION_WORDS
+    text = str(
+        message
+    ).strip().lower()
+
+    return any(
+        word.lower() in text
+        for word in IMAGE_GENERATION_WORDS
     )
 
 
 def is_image_edit_request(
-    message,
-    has_image=False
+    message
 ):
 
     if not message:
@@ -2262,49 +2785,12 @@ def is_image_edit_request(
 
     text = str(
         message
-    ).strip()
+    ).strip().lower()
 
-    if contains_any(
-        text,
-        IMAGE_EDIT_WORDS
-    ):
-        return True
-
-    # --------------------------------------------------------
-    # If an image is attached and the user uses common
-    # modification language, treat it as an edit.
-    # --------------------------------------------------------
-
-    if has_image:
-
-        edit_patterns = [
-
-            r"\bغي[ّر]+",
-            r"\bاجعل\b",
-            r"\bبدل\b",
-            r"\bأضف\b",
-            r"\bاضف\b",
-            r"\bاحذف\b",
-            r"\bأزل\b",
-
-            r"\bchange\b",
-            r"\bedit\b",
-            r"\bmodify\b",
-            r"\bremove\b",
-            r"\badd\b",
-            r"\breplace\b"
-        ]
-
-        for pattern in edit_patterns:
-
-            if re.search(
-                pattern,
-                text,
-                flags=re.IGNORECASE
-            ):
-                return True
-
-    return False
+    return any(
+        word.lower() in text
+        for word in IMAGE_EDIT_WORDS
+    )
 
 
 def get_image_prompt(
@@ -2355,9 +2841,8 @@ def get_image_prompt(
 
         "draw an image of",
 
-        "generate an image",
-        "create an image",
-        "make an image"
+        "generate a picture of",
+        "create a picture of"
     ]
 
     lower = text.lower()
@@ -2382,20 +2867,28 @@ def get_image_prompt(
 QUICK_RESPONSES = {
 
     "hello":
-        "السلام عليكم ورحمة الله وبركاته. "
-        "أنا Ido AI، كيف يمكنني مساعدتك؟",
+        (
+            "السلام عليكم ورحمة الله وبركاته. "
+            "أنا Ido AI، كيف يمكنني مساعدتك؟"
+        ),
 
     "hi":
-        "السلام عليكم ورحمة الله وبركاته. "
-        "أنا Ido AI، كيف يمكنني مساعدتك؟",
+        (
+            "السلام عليكم ورحمة الله وبركاته. "
+            "أنا Ido AI، كيف يمكنني مساعدتك؟"
+        ),
 
     "مرحبا":
-        "السلام عليكم ورحمة الله وبركاته. "
-        "مرحبًا بك، كيف يمكنني مساعدتك؟",
+        (
+            "السلام عليكم ورحمة الله وبركاته. "
+            "مرحبًا بك، كيف يمكنني مساعدتك؟"
+        ),
 
     "سلام":
-        "وعليكم السلام ورحمة الله وبركاته. "
-        "كيف يمكنني مساعدتك؟",
+        (
+            "وعليكم السلام ورحمة الله وبركاته. "
+            "كيف يمكنني مساعدتك؟"
+        ),
 
     "اسمك":
         "أنا Ido AI.",
@@ -2404,24 +2897,34 @@ QUICK_RESPONSES = {
         "أنا Ido AI.",
 
     "كيف حالك":
-        "أنا بخير، شكرًا لسؤالك. "
-        "كيف يمكنني مساعدتك؟",
+        (
+            "أنا بخير، شكرًا لسؤالك. "
+            "كيف يمكنني مساعدتك؟"
+        ),
 
     "من صنعك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
+        (
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI."
+        ),
 
     "من طورك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
+        (
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI."
+        ),
 
     "من بناك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
+        (
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI."
+        ),
 
     "من برمجك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
+        (
+            "تم تطويري وبنائي بواسطة "
+            "Noufal Ouhadi، وأنا Ido AI."
+        ),
 
     "ما هي عاصمة المغرب":
         "عاصمة المغرب هي الرباط.",
@@ -2444,21 +2947,10 @@ def quick_response(
     message
 ):
 
-    if not message:
-        return None
-
     text = str(
         message
-    ).strip().lower()
+    ).lower()
 
-    # Exact first
-    if text in QUICK_RESPONSES:
-
-        return QUICK_RESPONSES[
-            text
-        ]
-
-    # Then substring
     for key, value in (
         QUICK_RESPONSES.items()
     ):
@@ -2471,67 +2963,33 @@ def quick_response(
 
 
 # ============================================================
-# TEXT ROUTER
+# MAIN TEXT ROUTER
 # ============================================================
-
-TEXT_ROUTES = [
-
-    (
-        "GROQ",
-        ask_groq
-    ),
-
-    (
-        "MISTRAL",
-        ask_mistral
-    ),
-
-    (
-        "OPENROUTER",
-        ask_openrouter
-    ),
-
-    (
-        "GEMINI",
-        ask_gemini
-    ),
-
-    (
-        "XAI",
-        ask_xai
-    ),
-
-    (
-        "POLLINATIONS",
-        ask_pollinations
-    )
-]
-
 
 def get_response(
     message,
     conversation_id=None
 ):
 
-    """
-    Main text entry point.
-
-    conversation_id is intentionally accepted so
-    app.py and api.py can call this function safely.
-    """
-
     if not message:
-        return "اكتب رسالة أولًا."
+
+        return (
+            "اكتب رسالة أولًا."
+        )
 
     original_message = str(
         message
     ).strip()
 
     if not original_message:
-        return "اكتب رسالة أولًا."
+
+        return (
+            "اكتب رسالة أولًا."
+        )
+
 
     # --------------------------------------------------------
-    # IMAGE GENERATION WITHOUT ATTACHED IMAGE
+    # IMAGE GENERATION FROM TEXT
     # --------------------------------------------------------
 
     if is_image_generation_request(
@@ -2545,6 +3003,7 @@ def get_response(
         if not prompt:
 
             return {
+
                 "answer":
                     "اكتب وصف الصورة "
                     "التي تريد إنشاءها.",
@@ -2560,8 +3019,9 @@ def get_response(
             prompt
         )
 
+
     # --------------------------------------------------------
-    # QUICK RESPONSES
+    # QUICK RESPONSE
     # --------------------------------------------------------
 
     quick = quick_response(
@@ -2569,13 +3029,49 @@ def get_response(
     )
 
     if quick:
+
         return quick
 
+
     # --------------------------------------------------------
-    # NORMAL TEXT FALLBACK
+    # TEXT PROVIDER ROUTER
     # --------------------------------------------------------
 
-    for name, function in TEXT_ROUTES:
+    routes = [
+
+        (
+            "GROQ",
+            ask_groq
+        ),
+
+        (
+            "MISTRAL",
+            ask_mistral
+        ),
+
+        (
+            "OPENROUTER",
+            ask_openrouter
+        ),
+
+        (
+            "GEMINI",
+            ask_gemini
+        ),
+
+        (
+            "XAI",
+            ask_xai
+        ),
+
+        (
+            "POLLINATIONS",
+            ask_pollinations
+        )
+    ]
+
+
+    for name, function in routes:
 
         if not provider_available(
             name
@@ -2583,22 +3079,14 @@ def get_response(
 
             print(
                 f"{name}: SKIPPED "
-                "(cooldown)"
+                "(temporary cooldown)"
             )
 
             continue
 
+
         try:
 
-            answer = function(
-                original_message,
-                conversation_id
-            )
-
-        except TypeError:
-
-            # Compatibility fallback for any
-            # older provider function.
             answer = function(
                 original_message
             )
@@ -2612,518 +3100,33 @@ def get_response(
 
             answer = None
 
+
         if answer:
 
             print(
-                "TEXT ROUTE SUCCESS:",
-                name
+                f"TEXT ROUTE SUCCESS: "
+                f"{name}"
             )
 
             return answer
+
 
         print(
             f"{name} failed. "
             "Trying next provider..."
         )
 
-    return (
-        "أنا Ido AI، لكن لم يتمكن أي "
-        "مزود متاح من الإجابة حاليًا. "
-        "تحقق من مفاتيح API والرصيد "
-        "وحدود الاستخدام."
-    )
-
-
-# ============================================================
-# VISION ROUTES
-# ============================================================
-
-VISION_ROUTES = [
-
-    (
-        "GROQ_VISION",
-        ask_groq_vision
-    ),
-
-    (
-        "MISTRAL_VISION",
-        ask_mistral_vision
-    ),
-
-    (
-        "OPENROUTER_VISION",
-        ask_openrouter_vision
-    ),
-
-    (
-        "XAI_VISION",
-        ask_xai_vision
-    )
-]
-
-
-def analyze_image(
-    message,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    """
-    Analyze an image.
-
-    All available vision providers are tried in order.
-    """
-
-    if not image_bytes:
-
-        return (
-            "لم يتم إرسال صورة صالحة."
-        )
-
-    if not mime_type:
-
-        mime_type = "image/jpeg"
-
-    if not mime_type.startswith(
-        "image/"
-    ):
-
-        return (
-            "الملف المرسل ليس صورة صالحة."
-        )
-
-    if not message:
-
-        message = (
-            "حلل هذه الصورة واشرح لي "
-            "ما الذي يظهر فيها بالتفصيل."
-        )
-
-    message = str(
-        message
-    ).strip()
-
-    for name, function in VISION_ROUTES:
-
-        if not provider_available(
-            name
-        ):
-
-            print(
-                f"{name}: SKIPPED "
-                "(cooldown)"
-            )
-
-            continue
-
-        try:
-
-            answer = function(
-
-                message,
-
-                image_bytes,
-
-                mime_type,
-
-                conversation_id
-
-            )
-
-        except TypeError:
-
-            answer = function(
-                message,
-                image_bytes,
-                mime_type
-            )
-
-        except Exception as exc:
-
-            print(
-                f"{name} ERROR:",
-                exc
-            )
-
-            answer = None
-
-        if answer:
-
-            print(
-                "VISION ROUTE SUCCESS:",
-                name
-            )
-
-            return answer
-
-        print(
-            f"{name} failed. "
-            "Trying next vision provider..."
-        )
 
     return (
-        "تعذر تحليل الصورة حاليًا. "
-        "حاول مرة أخرى أو تحقق من "
-        "مفاتيح مزودي الرؤية."
+        "أنا Ido AI، لكن جميع مزودي "
+        "الذكاء الاصطناعي المتاحين "
+        "فشلوا حاليًا. "
+        "تحقق من المفاتيح والرصيد."
     )
 
 
 # ============================================================
-# IMAGE GENERATION ROUTER
-# ============================================================
-
-IMAGE_GENERATION_ROUTES = [
-
-    (
-        "XAI_IMAGE",
-        generate_image_xai
-    ),
-
-    (
-        "POLLINATIONS_IMAGE",
-        generate_image_pollinations
-    ),
-
-    (
-        "OPENROUTER_IMAGE",
-        generate_image_openrouter
-    )
-]
-
-
-def generate_image(
-    prompt
-):
-
-    """
-    Generate a new image.
-
-    The router tries every configured image provider.
-    """
-
-    prompt = clean_answer(
-        prompt
-    )
-
-    if not prompt:
-
-        return {
-            "answer":
-                "اكتب وصف الصورة "
-                "التي تريد إنشاءها.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                None
-        }
-
-    print("=" * 60)
-
-    print(
-        "IMAGE GENERATION STARTED"
-    )
-
-    print(
-        "IMAGE PROMPT:",
-        prompt
-    )
-
-    print("=" * 60)
-
-    for name, function in (
-        IMAGE_GENERATION_ROUTES
-    ):
-
-        if not provider_available(
-            name
-        ):
-
-            print(
-                f"{name}: SKIPPED "
-                "(cooldown)"
-            )
-
-            continue
-
-        try:
-
-            image = function(
-                prompt
-            )
-
-        except Exception as exc:
-
-            print(
-                f"{name} ERROR:",
-                exc
-            )
-
-            image = None
-
-        if image:
-
-            print(
-                "IMAGE GENERATION SUCCESS:",
-                name
-            )
-
-            return {
-
-                "answer":
-                    "تم إنشاء الصورة "
-                    "بنجاح.",
-
-                "imageUrl":
-                    image,
-
-                "provider":
-                    name
-            }
-
-        print(
-            f"{name} failed. "
-            "Trying next image provider..."
-        )
-
-    return {
-
-        "answer":
-            "تعذر إنشاء الصورة حاليًا. "
-            "تمت تجربة مزودي الصور "
-            "المتاحين.",
-
-        "imageUrl":
-            "",
-
-        "provider":
-            None
-    }
-
-
-# ============================================================
-# IMAGE EDIT ROUTER
-# ============================================================
-
-IMAGE_EDIT_ROUTES = [
-
-    (
-        "XAI_EDIT",
-        edit_image_xai
-    ),
-
-    (
-        "OPENROUTER_IMAGE_EDIT",
-        generate_image_openrouter
-    )
-]
-
-
-def edit_image(
-    prompt,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    """
-    Edit an existing image.
-
-    IMPORTANT:
-    Vision providers are NOT used as fake image editors.
-
-    A vision model may describe the image, but an edit request
-    must be sent to an actual image-edit capable endpoint.
-    """
-
-    if not image_bytes:
-
-        return {
-            "answer":
-                "لم يتم إرسال صورة صالحة للتعديل.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                None
-        }
-
-    if not mime_type:
-
-        mime_type = "image/jpeg"
-
-    if not mime_type.startswith(
-        "image/"
-    ):
-
-        return {
-            "answer":
-                "الملف المرسل ليس صورة صالحة.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                None
-        }
-
-    prompt = clean_answer(
-        prompt
-    )
-
-    if not prompt:
-
-        return {
-            "answer":
-                "اكتب التعديل الذي تريد "
-                "إجراءه على الصورة.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                None
-        }
-
-    print("=" * 60)
-
-    print(
-        "IMAGE EDIT STARTED"
-    )
-
-    print(
-        "EDIT PROMPT:",
-        prompt
-    )
-
-    print(
-        "IMAGE MIME:",
-        mime_type
-    )
-
-    print(
-        "IMAGE SIZE:",
-        len(image_bytes)
-    )
-
-    print("=" * 60)
-
-    # --------------------------------------------------------
-    # XAI: true image editing
-    # --------------------------------------------------------
-
-    if provider_available(
-        "XAI_EDIT"
-    ):
-
-        image = edit_image_xai(
-
-            prompt,
-
-            image_bytes,
-
-            mime_type
-        )
-
-        if image:
-
-            print(
-                "IMAGE EDIT SUCCESS: XAI_EDIT"
-            )
-
-            return {
-
-                "answer":
-                    "تم تعديل الصورة بنجاح.",
-
-                "imageUrl":
-                    image,
-
-                "provider":
-                    "XAI_EDIT"
-            }
-
-        print(
-            "XAI_EDIT failed."
-        )
-
-    # --------------------------------------------------------
-    # OpenRouter image-to-image
-    # --------------------------------------------------------
-
-    if provider_available(
-        "OPENROUTER_IMAGE_EDIT"
-    ):
-
-        try:
-
-            image = generate_image_openrouter(
-
-                prompt,
-
-                image_bytes,
-
-                mime_type
-            )
-
-        except Exception as exc:
-
-            print(
-                "OPENROUTER IMAGE EDIT ERROR:",
-                exc
-            )
-
-            image = None
-
-        if image:
-
-            print(
-                "IMAGE EDIT SUCCESS:",
-                "OPENROUTER_IMAGE_EDIT"
-            )
-
-            return {
-
-                "answer":
-                    "تم تعديل الصورة بنجاح.",
-
-                "imageUrl":
-                    image,
-
-                "provider":
-                    "OPENROUTER_IMAGE_EDIT"
-            }
-
-        print(
-            "OPENROUTER_IMAGE_EDIT failed."
-        )
-
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # Do NOT return a vision answer here.
-    # That was the old bug.
-    # --------------------------------------------------------
-
-    return {
-
-        "answer":
-            "تعذر تعديل الصورة حاليًا. "
-            "لم ينجح أي مزود متاح "
-            "في تنفيذ عملية التعديل.",
-
-        "imageUrl":
-            "",
-
-        "provider":
-            None
-    }
-
-
-# ============================================================
-# UNIFIED IMAGE ENTRY POINT
+# MAIN IMAGE ROUTER
 # ============================================================
 
 def get_image_response(
@@ -3133,23 +3136,17 @@ def get_image_response(
     conversation_id=None
 ):
 
-    """
-    Unified image endpoint used by app.py.
-
-    It decides between:
-        1. image editing
-        2. image analysis
-    """
-
     if not image_bytes:
 
         return (
             "لم يتم إرسال صورة صالحة."
         )
 
+
     if not mime_type:
 
         mime_type = "image/jpeg"
+
 
     if not mime_type.startswith(
         "image/"
@@ -3159,126 +3156,166 @@ def get_image_response(
             "الملف المرسل ليس صورة صالحة."
         )
 
-    message = (
-        str(message).strip()
-        if message
-        else ""
+
+    if not message:
+
+        message = (
+            "حلل هذه الصورة واشرح لي "
+            "ما الذي يظهر فيها."
+        )
+
+
+    message = str(
+        message
+    ).strip()
+
+
+    print("=" * 60)
+
+    print(
+        "IMAGE REQUEST RECEIVED"
     )
 
-    # --------------------------------------------------------
-    # EDIT
-    # --------------------------------------------------------
+    print(
+        "IMAGE MIME TYPE:",
+        mime_type
+    )
+
+    print(
+        "IMAGE SIZE:",
+        len(image_bytes),
+        "bytes"
+    )
+
+    print(
+        "IMAGE QUESTION:",
+        message
+    )
+
+    print(
+        "CONVERSATION ID:",
+        conversation_id
+    )
+
+    print("=" * 60)
+
+
+    # ========================================================
+    # EDIT REQUEST
+    # ========================================================
 
     if is_image_edit_request(
-        message,
-        has_image=True
+        message
     ):
+
+        print(
+            "REQUEST TYPE: IMAGE EDIT"
+        )
 
         result = edit_image(
 
             message,
-
             image_bytes,
-
-            mime_type,
-
-            conversation_id
+            mime_type
         )
-
-        # app.py currently expects IMAGE_URL:
-        # for generated/edited images.
-        if isinstance(
-            result,
-            dict
-        ):
-
-            image_url = result.get(
-                "imageUrl"
-            )
-
-            if image_url:
-
-                return (
-                    "IMAGE_URL:"
-                    + image_url
-                )
-
-            return result.get(
-                "answer",
-                "تعذر تعديل الصورة."
-            )
 
         return result
 
-    # --------------------------------------------------------
-    # VISION / ANALYSIS
-    # --------------------------------------------------------
 
-    return analyze_image(
+    # ========================================================
+    # VISION / IMAGE UNDERSTANDING
+    # ========================================================
 
-        message,
+    print(
+        "REQUEST TYPE: IMAGE UNDERSTANDING"
+    )
 
-        image_bytes,
 
-        mime_type,
+    vision_routes = [
 
-        conversation_id
+        (
+            "MISTRAL_VISION",
+            ask_mistral_image
+        ),
+
+        (
+            "GROQ_VISION",
+            ask_groq_image
+        ),
+
+        (
+            "OPENROUTER_VISION",
+            ask_openrouter_image
+        ),
+
+        (
+            "XAI_VISION",
+            ask_xai_image
+        )
+    ]
+
+
+    for name, function in vision_routes:
+
+
+        if not provider_available(
+            name
+        ):
+
+            print(
+                f"{name}: SKIPPED "
+                "(temporary cooldown)"
+            )
+
+            continue
+
+
+        try:
+
+            answer = function(
+
+                message,
+
+                image_bytes,
+
+                mime_type
+            )
+
+        except Exception as exc:
+
+            print(
+                f"{name} ROUTER ERROR:",
+                exc
+            )
+
+            answer = None
+
+
+        if answer:
+
+            print(
+                f"VISION ROUTE SUCCESS: "
+                f"{name}"
+            )
+
+            return answer
+
+
+        print(
+            f"{name} failed. "
+            "Trying next vision provider..."
+        )
+
+
+    return (
+        "تعذر تحليل الصورة حاليًا. "
+        "تمت تجربة جميع مزودي الرؤية "
+        "المتاحين."
     )
 
 
 # ============================================================
-# COMPATIBILITY HELPERS
-# ============================================================
-
-def ask_vision(
-    message,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    return analyze_image(
-
-        message,
-
-        image_bytes,
-
-        mime_type,
-
-        conversation_id
-    )
-
-
-def create_image(
-    prompt
-):
-
-    return generate_image(
-        prompt
-    )
-
-
-def modify_image(
-    prompt,
-    image_bytes,
-    mime_type,
-    conversation_id=None
-):
-
-    return edit_image(
-
-        prompt,
-
-        image_bytes,
-
-        mime_type,
-
-        conversation_id
-    )
-
-
-# ============================================================
-# STARTUP LOG
+# STARTUP
 # ============================================================
 
 print("=" * 60)
@@ -3292,8 +3329,8 @@ print(
 )
 
 print(
-    "GROQ -> MISTRAL -> OPENROUTER "
-    "-> GEMINI -> XAI -> POLLINATIONS"
+    "GROQ -> MISTRAL -> OPENROUTER -> "
+    "GEMINI -> XAI -> POLLINATIONS"
 )
 
 print(
@@ -3301,7 +3338,7 @@ print(
 )
 
 print(
-    "GROQ -> MISTRAL -> OPENROUTER -> XAI"
+    "MISTRAL -> GROQ -> OPENROUTER -> XAI"
 )
 
 print(
@@ -3309,19 +3346,15 @@ print(
 )
 
 print(
-    "XAI -> POLLINATIONS -> OPENROUTER"
+    "XAI -> OPENROUTER -> POLLINATIONS"
 )
 
 print(
-    "IMAGE EDIT ROUTE:"
+    "IMAGE EDITING ROUTE:"
 )
 
 print(
     "XAI -> OPENROUTER"
-)
-
-print(
-    "UNIFIED ROUTER: READY"
 )
 
 print("=" * 60)
