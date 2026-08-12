@@ -300,16 +300,8 @@ if mistral_client is not None:
                     "Ido AI image generation agent."
                 ),
                 instructions=(
-                    "You are the image generation agent "
-                    "for Ido AI. "
-                    "Whenever the user asks to create, "
-                    "generate, draw, make, or produce "
-                    "an image, you MUST use the "
-                    "image_generation tool. "
-                    "Do not answer with text instead "
-                    "of an image when an image is requested. "
-                    "Always use the image generation tool "
-                    "for image requests."
+                    "Use the image generation tool "
+                    "when you have to create images."
                 ),
                 tools=[
                     {
@@ -568,11 +560,15 @@ def extract_generated_images(
             return file_ids
 
         print(
-            "MISTRAL IMAGE DEBUG: "
-            f"{len(outputs)} output(s) received."
+            "MISTRAL IMAGE DEBUG:",
+            len(outputs),
+            "output(s) received."
         )
 
-        # Mistral يضع الناتج النهائي في آخر output.
+        # =====================================================
+        # نفحص آخر output أولًا لأنه المخرج النهائي للصورة
+        # =====================================================
+
         latest_output = outputs[-1]
 
         output_type = getattr(
@@ -582,7 +578,7 @@ def extract_generated_images(
         )
 
         print(
-            "MISTRAL IMAGE DEBUG: "
+            "MISTRAL IMAGE DEBUG:",
             "Latest output type:",
             output_type
         )
@@ -593,71 +589,170 @@ def extract_generated_images(
             None
         )
 
-        if not content:
+        if content:
+
+            print(
+                "MISTRAL IMAGE DEBUG:",
+                len(content),
+                "content chunk(s) found."
+            )
+
+            for index, chunk in enumerate(
+                content
+            ):
+
+                chunk_type = getattr(
+                    chunk,
+                    "type",
+                    None
+                )
+
+                file_id = getattr(
+                    chunk,
+                    "file_id",
+                    None
+                )
+
+                file_name = getattr(
+                    chunk,
+                    "file_name",
+                    None
+                )
+
+                print(
+                    "MISTRAL IMAGE CHUNK:",
+                    index,
+                    "TYPE:",
+                    chunk_type,
+                    "FILE_ID:",
+                    file_id,
+                    "FILE_NAME:",
+                    file_name
+                )
+
+                # الطريقة الرسمية من Mistral SDK
+                if (
+                    ToolFileChunk is not None
+                    and isinstance(
+                        chunk,
+                        ToolFileChunk
+                    )
+                ):
+
+                    if chunk.file_id:
+
+                        file_ids.append(
+                            chunk.file_id
+                        )
+
+                    continue
+
+                # احتياط إضافي
+                if (
+                    chunk_type == "tool_file"
+                    and file_id
+                ):
+
+                    file_ids.append(
+                        file_id
+                    )
+
+        # =====================================================
+        # إذا لم نجد شيئًا في آخر output، نفحص باقي outputs
+        # =====================================================
+
+        if not file_ids:
 
             print(
                 "MISTRAL IMAGE DEBUG: "
-                "No content found in latest output."
+                "No file found in latest output. "
+                "Checking all outputs..."
             )
 
-            return file_ids
-
-        print(
-            "MISTRAL IMAGE DEBUG: "
-            f"{len(content)} content chunk(s) found."
-        )
-
-        for index, chunk in enumerate(
-            content
-        ):
-
-            chunk_type = getattr(
-                chunk,
-                "type",
-                None
-            )
-
-            file_id = getattr(
-                chunk,
-                "file_id",
-                None
-            )
-
-            print(
-                "MISTRAL IMAGE CHUNK:",
-                index,
-                "TYPE:",
-                chunk_type,
-                "FILE_ID:",
-                file_id
-            )
-
-            # الطريقة الموثقة من Mistral
-            if (
-                ToolFileChunk is not None
-                and isinstance(
-                    chunk,
-                    ToolFileChunk
-                )
+            for output_index, output in enumerate(
+                outputs
             ):
 
-                if chunk.file_id:
+                if output is latest_output:
+                    continue
 
-                    file_ids.append(
-                        chunk.file_id
+                current_content = getattr(
+                    output,
+                    "content",
+                    None
+                )
+
+                if not current_content:
+                    continue
+
+                print(
+                    "MISTRAL OUTPUT",
+                    output_index,
+                    "CONTENT CHUNKS:",
+                    len(current_content)
+                )
+
+                for chunk_index, chunk in enumerate(
+                    current_content
+                ):
+
+                    chunk_type = getattr(
+                        chunk,
+                        "type",
+                        None
                     )
 
-                continue
+                    file_id = getattr(
+                        chunk,
+                        "file_id",
+                        None
+                    )
 
-            # احتياط إذا تغيّر تمثيل SDK
-            if (
-                chunk_type == "tool_file"
-                and file_id
-            ):
+                    print(
+                        "MISTRAL FALLBACK CHUNK:",
+                        chunk_index,
+                        "TYPE:",
+                        chunk_type,
+                        "FILE_ID:",
+                        file_id
+                    )
 
-                file_ids.append(
-                    file_id
-                )
+                    if (
+                        ToolFileChunk is not None
+                        and isinstance(
+                            chunk,
+                            ToolFileChunk
+                        )
+                    ):
+
+                        if chunk.file_id:
+
+                            file_ids.append(
+                                chunk.file_id
+                            )
+
+                        continue
+
+                    if (
+                        chunk_type == "tool_file"
+                        and file_id
+                    ):
+
+                        file_ids.append(
+                            file_id
+                        )
+
+        # إزالة التكرار
+        file_ids = list(
+            dict.fromkeys(
+                file_ids
+            )
+        )
+
+        print(
+            "MISTRAL IMAGE FILE IDS:",
+            file_ids
+        )
 
         return file_ids
 
@@ -1747,6 +1842,10 @@ def get_image_prompt(
                 len(prefix):
             ].strip()
 
+    # =====================================================
+    # إزالة العبارات العامة
+    # =====================================================
+
     cleaned = text
 
     cleanup_prefixes = [
@@ -1788,6 +1887,10 @@ def get_image_prompt(
             ].strip()
 
             break
+
+    # =====================================================
+    # إزالة "صورة" / "صوره" من البداية
+    # =====================================================
 
     for image_word in (
         "صورة",
@@ -1939,6 +2042,10 @@ def edit_image(
         edit_request
     )
 
+    # =====================================================
+    # تحليل الصورة الأصلية
+    # =====================================================
+
     analysis_prompt = (
         "Describe this image in very detailed "
         "visual terms for a second image model. "
@@ -1977,12 +2084,20 @@ def edit_image(
 
         return None
 
+    # =====================================================
+    # إنشاء Prompt جديد
+    # =====================================================
+
     edit_prompt = (
         build_image_edit_prompt(
             image_description,
             edit_request
         )
     )
+
+    # =====================================================
+    # توليد الصورة المعدلة
+    # =====================================================
 
     generated_image = (
         generate_image(
@@ -2036,6 +2151,8 @@ def get_response(
 
     # =====================================================
     # إنشاء صورة من الصفر
+    #
+    # يجب أن يكون هذا قبل أي نموذج نصي
     # =====================================================
 
     if is_image_generation_request(
@@ -2189,6 +2306,7 @@ def get_response(
 
     # =====================================================
     # Gemini أولًا
+    # Gemini للأسئلة النصية فقط
     # =====================================================
 
     answer = ask_gemini(
@@ -2201,6 +2319,7 @@ def get_response(
 
     # =====================================================
     # OpenRouter ثانيًا
+    # الانتقال مباشر عند فشل Gemini
     # =====================================================
 
     print(
