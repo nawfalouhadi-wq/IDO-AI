@@ -25,20 +25,24 @@ api = Blueprint(
 )
 def chat_api():
 
+    # =====================================================
+    # قراءة البيانات
+    # =====================================================
+
     data = request.get_json(
         silent=True
     )
 
-    # =====================================================
-    # التحقق من البيانات
-    # =====================================================
-
     if not data:
 
         return jsonify({
-            "error":
-                "No data received"
+            "error": "No data received"
         }), 400
+
+
+    # =====================================================
+    # الحصول على الرسالة
+    # =====================================================
 
     message = data.get(
         "message",
@@ -52,12 +56,13 @@ def chat_api():
         message
     ).strip()
 
+
     if not message:
 
         return jsonify({
-            "answer":
-                "اكتب رسالة"
+            "answer": "اكتب رسالة"
         })
+
 
     # =====================================================
     # الحصول على معرف المحادثة
@@ -73,6 +78,7 @@ def chat_api():
             conversation_id
         ).strip()
 
+
     # =====================================================
     # إنشاء محادثة جديدة إذا لم يوجد معرف
     # =====================================================
@@ -81,22 +87,24 @@ def chat_api():
 
         try:
 
-            conversation = (
-                create_conversation(
-                    "محادثة جديدة"
-                )
+            conversation = create_conversation(
+                "محادثة جديدة"
             )
 
-            conversation_id = (
-                conversation.get(
-                    "id"
+            if isinstance(
+                conversation,
+                dict
+            ):
+
+                conversation_id = (
+                    conversation.get("id")
                 )
-                if isinstance(
-                    conversation,
-                    dict
+
+            else:
+
+                conversation_id = str(
+                    conversation
                 )
-                else conversation
-            )
 
         except Exception as e:
 
@@ -107,27 +115,41 @@ def chat_api():
 
             conversation_id = None
 
+
     # =====================================================
-    # إرسال الرسالة إلى عقل Ido AI
+    # إرسال الرسالة إلى Brain
     # =====================================================
 
     try:
 
+        # -------------------------------------------------
+        # مهم جدًا:
+        #
+        # brain.py الحالي لا يستقبل conversation_id
+        # لذلك نرسل الرسالة فقط.
+        # -------------------------------------------------
+
         answer = get_response(
-            message,
-            conversation_id=conversation_id
+            message
         )
+
+
+        # =================================================
+        # إرسال النتيجة
+        # =================================================
 
         return jsonify({
 
-            "answer":
+            "answer": (
                 answer
-                or "لم أجد إجابة حاليًا.",
+                or "لم أجد إجابة حاليًا."
+            ),
 
             "conversation_id":
                 conversation_id
 
         })
+
 
     except Exception as e:
 
