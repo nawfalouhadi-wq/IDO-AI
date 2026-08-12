@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 
 from brain import get_response
-
 from memory import create_conversation
 
 
@@ -29,13 +28,29 @@ def chat_api():
     # قراءة البيانات
     # =====================================================
 
-    data = request.get_json(
-        silent=True
-    )
+    try:
+
+        data = request.get_json(
+            silent=True
+        )
+
+    except Exception as e:
+
+        print(
+            "JSON READ ERROR:",
+            e
+        )
+
+        return jsonify({
+            "answer": "تعذر قراءة الطلب.",
+            "error": str(e)
+        }), 400
+
 
     if not data:
 
         return jsonify({
+            "answer": "لم يتم إرسال بيانات.",
             "error": "No data received"
         }), 400
 
@@ -50,6 +65,7 @@ def chat_api():
     )
 
     if message is None:
+
         message = ""
 
     message = str(
@@ -60,7 +76,7 @@ def chat_api():
     if not message:
 
         return jsonify({
-            "answer": "اكتب رسالة"
+            "answer": "اكتب رسالة أولًا."
         })
 
 
@@ -122,48 +138,178 @@ def chat_api():
 
     try:
 
+        print("=" * 60)
+
+        print(
+            "API CHAT REQUEST"
+        )
+
+        print(
+            "MESSAGE:",
+            message
+        )
+
+        print(
+            "CONVERSATION ID:",
+            conversation_id
+        )
+
+        print("=" * 60)
+
+
         # -------------------------------------------------
-        # مهم جدًا:
-        #
-        # brain.py الحالي لا يستقبل conversation_id
-        # لذلك نرسل الرسالة فقط.
+        # brain.py الحالي
         # -------------------------------------------------
 
         answer = get_response(
-            message
+            message,
+            conversation_id=conversation_id
         )
+
+
+        # =================================================
+        # معالجة نتيجة Brain
+        # =================================================
+
+        # -------------------------------------------------
+        # الحالة 1:
+        # Brain رجع Dictionary
+        #
+        # مثال إنشاء صورة:
+        #
+        # {
+        #     "answer": "...",
+        #     "imageUrl": "...",
+        #     "provider": "xAI"
+        # }
+        # -------------------------------------------------
+
+        if isinstance(
+            answer,
+            dict
+        ):
+
+            response_data = {
+
+                "answer":
+                    answer.get(
+                        "answer",
+                        "تم تنفيذ الطلب."
+                    ),
+
+                "conversation_id":
+                    conversation_id,
+
+                "imageUrl":
+                    answer.get(
+                        "imageUrl",
+                        ""
+                    ),
+
+                "provider":
+                    answer.get(
+                        "provider"
+                    )
+            }
+
+
+        # -------------------------------------------------
+        # الحالة 2:
+        # Brain رجع نصًا
+        # -------------------------------------------------
+
+        else:
+
+            response_data = {
+
+                "answer":
+                    str(
+                        answer
+                        or
+                        "لم أجد إجابة حاليًا."
+                    ),
+
+                "conversation_id":
+                    conversation_id,
+
+                "imageUrl":
+                    "",
+
+                "provider":
+                    None
+            }
 
 
         # =================================================
         # إرسال النتيجة
         # =================================================
 
-        return jsonify({
+        print(
+            "API CHAT SUCCESS"
+        )
 
-            "answer": (
-                answer
-                or "لم أجد إجابة حاليًا."
-            ),
+        print(
+            "ANSWER:",
+            response_data.get(
+                "answer"
+            )
+        )
 
-            "conversation_id":
-                conversation_id
+        print(
+            "IMAGE URL:",
+            response_data.get(
+                "imageUrl"
+            )
+        )
 
-        })
+        print(
+            "PROVIDER:",
+            response_data.get(
+                "provider"
+            )
+        )
 
+
+        return jsonify(
+            response_data
+        )
+
+
+    # =====================================================
+    # خطأ أثناء تشغيل Brain
+    # =====================================================
 
     except Exception as e:
 
+        print("=" * 60)
+
         print(
-            "API CHAT ERROR:",
-            e
+            "API CHAT ERROR:"
         )
+
+        print(
+            repr(e)
+        )
+
+        print("=" * 60)
+
 
         return jsonify({
 
             "answer":
-                f"حدث خطأ: {e}",
+                "حدث خطأ أثناء معالجة "
+                "الرسالة في Aido AI.",
+
+            "error":
+                str(e),
 
             "conversation_id":
-                conversation_id
+                conversation_id,
+
+            "imageUrl":
+                "",
+
+            "provider":
+                None
 
         }), 500
