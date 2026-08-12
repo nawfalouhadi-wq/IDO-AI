@@ -20,13 +20,11 @@ from memory import (
 # =========================================================
 
 try:
-
     from api import api
 
     api_available = True
 
 except Exception as e:
-
     print(
         "API error:",
         e
@@ -50,10 +48,7 @@ app = Flask(
 # =========================================================
 
 if api_available:
-
-    app.register_blueprint(
-        api
-    )
+    app.register_blueprint(api)
 
 
 # =========================================================
@@ -63,26 +58,20 @@ if api_available:
 def resolve_conversation_id(
     conversation_id=None
 ):
-
     if conversation_id:
-
         return str(
             conversation_id
         ).strip()
 
     try:
-
-        conversation = (
-            create_conversation(
-                "محادثة جديدة"
-            )
+        conversation = create_conversation(
+            "محادثة جديدة"
         )
 
         if isinstance(
             conversation,
             dict
         ):
-
             return conversation.get(
                 "id"
             )
@@ -92,7 +81,6 @@ def resolve_conversation_id(
         )
 
     except Exception as e:
-
         print(
             "CONVERSATION CREATE ERROR:",
             e
@@ -109,38 +97,29 @@ def ai_response(
     question,
     conversation_id=None
 ):
-
     try:
-
-        question = (
-            str(question)
-            .strip()
-        )
+        question = str(
+            question
+        ).strip()
 
         if not question:
-
-            return (
-                "اكتب سؤالاً أولاً"
-            )
+            return "اكتب سؤالاً أولاً"
 
         # =====================================================
         # الحاسبة
         # =====================================================
 
         try:
-
             result = calculate(
                 question
             )
 
             if result is not None:
-
                 return (
                     f"النتيجة: {result}"
                 )
 
         except Exception as e:
-
             print(
                 "CALCULATOR ERROR:",
                 e
@@ -151,7 +130,6 @@ def ai_response(
         # =====================================================
 
         try:
-
             translated = translate(
                 question
             )
@@ -161,11 +139,9 @@ def ai_response(
                 and translated.lower()
                 != question.lower()
             ):
-
                 return translated
 
         except Exception as e:
-
             print(
                 "TRANSLATOR ERROR:",
                 e
@@ -176,17 +152,14 @@ def ai_response(
         # =====================================================
 
         try:
-
             memory_answer = get_answer(
                 question
             )
 
             if memory_answer:
-
                 return memory_answer
 
         except Exception as e:
-
             print(
                 "MEMORY ERROR:",
                 e
@@ -207,7 +180,6 @@ def ai_response(
         )
 
     except Exception as e:
-
         print(
             "AI RESPONSE ERROR:",
             e
@@ -227,7 +199,6 @@ def ai_response(
 def home():
 
     answer = ""
-
     generated_image = None
 
     current_time = (
@@ -268,7 +239,6 @@ def home():
         if image and image.filename:
 
             try:
-
                 print(
                     "IMAGE REQUEST RECEIVED"
                 )
@@ -303,13 +273,9 @@ def home():
                     # =========================================
 
                     if question:
-
-                        image_question = (
-                            question
-                        )
+                        image_question = question
 
                     else:
-
                         image_question = (
                             "حلل هذه الصورة "
                             "واشرح لي بالتفصيل "
