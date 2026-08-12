@@ -33,13 +33,11 @@ try:
 except Exception:
     ToolFileChunk = None
 
-
 # =========================================================
 # تحميل ملف .env
 # =========================================================
 
 load_dotenv()
-
 
 # =========================================================
 # إعدادات عامة
@@ -50,28 +48,14 @@ REQUEST_TIMEOUT = (
     int(os.getenv("REQUEST_READ_TIMEOUT", "30"))
 )
 
-
-# =========================================================
-# مهلة OpenRouter
-# =========================================================
-
 OPENROUTER_TIMEOUT = (
     int(os.getenv("OPENROUTER_CONNECT_TIMEOUT", "5")),
     int(os.getenv("OPENROUTER_READ_TIMEOUT", "15"))
 )
 
-
-# =========================================================
-# إعدادات سياق المحادثة
-# =========================================================
-
 CONVERSATION_CONTEXT_LIMIT = int(
-    os.getenv(
-        "CONVERSATION_CONTEXT_LIMIT",
-        "12"
-    )
+    os.getenv("CONVERSATION_CONTEXT_LIMIT", "12")
 )
-
 
 # =========================================================
 # مجلد الصور الناتجة
@@ -95,14 +79,11 @@ except Exception as e:
         e
     )
 
-
 # =========================================================
 # Gemini
 # =========================================================
 
-GEMINI_API_KEY = os.getenv(
-    "GEMINI_API_KEY"
-)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
@@ -124,18 +105,13 @@ if GEMINI_API_KEY:
 
         print("GEMINI CLIENT: READY")
         print("GEMINI MODEL:", GEMINI_MODEL)
-        print("GEMINI TIMEOUT:", "30 seconds")
+        print("GEMINI TIMEOUT: 30 seconds")
 
     except Exception as e:
-        print(
-            "GEMINI CLIENT ERROR:",
-            e
-        )
+        print("GEMINI CLIENT ERROR:", e)
         gemini_client = None
-
 else:
     print("GEMINI_API_KEY: NOT FOUND")
-
 
 # =========================================================
 # OpenRouter
@@ -157,7 +133,6 @@ if OPENROUTER_API_KEY:
     )
 else:
     print("OPENROUTER_API_KEY: NOT FOUND")
-
 
 # =========================================================
 # Groq
@@ -190,7 +165,6 @@ if GROQ_API_KEY:
     )
 else:
     print("GROQ_API_KEY: NOT FOUND")
-
 
 # =========================================================
 # Mistral
@@ -231,10 +205,7 @@ if MISTRAL_API_KEY:
             )
 
             print("MISTRAL CLIENT: READY")
-            print(
-                "MISTRAL MODEL:",
-                MISTRAL_MODEL
-            )
+            print("MISTRAL MODEL:", MISTRAL_MODEL)
             print(
                 "MISTRAL VISION MODEL:",
                 MISTRAL_VISION_MODEL
@@ -245,27 +216,17 @@ if MISTRAL_API_KEY:
             )
 
         except Exception as e:
-
-            print(
-                "MISTRAL CLIENT ERROR:",
-                e
-            )
-
+            print("MISTRAL CLIENT ERROR:", e)
             mistral_client = None
 
     else:
-
         print(
             "MISTRAL CLIENT ERROR: "
             "mistralai package غير متاح."
         )
 
 else:
-
-    print(
-        "MISTRAL_API_KEY: NOT FOUND"
-    )
-
+    print("MISTRAL_API_KEY: NOT FOUND")
 
 # =========================================================
 # Mistral Image Generation Agent
@@ -300,10 +261,7 @@ if mistral_client is not None:
             )
         )
 
-        print(
-            "MISTRAL IMAGE AGENT: READY"
-        )
-
+        print("MISTRAL IMAGE AGENT: READY")
         print(
             "MISTRAL IMAGE AGENT ID:",
             getattr(
@@ -322,7 +280,6 @@ if mistral_client is not None:
 
         mistral_image_agent = None
 
-
 # =========================================================
 # معلومات التشغيل
 # =========================================================
@@ -331,7 +288,6 @@ print(
     "BRAIN.PY LOADED - "
     "GEMINI + OPENROUTER + GROQ + MISTRAL READY"
 )
-
 
 # =========================================================
 # تنظيف الإجابة
@@ -344,9 +300,7 @@ def clean_answer(answer):
 
     try:
 
-        answer = str(
-            answer
-        ).strip()
+        answer = str(answer).strip()
 
         if not answer:
             return None
@@ -354,12 +308,11 @@ def clean_answer(answer):
         return answer
 
     except Exception:
-
         return None
 
 
 # =========================================================
-# تطبيع النص
+# تطبيع النص العربي والإنجليزي
 # =========================================================
 
 def normalize_text(text):
@@ -367,9 +320,7 @@ def normalize_text(text):
     if not text:
         return ""
 
-    text = str(
-        text
-    ).strip().lower()
+    text = str(text).strip().lower()
 
     replacements = {
         "أ": "ا",
@@ -382,11 +333,7 @@ def normalize_text(text):
     }
 
     for old, new in replacements.items():
-
-        text = text.replace(
-            old,
-            new
-        )
+        text = text.replace(old, new)
 
     text = (
         text
@@ -533,9 +480,7 @@ def build_context_message(
     context_limit=CONVERSATION_CONTEXT_LIMIT
 ):
 
-    message = str(
-        message or ""
-    ).strip()
+    message = str(message or "").strip()
 
     if not message:
         return ""
@@ -630,16 +575,10 @@ def save_ai_response(
 
 def extract_response_content(data):
 
-    if not isinstance(
-        data,
-        dict
-    ):
+    if not isinstance(data, dict):
         return None
 
-    choices = data.get(
-        "choices",
-        []
-    )
+    choices = data.get("choices", [])
 
     if not choices:
         return None
@@ -649,50 +588,28 @@ def extract_response_content(data):
         {}
     )
 
-    if not isinstance(
-        message_data,
-        dict
-    ):
+    if not isinstance(message_data, dict):
         return None
 
-    content = message_data.get(
-        "content"
-    )
+    content = message_data.get("content")
 
-    if isinstance(
-        content,
-        str
-    ):
+    if isinstance(content, str):
+        return clean_answer(content)
 
-        return clean_answer(
-            content
-        )
-
-    if isinstance(
-        content,
-        list
-    ):
+    if isinstance(content, list):
 
         parts = []
 
         for item in content:
 
-            if isinstance(
-                item,
-                dict
-            ):
+            if isinstance(item, dict):
 
-                text = item.get(
-                    "text"
-                )
+                text = item.get("text")
 
                 if text:
-                    parts.append(
-                        str(text)
-                    )
+                    parts.append(str(text))
 
         if parts:
-
             return clean_answer(
                 "\n".join(parts)
             )
@@ -704,9 +621,7 @@ def extract_response_content(data):
 # حفظ الصورة الناتجة
 # =========================================================
 
-def save_generated_image(
-    image_bytes
-):
+def save_generated_image(image_bytes):
 
     if not image_bytes:
         return None
@@ -743,285 +658,283 @@ def save_generated_image(
 
 
 # =========================================================
-# مساعد: قراءة قيمة من object أو dict
+# أدوات مساعدة لتحويل استجابة Mistral إلى بيانات
 # =========================================================
 
-def get_value(
-    obj,
-    key,
-    default=None
-):
+def object_to_data(value):
 
-    if obj is None:
-        return default
+    if value is None:
+        return None
 
-    if isinstance(
-        obj,
-        dict
-    ):
+    if isinstance(value, (str, int, float, bool)):
+        return value
 
-        return obj.get(
-            key,
-            default
-        )
+    if isinstance(value, bytes):
+        return None
+
+    if isinstance(value, dict):
+        return value
+
+    # -----------------------------------------------------
+    # Pydantic / SDK models
+    # -----------------------------------------------------
 
     try:
 
-        return getattr(
-            obj,
-            key,
-            default
-        )
+        if hasattr(value, "model_dump"):
+
+            data = value.model_dump(
+                mode="python"
+            )
+
+            if isinstance(data, dict):
+                return data
 
     except Exception:
+        pass
 
-        return default
+    try:
 
+        if hasattr(value, "dict"):
 
-# =========================================================
-# استخراج file_id بشكل آمن
-# =========================================================
+            data = value.dict()
 
-def extract_file_id(
-    chunk
-):
+            if isinstance(data, dict):
+                return data
 
-    if chunk is None:
-        return None
+    except Exception:
+        pass
 
-    # -----------------------------------------------------
-    # ToolFileChunk الرسمي
-    # -----------------------------------------------------
+    try:
 
-    if (
-        ToolFileChunk is not None
-        and isinstance(
-            chunk,
-            ToolFileChunk
-        )
-    ):
+        if hasattr(value, "to_dict"):
 
-        file_id = get_value(
-            chunk,
-            "file_id"
-        )
+            data = value.to_dict()
 
-        if file_id:
-            return str(
-                file_id
-            )
+            if isinstance(data, dict):
+                return data
 
-    # -----------------------------------------------------
-    # object عادي
-    # -----------------------------------------------------
-
-    file_id = get_value(
-        chunk,
-        "file_id"
-    )
-
-    if file_id:
-        return str(
-            file_id
-        )
-
-    # -----------------------------------------------------
-    # بعض الاستجابات قد تستخدم id
-    # مع type = tool_file
-    # -----------------------------------------------------
-
-    chunk_type = get_value(
-        chunk,
-        "type"
-    )
-
-    if chunk_type == "tool_file":
-
-        file_id = get_value(
-            chunk,
-            "id"
-        )
-
-        if file_id:
-            return str(
-                file_id
-            )
+    except Exception:
+        pass
 
     return None
 
 
 # =========================================================
-# استخراج file IDs من محتوى Mistral
+# البحث العميق عن file_id داخل استجابة Mistral
 # =========================================================
 
-def collect_file_ids(
+def find_file_ids_recursive(
     value,
-    file_ids=None,
-    visited=None
+    found=None,
+    visited=None,
+    depth=0
 ):
 
-    if file_ids is None:
-        file_ids = []
+    if found is None:
+        found = []
 
     if visited is None:
         visited = set()
 
     if value is None:
-        return file_ids
+        return found
+
+    if depth > 15:
+        return found
 
     # -----------------------------------------------------
-    # منع الدوران اللانهائي
+    # حماية من الحلقات
     # -----------------------------------------------------
 
     try:
-
-        object_id = id(
-            value
-        )
+        object_id = id(value)
 
         if object_id in visited:
-            return file_ids
+            return found
 
-        visited.add(
-            object_id
-        )
+        visited.add(object_id)
 
     except Exception:
         pass
 
     # -----------------------------------------------------
-    # ToolFileChunk / object
+    # نص
     # -----------------------------------------------------
 
-    file_id = extract_file_id(
-        value
-    )
+    if isinstance(value, str):
 
-    if file_id:
+        # لا نعتبر النص العادي file_id.
+        return found
 
-        if file_id not in file_ids:
+    # -----------------------------------------------------
+    # Bytes
+    # -----------------------------------------------------
 
-            file_ids.append(
-                file_id
+    if isinstance(value, bytes):
+        return found
+
+    # -----------------------------------------------------
+    # Dictionary
+    # -----------------------------------------------------
+
+    if isinstance(value, dict):
+
+        # file_id مباشر
+        for key in (
+            "file_id",
+            "fileId",
+            "fileID"
+        ):
+
+            candidate = value.get(key)
+
+            if isinstance(candidate, str):
+                candidate = candidate.strip()
+
+                if candidate:
+                    found.append(candidate)
+
+        # أحيانًا تكون القيمة داخل file
+        file_value = value.get("file")
+
+        if file_value is not None:
+
+            find_file_ids_recursive(
+                file_value,
+                found,
+                visited,
+                depth + 1
             )
 
-        return file_ids
+        # البحث داخل جميع المفاتيح
+        for key, child in value.items():
 
-    # -----------------------------------------------------
-    # dict
-    # -----------------------------------------------------
+            # تجنب تكرار file_id
+            if key in (
+                "file_id",
+                "fileId",
+                "fileID"
+            ):
+                continue
 
-    if isinstance(
-        value,
-        dict
-    ):
-
-        for key, item in value.items():
-
-            # file_id مباشر
-            if key == "file_id" and item:
-
-                item_id = str(
-                    item
-                )
-
-                if item_id not in file_ids:
-
-                    file_ids.append(
-                        item_id
-                    )
-
-            else:
-
-                collect_file_ids(
-                    item,
-                    file_ids,
-                    visited
-                )
-
-        return file_ids
-
-    # -----------------------------------------------------
-    # list / tuple
-    # -----------------------------------------------------
-
-    if isinstance(
-        value,
-        (list, tuple)
-    ):
-
-        for item in value:
-
-            collect_file_ids(
-                item,
-                file_ids,
-                visited
+            find_file_ids_recursive(
+                child,
+                found,
+                visited,
+                depth + 1
             )
 
-        return file_ids
+        return found
 
     # -----------------------------------------------------
-    # مهم:
-    # لا نقوم أبدًا بتقسيم string إلى حروف.
-    #
-    # هذا هو سبب ظهور:
-    # CHUNK 0
-    # CHUNK 1
-    # ...
-    # CHUNK 559
+    # تحويل SDK object إلى dict
     # -----------------------------------------------------
 
-    if isinstance(
-        value,
-        str
+    data = object_to_data(value)
+
+    if isinstance(data, dict):
+
+        find_file_ids_recursive(
+            data,
+            found,
+            visited,
+            depth + 1
+        )
+
+    # -----------------------------------------------------
+    # Lists / tuples
+    # -----------------------------------------------------
+
+    if isinstance(value, (list, tuple, set)):
+
+        for child in value:
+
+            find_file_ids_recursive(
+                child,
+                found,
+                visited,
+                depth + 1
+            )
+
+        return found
+
+    # -----------------------------------------------------
+    # Attributes في SDK object
+    # -----------------------------------------------------
+
+    for attribute in (
+        "file_id",
+        "fileId",
+        "fileID"
     ):
 
-        return file_ids
+        try:
+
+            candidate = getattr(
+                value,
+                attribute,
+                None
+            )
+
+            if isinstance(candidate, str):
+
+                candidate = candidate.strip()
+
+                if candidate:
+                    found.append(candidate)
+
+        except Exception:
+            pass
 
     # -----------------------------------------------------
-    # Pydantic / SDK object
+    # attributes شائعة في Mistral response
     # -----------------------------------------------------
 
-    for key in (
-        "content",
+    for attribute in (
         "outputs",
         "output",
-        "message",
+        "content",
         "messages",
-        "entries",
+        "message",
+        "tool_file",
+        "file",
+        "files",
+        "results",
         "result"
     ):
 
         try:
 
-            nested = getattr(
+            child = getattr(
                 value,
-                key,
+                attribute,
                 None
             )
 
-        except Exception:
+            if child is None:
+                continue
 
-            nested = None
-
-        if nested is not None:
-
-            collect_file_ids(
-                nested,
-                file_ids,
-                visited
+            find_file_ids_recursive(
+                child,
+                found,
+                visited,
+                depth + 1
             )
 
-    return file_ids
+        except Exception:
+            continue
+
+    return found
 
 
 # =========================================================
-# استخراج الصور الناتجة من استجابة Mistral
+# استخراج File IDs من استجابة Mistral
+#
+# هذا هو الإصلاح الأساسي لمشكلة توليد الصور.
 # =========================================================
 
-def extract_generated_images(
-    response
-):
+def extract_generated_images(response):
 
     file_ids = []
 
@@ -1036,123 +949,160 @@ def extract_generated_images(
 
     try:
 
-        outputs = get_value(
+        # =================================================
+        # معلومات عامة عن الاستجابة
+        # =================================================
+
+        outputs = getattr(
             response,
-            "outputs"
+            "outputs",
+            None
         )
 
-        if not outputs:
+        if outputs:
+
+            print(
+                "MISTRAL IMAGE DEBUG:",
+                len(outputs),
+                "output(s) received."
+            )
+
+        else:
 
             print(
                 "MISTRAL IMAGE DEBUG: "
-                "No outputs found."
+                "No direct outputs attribute."
             )
 
-            return file_ids
+        # =================================================
+        # الطريقة الجديدة:
+        # البحث بشكل recursive في الاستجابة كاملة.
+        # =================================================
 
-        print(
-            "MISTRAL IMAGE DEBUG:",
-            len(outputs),
-            "output(s) received."
+        file_ids = find_file_ids_recursive(
+            response
         )
 
         # =================================================
-        # الأفضلية:
-        # Mistral يضع ToolFileChunk في محتوى
-        # آخر message.output.
+        # محاولة إضافية باستخدام model_dump
         # =================================================
 
-        for output_index, output in enumerate(
-            reversed(
-                list(outputs)
-            )
-        ):
+        response_data = object_to_data(
+            response
+        )
 
-            output_type = get_value(
-                output,
-                "type"
-            )
+        if response_data:
 
-            output_role = get_value(
-                output,
-                "role"
-            )
-
-            content = get_value(
-                output,
-                "content"
-            )
-
-            print(
-                "MISTRAL OUTPUT:",
-                output_index,
-                "TYPE:",
-                output_type,
-                "ROLE:",
-                output_role,
-                "CONTENT TYPE:",
-                type(content).__name__
-            )
-
-            if content is None:
-                continue
-
-            # -------------------------------------------------
-            # لا نكرر string حرفًا حرفًا.
-            # -------------------------------------------------
-
-            if isinstance(
-                content,
-                str
-            ):
-
-                print(
-                    "MISTRAL IMAGE DEBUG: "
-                    "Content is text, not chunk list."
+            extra_ids = (
+                find_file_ids_recursive(
+                    response_data
                 )
+            )
 
-                continue
+            file_ids.extend(
+                extra_ids
+            )
 
-            # -------------------------------------------------
-            # استخراج IDs بشكل recursive
-            # -------------------------------------------------
+        # =================================================
+        # إزالة التكرار
+        # =================================================
 
-            collect_file_ids(
-                content,
+        file_ids = [
+            file_id
+            for file_id in dict.fromkeys(
                 file_ids
             )
+            if isinstance(file_id, str)
+            and file_id.strip()
+        ]
 
-            if file_ids:
-
-                break
+        print(
+            "MISTRAL IMAGE FILE IDS:",
+            file_ids
+        )
 
         # =================================================
-        # احتياط:
-        # ابحث في response كاملًا إذا لم نجد شيئًا.
+        # تشخيص إضافي إذا لم نجد شيئًا
         # =================================================
 
         if not file_ids:
 
             print(
                 "MISTRAL IMAGE DEBUG: "
-                "Searching entire response..."
+                "No file_id found by recursive extraction."
             )
 
-            collect_file_ids(
-                response,
-                file_ids
-            )
+            # نطبع معلومات آمنة عن content
+            # بدون طباعة محتوى الصورة.
+            if outputs:
 
-        file_ids = list(
-            dict.fromkeys(
-                file_ids
-            )
-        )
+                for output_index, output in enumerate(
+                    outputs
+                ):
 
-        print(
-            "MISTRAL IMAGE FILE IDS:",
-            file_ids
-        )
+                    try:
+
+                        content = getattr(
+                            output,
+                            "content",
+                            None
+                        )
+
+                        if content is not None:
+
+                            print(
+                                "MISTRAL OUTPUT:",
+                                output_index,
+                                "CONTENT TYPE:",
+                                type(content).__name__,
+                                "CONTENT COUNT:",
+                                len(content)
+                                if hasattr(
+                                    content,
+                                    "__len__"
+                                )
+                                else "unknown"
+                            )
+
+                            # أول عدة عناصر فقط
+                            if isinstance(
+                                content,
+                                (list, tuple)
+                            ):
+
+                                for index, chunk in enumerate(
+                                    content[:10]
+                                ):
+
+                                    chunk_type = getattr(
+                                        chunk,
+                                        "type",
+                                        None
+                                    )
+
+                                    chunk_file_id = getattr(
+                                        chunk,
+                                        "file_id",
+                                        None
+                                    )
+
+                                    print(
+                                        "MISTRAL CHUNK:",
+                                        index,
+                                        "TYPE:",
+                                        chunk_type,
+                                        "FILE_ID:",
+                                        chunk_file_id,
+                                        "CLASS:",
+                                        type(chunk).__name__
+                                    )
+
+                    except Exception as debug_error:
+
+                        print(
+                            "MISTRAL DEBUG ERROR:",
+                            debug_error
+                        )
 
         return file_ids
 
@@ -1167,12 +1117,134 @@ def extract_generated_images(
 
 
 # =========================================================
+# تنزيل ملف Mistral
+# =========================================================
+
+def download_mistral_file(
+    file_id
+):
+
+    if not file_id:
+        return None
+
+    if mistral_client is None:
+        return None
+
+    try:
+
+        print(
+            "MISTRAL FILE DOWNLOAD:",
+            file_id
+        )
+
+        downloaded = (
+            mistral_client.files.download(
+                file_id=file_id
+            )
+        )
+
+        # -------------------------------------------------
+        # bytes مباشرة
+        # -------------------------------------------------
+
+        if isinstance(
+            downloaded,
+            bytes
+        ):
+
+            return downloaded
+
+        # -------------------------------------------------
+        # object لديه read()
+        # -------------------------------------------------
+
+        if hasattr(
+            downloaded,
+            "read"
+        ):
+
+            data = downloaded.read()
+
+            if isinstance(
+                data,
+                bytes
+            ):
+
+                return data
+
+        # -------------------------------------------------
+        # object لديه content
+        # -------------------------------------------------
+
+        content = getattr(
+            downloaded,
+            "content",
+            None
+        )
+
+        if isinstance(
+            content,
+            bytes
+        ):
+
+            return content
+
+        # -------------------------------------------------
+        # object لديه data
+        # -------------------------------------------------
+
+        data = getattr(
+            downloaded,
+            "data",
+            None
+        )
+
+        if isinstance(
+            data,
+            bytes
+        ):
+
+            return data
+
+        # -------------------------------------------------
+        # محاولة تحويله إلى bytes
+        # -------------------------------------------------
+
+        try:
+
+            converted = bytes(
+                downloaded
+            )
+
+            if converted:
+                return converted
+
+        except Exception:
+            pass
+
+        print(
+            "MISTRAL FILE DOWNLOAD ERROR: "
+            "Unknown downloaded object type:",
+            type(downloaded).__name__
+        )
+
+        return None
+
+    except Exception as e:
+
+        print(
+            "MISTRAL FILE DOWNLOAD ERROR:",
+            e
+        )
+
+        return None
+
+
+# =========================================================
 # Gemini - نص
 # =========================================================
 
-def ask_gemini(
-    message
-):
+def ask_gemini(message):
 
     if gemini_client is None:
         return None
@@ -1182,9 +1254,7 @@ def ask_gemini(
 
     try:
 
-        print(
-            "Trying Gemini..."
-        )
+        print("Trying Gemini...")
 
         response = (
             gemini_client.models.generate_content(
@@ -1228,9 +1298,7 @@ def ask_gemini(
 # OpenRouter - نص
 # =========================================================
 
-def ask_openrouter(
-    message
-):
+def ask_openrouter(message):
 
     if not OPENROUTER_API_KEY:
         return None
@@ -1240,9 +1308,7 @@ def ask_openrouter(
 
     try:
 
-        print(
-            "Trying OpenRouter..."
-        )
+        print("Trying OpenRouter...")
 
         response = requests.post(
 
@@ -1318,8 +1384,7 @@ def ask_openrouter(
     except requests.exceptions.ConnectionError:
 
         print(
-            "OpenRouter ERROR: "
-            "connection failed."
+            "OpenRouter ERROR: connection failed."
         )
 
         return None
@@ -1338,9 +1403,7 @@ def ask_openrouter(
 # Groq - نص
 # =========================================================
 
-def ask_groq(
-    message
-):
+def ask_groq(message):
 
     if not GROQ_API_KEY:
         return None
@@ -1350,9 +1413,7 @@ def ask_groq(
 
     try:
 
-        print(
-            "Trying Groq..."
-        )
+        print("Trying Groq...")
 
         response = requests.post(
 
@@ -1451,9 +1512,7 @@ def ask_groq(
 # Mistral - نص
 # =========================================================
 
-def ask_mistral(
-    message
-):
+def ask_mistral(message):
 
     if not MISTRAL_API_KEY:
         return None
@@ -1463,9 +1522,7 @@ def ask_mistral(
 
     try:
 
-        print(
-            "Trying Mistral..."
-        )
+        print("Trying Mistral...")
 
         response = requests.post(
 
@@ -1581,9 +1638,7 @@ def ask_groq_image(
         image_base64 = (
             base64.b64encode(
                 image_bytes
-            ).decode(
-                "utf-8"
-            )
+            ).decode("utf-8")
         )
 
         image_data_url = (
@@ -1698,9 +1753,7 @@ def ask_mistral_image(
         image_base64 = (
             base64.b64encode(
                 image_bytes
-            ).decode(
-                "utf-8"
-            )
+            ).decode("utf-8")
         )
 
         image_data_url = (
@@ -1798,16 +1851,12 @@ def ask_mistral_image(
 # توليد صورة جديدة
 # =========================================================
 
-def generate_image(
-    prompt
-):
+def generate_image(prompt):
 
     if not prompt:
         return None
 
-    prompt = str(
-        prompt
-    ).strip()
+    prompt = str(prompt).strip()
 
     if not prompt:
         return None
@@ -1847,27 +1896,15 @@ def generate_image(
 
     try:
 
-        print(
-            "===================================="
-        )
+        print("====================================")
+        print("IMAGE GENERATION STARTED")
+        print("IMAGE PROMPT:", prompt)
+        print("IMAGE AGENT ID:", agent_id)
+        print("====================================")
 
-        print(
-            "IMAGE GENERATION STARTED"
-        )
-
-        print(
-            "IMAGE PROMPT:",
-            prompt
-        )
-
-        print(
-            "IMAGE AGENT ID:",
-            agent_id
-        )
-
-        print(
-            "===================================="
-        )
+        # =================================================
+        # بدء محادثة Agent
+        # =================================================
 
         response = (
             mistral_client.beta.conversations.start(
@@ -1880,32 +1917,78 @@ def generate_image(
             "MISTRAL IMAGE RESPONSE RECEIVED"
         )
 
-        outputs = get_value(
-            response,
-            "outputs"
-        )
-
-        if not outputs:
-
-            print(
-                "MISTRAL IMAGE ERROR: "
-                "No outputs returned."
-            )
-
-            return None
-
-        print(
-            "MISTRAL OUTPUT COUNT:",
-            len(outputs)
-        )
-
         # =================================================
-        # استخراج file IDs
+        # استخراج file_id
         # =================================================
 
         file_ids = extract_generated_images(
             response
         )
+
+        # =================================================
+        # إذا لم نجد file_id، محاولة إضافية من output
+        # =================================================
+
+        if not file_ids:
+
+            print(
+                "MISTRAL IMAGE: "
+                "Trying direct output extraction..."
+            )
+
+            outputs = getattr(
+                response,
+                "outputs",
+                None
+            )
+
+            if outputs:
+
+                for output in outputs:
+
+                    direct_file_id = getattr(
+                        output,
+                        "file_id",
+                        None
+                    )
+
+                    if direct_file_id:
+
+                        file_ids.append(
+                            direct_file_id
+                        )
+
+                    content = getattr(
+                        output,
+                        "content",
+                        None
+                    )
+
+                    if content:
+
+                        for chunk in content:
+
+                            direct_file_id = getattr(
+                                chunk,
+                                "file_id",
+                                None
+                            )
+
+                            if direct_file_id:
+
+                                file_ids.append(
+                                    direct_file_id
+                                )
+
+            file_ids = list(
+                dict.fromkeys(
+                    file_ids
+                )
+            )
+
+        # =================================================
+        # لا توجد صورة
+        # =================================================
 
         if not file_ids:
 
@@ -1914,30 +1997,15 @@ def generate_image(
                 "No generated image file found."
             )
 
-            # معلومات تشخيصية مفيدة فقط
-            for index, output in enumerate(
-                outputs
-            ):
-
-                print(
-                    "OUTPUT",
-                    index,
-                    "TYPE:",
-                    get_value(
-                        output,
-                        "type"
-                    ),
-                    "ROLE:",
-                    get_value(
-                        output,
-                        "role"
-                    )
-                )
-
             return None
 
+        print(
+            "MISTRAL GENERATED FILE IDS:",
+            file_ids
+        )
+
         # =================================================
-        # تنزيل الصور
+        # تنزيل الصورة
         # =================================================
 
         for file_id in file_ids:
@@ -1947,94 +2015,59 @@ def generate_image(
                 file_id
             )
 
-            try:
+            image_bytes = download_mistral_file(
+                file_id
+            )
 
-                downloaded = (
-                    mistral_client.files.download(
-                        file_id=file_id
-                    )
-                )
-
-                if hasattr(
-                    downloaded,
-                    "read"
-                ):
-
-                    image_bytes = (
-                        downloaded.read()
-                    )
-
-                elif isinstance(
-                    downloaded,
-                    bytes
-                ):
-
-                    image_bytes = (
-                        downloaded
-                    )
-
-                else:
-
-                    # بعض إصدارات SDK قد تعيد
-                    # object يحتوي على read()
-                    read_method = getattr(
-                        downloaded,
-                        "read",
-                        None
-                    )
-
-                    if callable(
-                        read_method
-                    ):
-
-                        image_bytes = (
-                            read_method()
-                        )
-
-                    else:
-
-                        image_bytes = None
-
-                if not image_bytes:
-
-                    print(
-                        "MISTRAL IMAGE ERROR: "
-                        "Downloaded image is empty."
-                    )
-
-                    continue
+            if not image_bytes:
 
                 print(
-                    "MISTRAL IMAGE DOWNLOADED:",
-                    len(image_bytes),
-                    "bytes"
-                )
-
-                image_url = save_generated_image(
-                    image_bytes
-                )
-
-                if image_url:
-
-                    print(
-                        "GENERATED IMAGE SAVED:",
-                        image_url
-                    )
-
-                    print(
-                        "===================================="
-                    )
-
-                    return image_url
-
-            except Exception as download_error:
-
-                print(
-                    "MISTRAL IMAGE DOWNLOAD ERROR:",
-                    download_error
+                    "MISTRAL IMAGE ERROR: "
+                    "Downloaded image is empty."
                 )
 
                 continue
+
+            print(
+                "MISTRAL IMAGE DOWNLOADED:",
+                len(image_bytes),
+                "bytes"
+            )
+
+            # -------------------------------------------------
+            # التحقق من أن الملف صورة فعلًا
+            # -------------------------------------------------
+
+            if not (
+                image_bytes.startswith(b"\x89PNG")
+                or image_bytes.startswith(b"\xff\xd8\xff")
+                or image_bytes.startswith(b"RIFF")
+                or image_bytes.startswith(b"GIF")
+                or image_bytes.startswith(b"WEBP")
+            ):
+
+                print(
+                    "MISTRAL IMAGE WARNING: "
+                    "Downloaded file does not look "
+                    "like a standard image."
+                )
+
+            image_url = save_generated_image(
+                image_bytes
+            )
+
+            if image_url:
+
+                print(
+                    "GENERATED IMAGE SAVED:",
+                    image_url
+                )
+
+                print(
+                    "===================================="
+                )
+
+                return image_url
 
         print(
             "MISTRAL IMAGE ERROR: "
@@ -2057,13 +2090,9 @@ def generate_image(
 # كشف طلب إنشاء صورة
 # =========================================================
 
-def is_image_generation_request(
-    message
-):
+def is_image_generation_request(message):
 
-    text = normalize_text(
-        message
-    )
+    text = normalize_text(message)
 
     if not text:
         return False
@@ -2196,6 +2225,7 @@ def is_image_generation_request(
             "تنشأ",
             "يصنع",
             "يرسم",
+            "تولد",
             "generate",
             "create",
             "make",
@@ -2223,16 +2253,16 @@ def is_image_generation_request(
 # استخراج وصف الصورة
 # =========================================================
 
-def get_image_prompt(
-    message
-):
+def get_image_prompt(message):
 
     if not message:
         return ""
 
-    text = str(
-        message
-    ).strip()
+    text = str(message).strip()
+
+    # -----------------------------------------------------
+    # إزالة صيغ السؤال
+    # -----------------------------------------------------
 
     question_prefixes = [
 
@@ -2276,6 +2306,10 @@ def get_image_prompt(
                 changed = True
 
                 break
+
+    # -----------------------------------------------------
+    # إزالة أفعال الإنشاء
+    # -----------------------------------------------------
 
     action_prefixes = [
 
@@ -2338,6 +2372,10 @@ def get_image_prompt(
 
             break
 
+    # -----------------------------------------------------
+    # إزالة كلمة صورة في البداية
+    # -----------------------------------------------------
+
     for image_word in (
         "صورة",
         "صوره",
@@ -2375,13 +2413,9 @@ def get_image_prompt(
 # كشف طلب تعديل صورة
 # =========================================================
 
-def is_image_edit_request(
-    message
-):
+def is_image_edit_request(message):
 
-    text = normalize_text(
-        message
-    )
+    text = normalize_text(message)
 
     if not text:
         return False
@@ -2415,7 +2449,6 @@ def is_image_edit_request(
         )
 
         if normalized_word in text:
-
             return True
 
     return False
@@ -2550,23 +2583,18 @@ def get_response(
 ):
 
     if not message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
+        return "اكتب رسالة أولًا."
 
     original_message = str(
         message
     ).strip()
 
     if not original_message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
+        return "اكتب رسالة أولًا."
 
     # =====================================================
-    # إنشاء الصورة أولًا
+    # إنشاء صورة
+    # يجب أن يحدث قبل الذاكرة والردود الثابتة
     # =====================================================
 
     if is_image_generation_request(
@@ -2583,7 +2611,6 @@ def get_response(
         )
 
         if not image_prompt:
-
             image_prompt = original_message
 
         generated = generate_image(
@@ -2785,19 +2812,14 @@ def get_image_response(
 ):
 
     if not image_bytes:
-
         return (
             "لم يتم إرسال صورة صالحة."
         )
 
     if not mime_type:
-
         mime_type = "image/jpeg"
 
-    if not mime_type.startswith(
-        "image/"
-    ):
-
+    if not mime_type.startswith("image/"):
         return (
             "الملف المرسل ليس صورة صالحة."
         )
