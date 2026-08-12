@@ -16,11 +16,28 @@ from memory import (
     learn
 )
 
+# =========================================================
+# Mistral SDK
+# =========================================================
+
 try:
-    from mistralai.client import Mistral
-    from mistralai.client.models import ToolFileChunk
+
+    from mistralai import Mistral
+
 except Exception:
-    Mistral = None
+
+    try:
+        from mistralai.client import Mistral
+    except Exception:
+        Mistral = None
+
+
+try:
+
+    from mistralai.client.models import ToolFileChunk
+
+except Exception:
+
     ToolFileChunk = None
 
 
@@ -36,8 +53,18 @@ load_dotenv()
 # =========================================================
 
 REQUEST_TIMEOUT = (
-    int(os.getenv("REQUEST_CONNECT_TIMEOUT", "5")),
-    int(os.getenv("REQUEST_READ_TIMEOUT", "30"))
+    int(
+        os.getenv(
+            "REQUEST_CONNECT_TIMEOUT",
+            "5"
+        )
+    ),
+    int(
+        os.getenv(
+            "REQUEST_READ_TIMEOUT",
+            "30"
+        )
+    )
 )
 
 
@@ -46,8 +73,18 @@ REQUEST_TIMEOUT = (
 # =========================================================
 
 OPENROUTER_TIMEOUT = (
-    int(os.getenv("OPENROUTER_CONNECT_TIMEOUT", "5")),
-    int(os.getenv("OPENROUTER_READ_TIMEOUT", "15"))
+    int(
+        os.getenv(
+            "OPENROUTER_CONNECT_TIMEOUT",
+            "5"
+        )
+    ),
+    int(
+        os.getenv(
+            "OPENROUTER_READ_TIMEOUT",
+            "15"
+        )
+    )
 )
 
 
@@ -75,12 +112,14 @@ GENERATED_IMAGE_DIR = Path(
 )
 
 try:
+
     GENERATED_IMAGE_DIR.mkdir(
         parents=True,
         exist_ok=True
     )
 
 except Exception as e:
+
     print(
         "GENERATED IMAGE DIRECTORY ERROR:",
         e
@@ -291,7 +330,7 @@ if MISTRAL_API_KEY:
 
         print(
             "MISTRAL CLIENT ERROR: "
-            "mistralai package غير مثبت."
+            "mistralai package غير متاح."
         )
 
 else:
@@ -324,18 +363,30 @@ if mistral_client is not None:
                 ),
                 tools=[
                     {
-                        "type": "image_generation"
+                        "type":
+                            "image_generation"
                     }
                 ],
                 completion_args={
-                    "temperature": 0.3,
-                    "top_p": 0.95
+                    "temperature":
+                        0.3,
+                    "top_p":
+                        0.95
                 }
             )
         )
 
         print(
             "MISTRAL IMAGE AGENT: READY"
+        )
+
+        print(
+            "MISTRAL IMAGE AGENT ID:",
+            getattr(
+                mistral_image_agent,
+                "id",
+                None
+            )
         )
 
     except Exception as e:
@@ -650,7 +701,7 @@ def save_ai_response(
 
 
 # =========================================================
-# استخراج محتوى الاستجابة
+# استخراج محتوى استجابة Chat Completions
 # =========================================================
 
 def extract_response_content(data):
@@ -680,11 +731,49 @@ def extract_response_content(data):
     ):
         return None
 
-    return clean_answer(
-        message_data.get(
-            "content"
-        )
+    content = message_data.get(
+        "content"
     )
+
+    if isinstance(
+        content,
+        str
+    ):
+
+        return clean_answer(
+            content
+        )
+
+    if isinstance(
+        content,
+        list
+    ):
+
+        parts = []
+
+        for item in content:
+
+            if isinstance(
+                item,
+                dict
+            ):
+
+                text = item.get(
+                    "text"
+                )
+
+                if text:
+                    parts.append(
+                        str(text)
+                    )
+
+        if parts:
+
+            return clean_answer(
+                "\n".join(parts)
+            )
+
+    return None
 
 
 # =========================================================
@@ -771,18 +860,28 @@ def extract_generated_images(
             "output(s) received."
         )
 
-        latest_output = outputs[-1]
+        # =====================================================
+        # وفق توثيق Mistral، الصورة موجودة عادةً في آخر
+        # message.output داخل content كـ tool_file
+        # =====================================================
 
-        latest_content = getattr(
-            latest_output,
-            "content",
-            None
+        ordered_outputs = list(
+            reversed(outputs)
         )
 
-        if latest_content:
+        for output in ordered_outputs:
+
+            content = getattr(
+                output,
+                "content",
+                None
+            )
+
+            if not content:
+                continue
 
             for index, chunk in enumerate(
-                latest_content
+                content
             ):
 
                 chunk_type = getattr(
@@ -797,6 +896,31 @@ def extract_generated_images(
                     None
                 )
 
+                tool_name = getattr(
+                    chunk,
+                    "tool",
+                    None
+                )
+
+                file_name = getattr(
+                    chunk,
+                    "file_name",
+                    None
+                )
+
+                print(
+                    "MISTRAL IMAGE CHUNK:",
+                    index,
+                    "TYPE:",
+                    chunk_type,
+                    "TOOL:",
+                    tool_name,
+                    "FILE_ID:",
+                    file_id,
+                    "FILE_NAME:",
+                    file_name
+                )
+
                 if (
                     ToolFileChunk is not None
                     and isinstance(
@@ -806,6 +930,7 @@ def extract_generated_images(
                 ):
 
                     if chunk.file_id:
+
                         file_ids.append(
                             chunk.file_id
                         )
@@ -820,57 +945,6 @@ def extract_generated_images(
                     file_ids.append(
                         file_id
                     )
-
-        if not file_ids:
-
-            for output in outputs:
-
-                content = getattr(
-                    output,
-                    "content",
-                    None
-                )
-
-                if not content:
-                    continue
-
-                for chunk in content:
-
-                    chunk_type = getattr(
-                        chunk,
-                        "type",
-                        None
-                    )
-
-                    file_id = getattr(
-                        chunk,
-                        "file_id",
-                        None
-                    )
-
-                    if (
-                        ToolFileChunk is not None
-                        and isinstance(
-                            chunk,
-                            ToolFileChunk
-                        )
-                    ):
-
-                        if chunk.file_id:
-                            file_ids.append(
-                                chunk.file_id
-                            )
-
-                        continue
-
-                    if (
-                        chunk_type == "tool_file"
-                        and file_id
-                    ):
-
-                        file_ids.append(
-                            file_id
-                        )
 
         file_ids = list(
             dict.fromkeys(
@@ -899,7 +973,9 @@ def extract_generated_images(
 # Gemini - نص
 # =========================================================
 
-def ask_gemini(message):
+def ask_gemini(
+    message
+):
 
     if gemini_client is None:
         return None
@@ -955,7 +1031,9 @@ def ask_gemini(message):
 # OpenRouter - نص
 # =========================================================
 
-def ask_openrouter(message):
+def ask_openrouter(
+    message
+):
 
     if not OPENROUTER_API_KEY:
         return None
@@ -990,6 +1068,7 @@ def ask_openrouter(message):
                     "openrouter/free",
 
                 "messages": [
+
                     {
                         "role":
                             "user",
@@ -1017,9 +1096,19 @@ def ask_openrouter(message):
 
             return None
 
-        return extract_response_content(
+        answer = extract_response_content(
             response.json()
         )
+
+        if answer:
+
+            print(
+                "OpenRouter response received."
+            )
+
+            return answer
+
+        return None
 
     except requests.exceptions.Timeout:
 
@@ -1052,7 +1141,9 @@ def ask_openrouter(message):
 # Groq - نص
 # =========================================================
 
-def ask_groq(message):
+def ask_groq(
+    message
+):
 
     if not GROQ_API_KEY:
         return None
@@ -1071,6 +1162,7 @@ def ask_groq(message):
             GROQ_URL,
 
             headers={
+
                 "Authorization":
                     f"Bearer {GROQ_API_KEY}",
 
@@ -1084,6 +1176,7 @@ def ask_groq(message):
                     GROQ_MODEL,
 
                 "messages": [
+
                     {
                         "role":
                             "user",
@@ -1117,9 +1210,19 @@ def ask_groq(message):
 
             return None
 
-        return extract_response_content(
+        answer = extract_response_content(
             response.json()
         )
+
+        if answer:
+
+            print(
+                "Groq response received."
+            )
+
+            return answer
+
+        return None
 
     except requests.exceptions.Timeout:
 
@@ -1151,7 +1254,9 @@ def ask_groq(message):
 # Mistral - نص
 # =========================================================
 
-def ask_mistral(message):
+def ask_mistral(
+    message
+):
 
     if not MISTRAL_API_KEY:
         return None
@@ -1170,6 +1275,7 @@ def ask_mistral(message):
             MISTRAL_URL,
 
             headers={
+
                 "Authorization":
                     f"Bearer {MISTRAL_API_KEY}",
 
@@ -1183,6 +1289,7 @@ def ask_mistral(message):
                     MISTRAL_MODEL,
 
                 "messages": [
+
                     {
                         "role":
                             "user",
@@ -1216,9 +1323,19 @@ def ask_mistral(message):
 
             return None
 
-        return extract_response_content(
+        answer = extract_response_content(
             response.json()
         )
+
+        if answer:
+
+            print(
+                "Mistral response received."
+            )
+
+            return answer
+
+        return None
 
     except requests.exceptions.Timeout:
 
@@ -1282,6 +1399,7 @@ def ask_groq_image(
             GROQ_URL,
 
             headers={
+
                 "Authorization":
                     f"Bearer {GROQ_API_KEY}",
 
@@ -1315,6 +1433,7 @@ def ask_groq_image(
                                     "image_url",
 
                                 "image_url": {
+
                                     "url":
                                         image_data_url
                                 }
@@ -1397,6 +1516,7 @@ def ask_mistral_image(
             MISTRAL_URL,
 
             headers={
+
                 "Authorization":
                     f"Bearer {MISTRAL_API_KEY}",
 
@@ -1430,6 +1550,7 @@ def ask_mistral_image(
                                     "image_url",
 
                                 "image_url": {
+
                                     "url":
                                         image_data_url
                                 }
@@ -1480,7 +1601,9 @@ def ask_mistral_image(
 # توليد صورة جديدة
 # =========================================================
 
-def generate_image(prompt):
+def generate_image(
+    prompt
+):
 
     if not prompt:
         return None
@@ -1501,6 +1624,30 @@ def generate_image(prompt):
 
         return None
 
+    if mistral_image_agent is None:
+
+        print(
+            "IMAGE GENERATION ERROR: "
+            "Mistral image agent غير جاهز."
+        )
+
+        return None
+
+    agent_id = getattr(
+        mistral_image_agent,
+        "id",
+        None
+    )
+
+    if not agent_id:
+
+        print(
+            "IMAGE GENERATION ERROR: "
+            "Agent ID غير موجود."
+        )
+
+        return None
+
     try:
 
         print(
@@ -1512,17 +1659,25 @@ def generate_image(prompt):
             prompt
         )
 
+        print(
+            "IMAGE AGENT ID:",
+            agent_id
+        )
+
+        # =====================================================
+        # مهم:
+        # نستخدم agent_id بدل model + tools مباشرة.
+        # =====================================================
+
         response = (
             mistral_client.beta.conversations.start(
-                model=MISTRAL_IMAGE_MODEL,
-                inputs=prompt,
-                tools=[
-                    {
-                        "type":
-                            "image_generation"
-                    }
-                ]
+                agent_id=agent_id,
+                inputs=prompt
             )
+        )
+
+        print(
+            "MISTRAL IMAGE RESPONSE RECEIVED"
         )
 
         outputs = getattr(
@@ -1540,10 +1695,13 @@ def generate_image(prompt):
 
             return None
 
-        file_ids = (
-            extract_generated_images(
-                response
-            )
+        print(
+            "MISTRAL OUTPUT COUNT:",
+            len(outputs)
+        )
+
+        file_ids = extract_generated_images(
+            response
         )
 
         if not file_ids:
@@ -1555,7 +1713,16 @@ def generate_image(prompt):
 
             return None
 
+        # =====================================================
+        # تنزيل الصورة
+        # =====================================================
+
         for file_id in file_ids:
+
+            print(
+                "MISTRAL GENERATED FILE:",
+                file_id
+            )
 
             downloaded = (
                 mistral_client.files.download(
@@ -1568,19 +1735,31 @@ def generate_image(prompt):
                 "read"
             ):
 
-                image_bytes = downloaded.read()
+                image_bytes = (
+                    downloaded.read()
+                )
 
             else:
 
                 image_bytes = downloaded
 
             if not image_bytes:
+
+                print(
+                    "MISTRAL IMAGE ERROR: "
+                    "Downloaded image is empty."
+                )
+
                 continue
 
-            image_url = (
-                save_generated_image(
-                    image_bytes
-                )
+            print(
+                "MISTRAL IMAGE DOWNLOADED:",
+                len(image_bytes),
+                "bytes"
+            )
+
+            image_url = save_generated_image(
+                image_bytes
             )
 
             if image_url:
@@ -1591,6 +1770,11 @@ def generate_image(prompt):
                 )
 
                 return image_url
+
+        print(
+            "MISTRAL IMAGE ERROR: "
+            "Could not save generated image."
+        )
 
         return None
 
@@ -1621,6 +1805,7 @@ def is_image_generation_request(
 
     direct_phrases = [
 
+        # عربي
         "ولد لي صورة",
         "ولد صورة",
         "ولّد لي صورة",
@@ -1674,6 +1859,16 @@ def is_image_generation_request(
         "بغيتك تصنع لي صورة",
         "بغيتك ترسم لي صورة",
 
+        "اريد صورة",
+        "اريد صوره",
+        "اريدك تولد صورة",
+        "اريدك ان تولد صورة",
+        "اريدك تنشئ صورة",
+        "اريدك تصنع صورة",
+        "ابغى صورة",
+        "ابغى صوره",
+
+        # English
         "generate an image",
         "generate image",
         "generate a picture",
@@ -1688,12 +1883,19 @@ def is_image_generation_request(
 
         "draw an image",
         "draw image",
-        "draw a picture"
+        "draw a picture",
+
+        "create artwork",
+        "generate artwork"
     ]
 
     for phrase in direct_phrases:
 
-        if phrase in text:
+        normalized_phrase = normalize_text(
+            phrase
+        )
+
+        if normalized_phrase in text:
 
             print(
                 "IMAGE GENERATION INTENT DETECTED:",
@@ -1769,10 +1971,6 @@ def get_image_prompt(
         message
     ).strip()
 
-    normalized = normalize_text(
-        text
-    )
-
     # -----------------------------------------------------
     # إزالة صيغة السؤال أولًا
     # -----------------------------------------------------
@@ -1787,28 +1985,37 @@ def get_image_prompt(
         "ممكن",
         "تقدر",
         "تستطيع",
-        "بغيتك"
+        "بغيتك",
+        "اريدك",
+        "ابغى"
     ]
 
-    for prefix in question_prefixes:
+    changed = True
 
-        normalized_prefix = normalize_text(
-            prefix
+    while changed:
+
+        changed = False
+
+        normalized_text = normalize_text(
+            text
         )
 
-        if normalized.startswith(
-            normalized_prefix + " "
-        ):
+        for prefix in question_prefixes:
 
-            text = text[
-                len(prefix):
-            ].strip()
-
-            normalized = normalize_text(
-                text
+            normalized_prefix = normalize_text(
+                prefix
             )
 
-            break
+            if normalized_text.startswith(
+                normalized_prefix + " "
+            ):
+
+                text = text[
+                    len(prefix):
+                ].strip()
+
+                changed = True
+                break
 
     # -----------------------------------------------------
     # إزالة أفعال الإنشاء
@@ -1845,6 +2052,9 @@ def get_image_prompt(
         "تنشئ",
         "تنشأ لي",
         "تنشأ",
+
+        "تولد لي",
+        "تولد",
 
         "generate",
         "create",
@@ -1904,6 +2114,7 @@ def get_image_prompt(
     text = text.strip()
 
     if not text:
+
         return message
 
     return text
@@ -1948,9 +2159,11 @@ def is_image_edit_request(
 
     for word in edit_words:
 
-        if normalize_text(
+        normalized_word = normalize_text(
             word
-        ) in text:
+        )
+
+        if normalized_word in text:
 
             return True
 
@@ -2021,6 +2234,11 @@ def edit_image(
     if not image_bytes:
         return None
 
+    print(
+        "IMAGE EDIT REQUEST:",
+        edit_request
+    )
+
     analysis_prompt = (
         "Describe this image in very detailed "
         "visual terms for a second image model. "
@@ -2032,22 +2250,18 @@ def edit_image(
         "Return only the visual description."
     )
 
-    image_description = (
-        ask_mistral_image(
-            analysis_prompt,
-            image_bytes,
-            mime_type
-        )
+    image_description = ask_mistral_image(
+        analysis_prompt,
+        image_bytes,
+        mime_type
     )
 
     if not image_description:
 
-        image_description = (
-            ask_groq_image(
-                analysis_prompt,
-                image_bytes,
-                mime_type
-            )
+        image_description = ask_groq_image(
+            analysis_prompt,
+            image_bytes,
+            mime_type
         )
 
     if not image_description:
@@ -2059,11 +2273,14 @@ def edit_image(
 
         return None
 
-    edit_prompt = (
-        build_image_edit_prompt(
-            image_description,
-            edit_request
-        )
+    edit_prompt = build_image_edit_prompt(
+        image_description,
+        edit_request
+    )
+
+    print(
+        "IMAGE EDIT PROMPT:",
+        edit_prompt
     )
 
     return generate_image(
@@ -2082,17 +2299,24 @@ def get_response(
 ):
 
     if not message:
-        return "اكتب رسالة أولًا."
+
+        return (
+            "اكتب رسالة أولًا."
+        )
 
     original_message = str(
         message
     ).strip()
 
     if not original_message:
-        return "اكتب رسالة أولًا."
+
+        return (
+            "اكتب رسالة أولًا."
+        )
 
     # =====================================================
-    # إنشاء صورة من الصفر أولًا
+    # مهم جدًا:
+    # إنشاء الصورة يجب أن يحدث قبل الذاكرة والردود الثابتة
     # =====================================================
 
     if is_image_generation_request(
@@ -2109,6 +2333,7 @@ def get_response(
         )
 
         if not image_prompt:
+
             image_prompt = original_message
 
         generated = generate_image(
@@ -2148,8 +2373,10 @@ def get_response(
         original_message
     )
 
-    builtin_answer = BUILTIN_RESPONSES.get(
-        normalized_message
+    builtin_answer = (
+        BUILTIN_RESPONSES.get(
+            normalized_message
+        )
     )
 
     if builtin_answer:
@@ -2280,9 +2507,20 @@ def get_response(
     # فشل جميع الخوادم
     # =====================================================
 
-    return (
+    fallback = (
         "أنا Ido AI ولم أجد إجابة حاليًا."
     )
+
+    if save_response:
+
+        save_ai_response(
+            original_message,
+            fallback,
+            conversation_id,
+            source="fallback"
+        )
+
+    return fallback
 
 
 # =========================================================
@@ -2297,15 +2535,22 @@ def get_image_response(
 ):
 
     if not image_bytes:
-        return "لم يتم إرسال صورة صالحة."
+
+        return (
+            "لم يتم إرسال صورة صالحة."
+        )
 
     if not mime_type:
+
         mime_type = "image/jpeg"
 
     if not mime_type.startswith(
         "image/"
     ):
-        return "الملف المرسل ليس صورة صالحة."
+
+        return (
+            "الملف المرسل ليس صورة صالحة."
+        )
 
     if (
         not message
