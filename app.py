@@ -9,6 +9,7 @@ from brain import (
 
 from calculator import calculate
 from translator import translate
+
 from memory import (
     get_answer,
     create_conversation
@@ -25,11 +26,7 @@ try:
     api_available = True
 
 except Exception as e:
-    print(
-        "API error:",
-        e
-    )
-
+    print("API error:", e)
     api_available = False
 
 
@@ -55,30 +52,20 @@ if api_available:
 # إنشاء / استرجاع معرف المحادثة
 # =========================================================
 
-def resolve_conversation_id(
-    conversation_id=None
-):
+def resolve_conversation_id(conversation_id=None):
+
     if conversation_id:
-        return str(
-            conversation_id
-        ).strip()
+        return str(conversation_id).strip()
 
     try:
         conversation = create_conversation(
             "محادثة جديدة"
         )
 
-        if isinstance(
-            conversation,
-            dict
-        ):
-            return conversation.get(
-                "id"
-            )
+        if isinstance(conversation, dict):
+            return conversation.get("id")
 
-        return str(
-            conversation
-        )
+        return str(conversation)
 
     except Exception as e:
         print(
@@ -97,19 +84,23 @@ def ai_response(
     question,
     conversation_id=None
 ):
+
     try:
+
         question = str(
             question
         ).strip()
 
         if not question:
-            return "اكتب سؤالاً أولاً"
+            return "اكتب سؤالاً أولاً."
 
-        # =====================================================
+
+        # =================================================
         # الحاسبة
-        # =====================================================
+        # =================================================
 
         try:
+
             result = calculate(
                 question
             )
@@ -120,16 +111,19 @@ def ai_response(
                 )
 
         except Exception as e:
+
             print(
                 "CALCULATOR ERROR:",
                 e
             )
 
-        # =====================================================
+
+        # =================================================
         # الترجمة
-        # =====================================================
+        # =================================================
 
         try:
+
             translated = translate(
                 question
             )
@@ -142,16 +136,19 @@ def ai_response(
                 return translated
 
         except Exception as e:
+
             print(
                 "TRANSLATOR ERROR:",
                 e
             )
 
-        # =====================================================
+
+        # =================================================
         # الذاكرة
-        # =====================================================
+        # =================================================
 
         try:
+
             memory_answer = get_answer(
                 question
             )
@@ -160,32 +157,72 @@ def ai_response(
                 return memory_answer
 
         except Exception as e:
+
             print(
                 "MEMORY ERROR:",
                 e
             )
 
-        # =====================================================
-        # Gemini / OpenRouter / Groq / Mistral
-        # =====================================================
 
-        answer = get_response(
-            question,
-            conversation_id=conversation_id
-        )
+        # =================================================
+        # الذكاء الاصطناعي
+        #
+        # مهم:
+        # لا نرسل conversation_id إلى brain.py
+        # إذا كانت دالة get_response الجديدة
+        # لا تستقبله.
+        # =================================================
+
+        try:
+
+            answer = get_response(
+                question
+            )
+
+        except TypeError as e:
+
+            print(
+                "GET_RESPONSE COMPATIBILITY ERROR:",
+                e
+            )
+
+            # محاولة توافق إضافية إذا كانت
+            # نسخة brain.py تستقبل conversation_id
+
+            try:
+
+                answer = get_response(
+                    question,
+                    conversation_id=conversation_id
+                )
+
+            except Exception as second_error:
+
+                print(
+                    "GET_RESPONSE ERROR:",
+                    second_error
+                )
+
+                raise second_error
+
 
         return (
             answer
             or "لم أجد إجابة حاليًا."
         )
 
+
     except Exception as e:
+
         print(
             "AI RESPONSE ERROR:",
             e
         )
 
-        return f"خطأ: {e}"
+        return (
+            "حدث خطأ أثناء معالجة طلبك: "
+            f"{e}"
+        )
 
 
 # =========================================================
@@ -206,6 +243,11 @@ def home():
         .strftime("%H:%M:%S")
     )
 
+
+    # =====================================================
+    # POST
+    # =====================================================
+
     if request.method == "POST":
 
         question = request.form.get(
@@ -213,9 +255,10 @@ def home():
             ""
         ).strip()
 
-        # =====================================================
+
+        # =================================================
         # معرف المحادثة
-        # =====================================================
+        # =================================================
 
         conversation_id = request.form.get(
             "conversation_id",
@@ -228,20 +271,28 @@ def home():
             )
         )
 
-        # =====================================================
+
+        # =================================================
         # رفع صورة
-        # =====================================================
+        # =================================================
 
         image = request.files.get(
             "image"
         )
 
+
         if image and image.filename:
 
             try:
+
                 print(
                     "IMAGE REQUEST RECEIVED"
                 )
+
+
+                # =========================================
+                # قراءة الصورة
+                # =========================================
 
                 image_bytes = image.read()
 
@@ -249,6 +300,11 @@ def home():
                     image.mimetype
                     or "image/jpeg"
                 )
+
+
+                # =========================================
+                # التحقق
+                # =========================================
 
                 if not image_bytes:
 
@@ -268,19 +324,24 @@ def home():
 
                 else:
 
-                    # =========================================
+                    # =====================================
                     # سؤال الصورة
-                    # =========================================
+                    # =====================================
 
                     if question:
-                        image_question = question
+
+                        image_question = (
+                            question
+                        )
 
                     else:
+
                         image_question = (
                             "حلل هذه الصورة "
                             "واشرح لي بالتفصيل "
                             "ما الذي يظهر فيها."
                         )
+
 
                     print(
                         "IMAGE MIME TYPE:",
@@ -303,20 +364,41 @@ def home():
                         conversation_id
                     )
 
-                    # =========================================
-                    # تحليل / تعديل الصورة
-                    # =========================================
 
-                    result = get_image_response(
-                        image_question,
-                        image_bytes,
-                        mime_type,
-                        conversation_id=conversation_id
-                    )
+                    # =====================================
+                    # تحليل / تعديل / توليد الصورة
+                    # =====================================
 
-                    # =========================================
-                    # هل النتيجة صورة مولدة؟
-                    # =========================================
+                    try:
+
+                        result = get_image_response(
+                            image_question,
+                            image_bytes,
+                            mime_type
+                        )
+
+                    except TypeError as e:
+
+                        print(
+                            "GET_IMAGE_RESPONSE "
+                            "COMPATIBILITY ERROR:",
+                            e
+                        )
+
+                        # توافق مع brain.py
+                        # الذي قد يدعم conversation_id
+
+                        result = get_image_response(
+                            image_question,
+                            image_bytes,
+                            mime_type,
+                            conversation_id=conversation_id
+                        )
+
+
+                    # =====================================
+                    # هل النتيجة صورة؟
+                    # =====================================
 
                     if (
                         isinstance(
@@ -335,14 +417,19 @@ def home():
                         )
 
                         answer = (
-                            "تم تعديل الصورة "
-                            "بناءً على طلبك."
+                            "تم إنشاء أو تعديل "
+                            "الصورة بنجاح."
                         )
 
                         print(
                             "GENERATED IMAGE:",
                             generated_image
                         )
+
+
+                    # =====================================
+                    # نتيجة نصية
+                    # =====================================
 
                     else:
 
@@ -352,6 +439,7 @@ def home():
                             "تعذر معالجة "
                             "الصورة حاليًا."
                         )
+
 
             except Exception as e:
 
@@ -366,9 +454,10 @@ def home():
                     f"{e}"
                 )
 
-        # =====================================================
+
+        # =================================================
         # سؤال نصي عادي
-        # =====================================================
+        # =================================================
 
         elif question:
 
@@ -376,6 +465,11 @@ def home():
                 question,
                 conversation_id=conversation_id
             )
+
+
+    # =====================================================
+    # عرض الصفحة
+    # =====================================================
 
     return render_template(
         "page.html",
