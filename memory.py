@@ -1,6 +1,7 @@
 import json
 import os
 import difflib
+import uuid
 from datetime import datetime
 
 
@@ -16,7 +17,6 @@ MEMORY_FILE = "memory.json"
 # =========================================================
 
 def load_memory():
-
     if os.path.exists(MEMORY_FILE):
 
         try:
@@ -81,8 +81,84 @@ def normalize_question(question):
         return ""
 
     return " ".join(
-        question.strip().lower().split()
+        str(question)
+        .strip()
+        .lower()
+        .split()
     )
+
+
+# =========================================================
+# إنشاء معرف محادثة
+# =========================================================
+
+def create_conversation_id():
+    return (
+        "chat_"
+        + uuid.uuid4().hex
+    )
+
+
+# =========================================================
+# العثور على محادثة بالمعرف
+# =========================================================
+
+def get_conversation_by_id(
+    conversation_id
+):
+
+    if not conversation_id:
+        return None
+
+    conversations = get_conversations()
+
+    for conversation in conversations:
+
+        if (
+            isinstance(conversation, dict)
+            and conversation.get("id")
+            == conversation_id
+        ):
+            return conversation
+
+    return None
+
+
+# =========================================================
+# إنشاء محادثة جديدة في الذاكرة
+# =========================================================
+
+def create_conversation(
+    title="محادثة جديدة"
+):
+
+    conversation = {
+
+        "id":
+            create_conversation_id(),
+
+        "title":
+            title or "محادثة جديدة",
+
+        "messages":
+            [],
+
+        "date":
+            datetime.now().isoformat()
+    }
+
+    memory = load_memory()
+
+    if "conversations" not in memory:
+        memory["conversations"] = []
+
+    memory["conversations"].append(
+        conversation
+    )
+
+    save_memory(memory)
+
+    return conversation
 
 
 # =========================================================
@@ -114,7 +190,7 @@ def learn(
     memory["questions"][normalized] = {
 
         "question":
-            question.strip(),
+            str(question).strip(),
 
         "answer":
             answer,
@@ -158,7 +234,6 @@ def get_answer(
         question
     )
 
-
     # =====================================================
     # مطابقة مباشرة
     # =====================================================
@@ -169,7 +244,6 @@ def get_answer(
 
     if saved:
 
-        # دعم الذاكرة القديمة
         if isinstance(saved, str):
             return saved
 
@@ -177,7 +251,6 @@ def get_answer(
             return saved.get(
                 "answer"
             )
-
 
     # =====================================================
     # البحث عن سؤال مشابه
@@ -256,7 +329,9 @@ def save_user_name(name):
 
     memory = load_memory()
 
-    memory["user_name"] = name.strip()
+    memory["user_name"] = (
+        str(name).strip()
+    )
 
     save_memory(memory)
 
@@ -276,7 +351,8 @@ def get_user_name():
 
 def save_conversation(
     title,
-    messages
+    messages,
+    conversation_id=None
 ):
 
     memory = load_memory()
@@ -286,11 +362,17 @@ def save_conversation(
 
     conversation = {
 
+        "id":
+            conversation_id
+            or create_conversation_id(),
+
         "title":
-            title,
+            title or "محادثة جديدة",
 
         "messages":
-            messages,
+            messages
+            if isinstance(messages, list)
+            else [],
 
         "date":
             datetime.now().isoformat()
@@ -302,53 +384,103 @@ def save_conversation(
 
     save_memory(memory)
 
+    return conversation["id"]
+
 
 # =========================================================
-# إضافة سؤال وجواب إلى آخر محادثة
+# إضافة رسالة إلى محادثة محددة
 # =========================================================
 
 def add_conversation_message(
     question,
     answer,
-    image_info=None
+    image_info=None,
+    conversation_id=None
 ):
 
     if not question or not answer:
-        return
+        return None
 
     memory = load_memory()
 
     if "conversations" not in memory:
         memory["conversations"] = []
 
+    # =====================================================
+    # العثور على المحادثة المطلوبة
+    # =====================================================
+
+    conversation = None
+
+    if conversation_id:
+
+        for item in memory["conversations"]:
+
+            if (
+                isinstance(item, dict)
+                and item.get("id")
+                == conversation_id
+            ):
+
+                conversation = item
+                break
 
     # =====================================================
-    # إذا لم توجد محادثة، إنشاء محادثة جديدة
+    # التوافق مع النظام القديم
     # =====================================================
 
-    if not memory["conversations"]:
+    if conversation is None:
 
-        memory["conversations"].append({
+        if memory["conversations"]:
 
-            "title":
-                "محادثة جديدة",
+            conversation = (
+                memory["conversations"][-1]
+            )
 
-            "messages":
-                [],
+        else:
 
-            "date":
-                datetime.now().isoformat()
-        })
+            conversation = {
 
-    conversation = memory["conversations"][-1]
+                "id":
+                    conversation_id
+                    or create_conversation_id(),
+
+                "title":
+                    "محادثة جديدة",
+
+                "messages":
+                    [],
+
+                "date":
+                    datetime.now().isoformat()
+            }
+
+            memory["conversations"].append(
+                conversation
+            )
+
+    # =====================================================
+    # ضمان وجود البيانات الأساسية
+    # =====================================================
+
+    if not conversation.get("id"):
+
+        conversation["id"] = (
+            conversation_id
+            or create_conversation_id()
+        )
 
     if "messages" not in conversation:
         conversation["messages"] = []
 
+    # =====================================================
+    # إضافة الرسالة
+    # =====================================================
+
     message = {
 
         "question":
-            question,
+            str(question).strip(),
 
         "answer":
             answer,
@@ -364,9 +496,27 @@ def add_conversation_message(
         message
     )
 
+    # =====================================================
+    # تحديث عنوان المحادثة
+    # =====================================================
+
+    if (
+        not conversation.get("title")
+        or conversation.get("title")
+        == "محادثة جديدة"
+    ):
+
+        conversation["title"] = (
+            str(question).strip()[:60]
+            or "محادثة جديدة"
+        )
+
+    conversation["date"] = (
+        datetime.now().isoformat()
+    )
 
     # =====================================================
-    # حفظ السؤال والجواب أيضًا في قاموس الأسئلة
+    # حفظ السؤال والجواب في الذاكرة العامة
     # =====================================================
 
     if "questions" not in memory:
@@ -376,25 +526,95 @@ def add_conversation_message(
         question
     )
 
-    memory["questions"][normalized] = {
+    if normalized:
 
-        "question":
-            question,
+        memory["questions"][normalized] = {
 
-        "answer":
-            answer,
+            "question":
+                str(question).strip(),
 
-        "source":
-            "conversation",
+            "answer":
+                answer,
 
-        "date":
-            datetime.now().isoformat(),
+            "source":
+                "conversation",
 
-        "image_info":
-            image_info
-    }
+            "date":
+                datetime.now().isoformat(),
+
+            "image_info":
+                image_info
+        }
 
     save_memory(memory)
+
+    return conversation["id"]
+
+
+# =========================================================
+# إضافة رسالة عامة إلى محادثة
+# =========================================================
+
+def append_message(
+    conversation_id,
+    role,
+    text,
+    image=None
+):
+
+    if not conversation_id:
+        return False
+
+    memory = load_memory()
+
+    conversations = memory.get(
+        "conversations",
+        []
+    )
+
+    for conversation in conversations:
+
+        if (
+            not isinstance(
+                conversation,
+                dict
+            )
+        ):
+            continue
+
+        if (
+            conversation.get("id")
+            != conversation_id
+        ):
+            continue
+
+        if "messages" not in conversation:
+            conversation["messages"] = []
+
+        conversation["messages"].append({
+
+            "role":
+                role,
+
+            "text":
+                text or "",
+
+            "image":
+                image,
+
+            "date":
+                datetime.now().isoformat()
+        })
+
+        conversation["date"] = (
+            datetime.now().isoformat()
+        )
+
+        save_memory(memory)
+
+        return True
+
+    return False
 
 
 # =========================================================
@@ -405,10 +625,51 @@ def get_conversations():
 
     memory = load_memory()
 
-    return memory.get(
+    conversations = memory.get(
         "conversations",
         []
     )
+
+    if not isinstance(
+        conversations,
+        list
+    ):
+        return []
+
+    # =====================================================
+    # ترقية المحادثات القديمة تلقائيًا
+    # =====================================================
+
+    changed = False
+
+    for conversation in conversations:
+
+        if not isinstance(
+            conversation,
+            dict
+        ):
+            continue
+
+        if not conversation.get("id"):
+
+            conversation["id"] = (
+                create_conversation_id()
+            )
+
+            changed = True
+
+        if "messages" not in conversation:
+
+            conversation["messages"] = []
+
+            changed = True
+
+    if changed:
+
+        memory["conversations"] = conversations
+        save_memory(memory)
+
+    return conversations
 
 
 # =========================================================
@@ -423,6 +684,137 @@ def get_last_conversation():
         return conversations[-1]
 
     return None
+
+
+# =========================================================
+# آخر محادثة بالمعرف
+# =========================================================
+
+def get_conversation_context(
+    conversation_id,
+    limit=12
+):
+
+    conversation = (
+        get_conversation_by_id(
+            conversation_id
+        )
+    )
+
+    if not conversation:
+        return []
+
+    messages = conversation.get(
+        "messages",
+        []
+    )
+
+    if not isinstance(
+        messages,
+        list
+    ):
+        return []
+
+    return messages[-max(
+        1,
+        int(limit)
+    ):]
+
+
+# =========================================================
+# إنشاء نص سياق للمحادثة
+# =========================================================
+
+def build_conversation_context(
+    conversation_id,
+    limit=12
+):
+
+    messages = (
+        get_conversation_context(
+            conversation_id,
+            limit
+        )
+    )
+
+    if not messages:
+        return ""
+
+    context = []
+
+    for message in messages:
+
+        if not isinstance(
+            message,
+            dict
+        ):
+            continue
+
+        # =================================================
+        # النظام الجديد role/text
+        # =================================================
+
+        if "role" in message:
+
+            role = message.get(
+                "role",
+                "user"
+            )
+
+            text = message.get(
+                "text",
+                ""
+            )
+
+            if text:
+
+                if role == "assistant":
+
+                    context.append(
+                        "Aido AI: "
+                        + str(text)
+                    )
+
+                else:
+
+                    context.append(
+                        "المستخدم: "
+                        + str(text)
+                    )
+
+            continue
+
+        # =================================================
+        # النظام القديم question/answer
+        # =================================================
+
+        question = message.get(
+            "question",
+            ""
+        )
+
+        answer = message.get(
+            "answer",
+            ""
+        )
+
+        if question:
+
+            context.append(
+                "المستخدم: "
+                + str(question)
+            )
+
+        if answer:
+
+            context.append(
+                "Aido AI: "
+                + str(answer)
+            )
+
+    return "\n".join(
+        context
+    )
 
 
 # =========================================================
@@ -471,7 +863,10 @@ def review_previous_questions(
 
     for key, value in questions.items():
 
-        if isinstance(value, str):
+        if isinstance(
+            value,
+            str
+        ):
 
             items.append({
 
@@ -482,7 +877,10 @@ def review_previous_questions(
                     value
             })
 
-        elif isinstance(value, dict):
+        elif isinstance(
+            value,
+            dict
+        ):
 
             items.append({
 
@@ -522,7 +920,9 @@ def review_previous_conversations(
     limit=10
 ):
 
-    conversations = get_conversations()
+    conversations = (
+        get_conversations()
+    )
 
     if not conversations:
         return []
@@ -552,7 +952,9 @@ def search_conversations(
 
     results = []
 
-    conversations = get_conversations()
+    conversations = (
+        get_conversations()
+    )
 
     for conversation in reversed(
         conversations
@@ -567,25 +969,45 @@ def search_conversations(
             messages
         ):
 
-            old_question = normalize_question(
-                message.get(
-                    "question",
-                    ""
+            if not isinstance(
+                message,
+                dict
+            ):
+                continue
+
+            old_question = (
+                normalize_question(
+                    message.get(
+                        "question",
+                        ""
+                    )
                 )
             )
 
             if not old_question:
                 continue
 
-            similarity = difflib.SequenceMatcher(
-                None,
-                normalized,
-                old_question
-            ).ratio()
+            similarity = (
+                difflib.SequenceMatcher(
+                    None,
+                    normalized,
+                    old_question
+                ).ratio()
+            )
 
             if similarity >= 0.70:
 
                 results.append({
+
+                    "conversation_id":
+                        conversation.get(
+                            "id"
+                        ),
+
+                    "conversation_title":
+                        conversation.get(
+                            "title"
+                        ),
 
                     "question":
                         message.get(

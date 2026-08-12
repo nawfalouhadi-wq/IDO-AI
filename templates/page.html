@@ -2,9 +2,18 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="Aido AI - مساعد الذكاء الاصطناعي">
-    <meta name="theme-color" content="#2563eb">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    >
+    <meta
+        name="description"
+        content="Aido AI - مساعد الذكاء الاصطناعي"
+    >
+    <meta
+        name="theme-color"
+        content="#2563eb"
+    >
     <title>Aido AI</title>
 
     <style>
@@ -112,10 +121,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* =====================================================
-           APP
-        ===================================================== */
-
         .app {
             width: 100%;
             height: 100dvh;
@@ -123,10 +128,6 @@
             display: flex;
             position: relative;
         }
-
-        /* =====================================================
-           SIDEBAR
-        ===================================================== */
 
         .sidebar {
             width: var(--sidebar-width);
@@ -264,10 +265,6 @@
             margin-bottom: 8px;
         }
 
-        /* =====================================================
-           HISTORY
-        ===================================================== */
-
         .history-search-wrap {
             position: relative;
             margin-bottom: 10px;
@@ -287,9 +284,7 @@
         .history-search {
             width: 100%;
             height: 38px;
-            padding:
-                0 34px
-                0 11px;
+            padding: 0 34px 0 11px;
             border: 1px solid var(--border);
             border-radius: 9px;
             background: var(--surface);
@@ -385,10 +380,6 @@
             margin-top: 8px;
         }
 
-        /* =====================================================
-           MOBILE OVERLAY
-        ===================================================== */
-
         .sidebar-overlay {
             display: none;
             position: fixed;
@@ -400,10 +391,6 @@
             backdrop-filter: blur(2px);
         }
 
-        /* =====================================================
-           MAIN
-        ===================================================== */
-
         .main {
             flex: 1;
             min-width: 0;
@@ -412,10 +399,6 @@
             display: flex;
             flex-direction: column;
         }
-
-        /* =====================================================
-           TOPBAR
-        ===================================================== */
 
         .topbar {
             height: var(--topbar-height);
@@ -507,10 +490,6 @@
             background: var(--surface-2);
         }
 
-        /* =====================================================
-           CHAT
-        ===================================================== */
-
         .chat {
             flex: 1;
             min-height: 0;
@@ -593,17 +572,12 @@
             transform: scale(.97);
         }
 
-        /* =====================================================
-           MESSAGES
-        ===================================================== */
-
         .message {
             display: flex;
             flex-direction: column;
             gap: 6px;
             margin-bottom: 22px;
-            animation:
-                messageAppear .2s ease;
+            animation: messageAppear .2s ease;
         }
 
         @keyframes messageAppear {
@@ -660,28 +634,13 @@
             background: rgba(31, 41, 55, .94);
         }
 
-        .message-bubble p {
-            margin-bottom: 9px;
-        }
-
-        .message-bubble p:last-child {
-            margin-bottom: 0;
-        }
-
-        .message-bubble strong {
-            font-weight: 700;
-        }
-
         .message-bubble code {
             direction: ltr;
             display: inline-block;
             padding: 2px 6px;
             border-radius: 5px;
             background: var(--surface-2);
-            font-family:
-                Consolas,
-                "Courier New",
-                monospace;
+            font-family: Consolas, "Courier New", monospace;
             font-size: .9em;
         }
 
@@ -695,10 +654,7 @@
             border-radius: 10px;
             background: #111827;
             color: #f9fafb;
-            font-family:
-                Consolas,
-                "Courier New",
-                monospace;
+            font-family: Consolas, "Courier New", monospace;
             font-size: 13px;
             line-height: 1.5;
             position: relative;
@@ -714,10 +670,6 @@
             background: rgba(255, 255, 255, .1);
             color: #ffffff;
             cursor: pointer;
-        }
-
-        .code-copy:hover {
-            background: rgba(255, 255, 255, .2);
         }
 
         .message-image {
@@ -753,10 +705,6 @@
             cursor: zoom-in;
         }
 
-        /* =====================================================
-           MESSAGE ACTIONS
-        ===================================================== */
-
         .message-actions {
             display: flex;
             gap: 7px;
@@ -776,10 +724,6 @@
             align-items: center;
             justify-content: center;
             gap: 6px;
-            transition:
-                background .2s ease,
-                transform .1s ease,
-                border-color .2s ease;
         }
 
         .message-action:hover {
@@ -791,11 +735,6 @@
             color: var(--danger);
         }
 
-        .message-action.stop-reading:hover {
-            border-color: var(--danger);
-            background: rgba(239, 68, 68, .08);
-        }
-
         .message-action .icon {
             width: 17px;
             height: 17px;
@@ -804,10 +743,6 @@
         .message-action-label {
             font-size: 12px;
         }
-
-        /* =====================================================
-           TYPING
-        ===================================================== */
 
         .typing {
             display: none;
@@ -854,10 +789,6 @@
                 transform: translateY(-5px);
             }
         }
-
-        /* =====================================================
-           COMPOSER
-        ===================================================== */
 
         .composer-area {
             flex-shrink: 0;
@@ -974,10 +905,6 @@
             display: flex;
         }
 
-        /* =====================================================
-           IMAGE
-        ===================================================== */
-
         #imageInput,
         #backgroundInput {
             display: none;
@@ -1022,10 +949,6 @@
                 0 0 0 3px var(--primary-soft);
         }
 
-        /* =====================================================
-           TOAST
-        ===================================================== */
-
         .toast-container {
             position: fixed;
             right: 20px;
@@ -1047,33 +970,7 @@
             box-shadow:
                 0 10px 30px rgba(0, 0, 0, .18);
             font-size: 13px;
-            animation:
-                toastIn .25s ease,
-                toastOut .25s ease 2.75s forwards;
         }
-
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes toastOut {
-            to {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-        }
-
-        /* =====================================================
-           VOICE
-        ===================================================== */
 
         .voice-panel {
             display: none;
@@ -1164,13 +1061,11 @@
         }
 
         .voice-ai.active::before {
-            animation:
-                voicePulse 1.8s infinite;
+            animation: voicePulse 1.8s infinite;
         }
 
         .voice-ai.active::after {
-            animation:
-                voicePulse 1.8s infinite .4s;
+            animation: voicePulse 1.8s infinite .4s;
         }
 
         @keyframes voicePulse {
@@ -1226,16 +1121,10 @@
         @keyframes voiceCore {
             from {
                 transform: scale(.94);
-                box-shadow:
-                    0 0 35px rgba(59, 130, 246, .55),
-                    0 0 70px rgba(37, 99, 235, .25);
             }
 
             to {
                 transform: scale(1.08);
-                box-shadow:
-                    0 0 55px rgba(96, 165, 250, .85),
-                    0 0 120px rgba(37, 99, 235, .45);
             }
         }
 
@@ -1323,10 +1212,6 @@
             font-weight: 600;
         }
 
-        .voice-start:hover {
-            background: #dbeafe;
-        }
-
         .voice-start.recording {
             background: #ef4444;
             color: #ffffff;
@@ -1349,22 +1234,17 @@
             font-size: 22px;
         }
 
-        /* =====================================================
-           BACKGROUND
-        ===================================================== */
-
         .background-info {
             font-size: 12px;
             color: var(--muted);
             margin-top: 4px;
         }
 
-        /* =====================================================
+        /* =========================================================
            MOBILE
-        ===================================================== */
+        ========================================================= */
 
         @media (max-width: 750px) {
-
             :root {
                 --topbar-height: 58px;
             }
@@ -1448,10 +1328,6 @@
                 font-size: 13px;
             }
 
-            .history {
-                overscroll-behavior: contain;
-            }
-
             .history-delete {
                 opacity: 1;
             }
@@ -1463,9 +1339,7 @@
             }
 
             .topbar {
-                padding:
-                    0 10px
-                    0 8px;
+                padding: 0 10px 0 8px;
                 min-height: 58px;
             }
 
@@ -1499,21 +1373,13 @@
             }
 
             .chat {
-                padding:
-                    15px 9px
-                    10px;
+                padding: 15px 9px 10px;
                 -webkit-overflow-scrolling: touch;
-            }
-
-            .chat-inner {
-                max-width: 100%;
-                padding-bottom: 2px;
             }
 
             .welcome {
                 min-height: 48vh;
-                padding:
-                    20px 8px;
+                padding: 20px 8px;
             }
 
             .welcome-logo {
@@ -1583,11 +1449,6 @@
                 display: none;
             }
 
-            .message-action .icon {
-                width: 15px;
-                height: 15px;
-            }
-
             .typing {
                 font-size: 11px;
                 margin-bottom: 14px;
@@ -1602,8 +1463,6 @@
             .input-box {
                 padding: 8px;
                 border-radius: 15px;
-                box-shadow:
-                    0 3px 15px rgba(0, 0, 0, .07);
             }
 
             textarea {
@@ -1615,9 +1474,7 @@
             }
 
             .composer-meta {
-                padding:
-                    0 5px
-                    3px;
+                padding: 0 5px 3px;
                 font-size: 9px;
             }
 
@@ -1636,10 +1493,6 @@
             .send-btn .icon {
                 width: 17px;
                 height: 17px;
-            }
-
-            .image-container {
-                margin-bottom: 7px;
             }
 
             #previewImage {
@@ -1724,12 +1577,7 @@
             }
         }
 
-        /* =====================================================
-           VERY SMALL PHONES
-        ===================================================== */
-
         @media (max-width: 380px) {
-
             .model-logo {
                 display: none;
             }
@@ -1762,12 +1610,7 @@
             }
         }
 
-        /* =====================================================
-           REDUCED MOTION
-        ===================================================== */
-
         @media (prefers-reduced-motion: reduce) {
-
             *,
             *::before,
             *::after {
@@ -1784,14 +1627,9 @@
 
     <div class="app">
 
-        <!-- =====================================================
-             SIDEBAR
-        ===================================================== -->
-
         <aside class="sidebar" id="sidebar">
 
             <div class="sidebar-mobile-header">
-
                 <span class="sidebar-mobile-title">
                     قائمة Aido AI
                 </span>
@@ -1804,17 +1642,14 @@
                 >
                     ×
                 </button>
-
             </div>
 
             <div class="brand">
-
                 <div class="brand-logo">
                     DA
                 </div>
 
                 <div>
-
                     <div class="brand-name">
                         Aido AI
                     </div>
@@ -1822,9 +1657,7 @@
                     <span class="brand-version">
                         AI Assistant
                     </span>
-
                 </div>
-
             </div>
 
             <button
@@ -1832,7 +1665,6 @@
                 id="newChatBtn"
                 type="button"
             >
-
                 <span class="icon">
                     <svg viewBox="0 0 24 24">
                         <path d="M12 5v14"></path>
@@ -1843,7 +1675,6 @@
                 <span>
                     محادثة جديدة
                 </span>
-
             </button>
 
             <div class="sidebar-title">
@@ -1851,7 +1682,6 @@
             </div>
 
             <div class="history-search-wrap">
-
                 <span class="history-search-icon">
                     <svg viewBox="0 0 24 24">
                         <circle
@@ -1871,7 +1701,6 @@
                     aria-label="البحث في المحادثات"
                     autocomplete="off"
                 >
-
             </div>
 
             <div
@@ -1886,7 +1715,6 @@
                     id="exportBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M12 3v12"></path>
@@ -1898,7 +1726,6 @@
                     <span>
                         تصدير المحادثة
                     </span>
-
                 </button>
 
                 <button
@@ -1906,7 +1733,6 @@
                     id="copyChatBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <rect
@@ -1916,6 +1742,7 @@
                                 height="11"
                                 rx="2"
                             ></rect>
+
                             <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
                         </svg>
                     </span>
@@ -1923,7 +1750,6 @@
                     <span>
                         نسخ المحادثة
                     </span>
-
                 </button>
 
                 <button
@@ -1931,7 +1757,6 @@
                     id="themeBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M21 12.8A8.5 8.5 0 1 1 11.2 3A6.7 6.7 0 0 0 21 12.8z"></path>
@@ -1941,7 +1766,6 @@
                     <span id="themeText">
                         الوضع الليلي
                     </span>
-
                 </button>
 
                 <button
@@ -1949,7 +1773,6 @@
                     id="backgroundBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <rect
@@ -1959,11 +1782,13 @@
                                 height="16"
                                 rx="2"
                             ></rect>
+
                             <circle
                                 cx="8.5"
                                 cy="9"
                                 r="1.5"
                             ></circle>
+
                             <path d="M21 15l-5-5L5 20"></path>
                         </svg>
                     </span>
@@ -1971,7 +1796,6 @@
                     <span>
                         خلفية الجهاز
                     </span>
-
                 </button>
 
                 <button
@@ -1979,7 +1803,6 @@
                     id="clearBackgroundBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M4 4l16 16"></path>
@@ -1990,7 +1813,6 @@
                     <span>
                         إزالة الخلفية
                     </span>
-
                 </button>
 
                 <button
@@ -1998,7 +1820,6 @@
                     id="clearBtn"
                     type="button"
                 >
-
                     <span class="icon">
                         <svg viewBox="0 0 24 24">
                             <path d="M3 6h18"></path>
@@ -2012,21 +1833,14 @@
                     <span>
                         مسح المحادثات
                     </span>
-
                 </button>
-
             </div>
-
         </aside>
 
         <div
             class="sidebar-overlay"
             id="sidebarOverlay"
         ></div>
-
-        <!-- =====================================================
-             MAIN
-        ===================================================== -->
 
         <main class="main">
 
@@ -2055,24 +1869,20 @@
                     </div>
 
                     <div class="model-info">
-
                         <div class="model-name">
                             Aido AI
                         </div>
 
                         <div class="model-subtitle">
-                            Gemini AI + OpenRouter + OpenAI
+                            Gemini AI + OpenRouter + Groq + Mistral
                         </div>
-
                     </div>
-
                 </div>
 
                 <div
                     class="status"
                     id="status"
                 >
-
                     <span
                         class="status-dot"
                         id="statusDot"
@@ -2081,14 +1891,8 @@
                     <span id="statusText">
                         متصل
                     </span>
-
                 </div>
-
             </header>
-
-            <!-- =================================================
-                 CHAT
-            ================================================== -->
 
             <section
                 class="chat"
@@ -2150,16 +1954,13 @@
                             >
                                 فكرة مشروع
                             </button>
-
                         </div>
-
                     </div>
 
                     <div
                         class="typing"
                         id="typing"
                     >
-
                         <span>
                             Aido AI يكتب
                         </span>
@@ -2169,16 +1970,9 @@
                             <span></span>
                             <span></span>
                         </span>
-
                     </div>
-
                 </div>
-
             </section>
-
-            <!-- =================================================
-                 COMPOSER
-            ================================================== -->
 
             <div class="composer-area">
 
@@ -2196,7 +1990,6 @@
                             class="image-container"
                             id="imageContainer"
                         >
-
                             <img
                                 id="previewImage"
                                 src=""
@@ -2211,7 +2004,6 @@
                             >
                                 ×
                             </button>
-
                         </div>
 
                         <input
@@ -2232,16 +2024,12 @@
                         ></textarea>
 
                         <div class="composer-meta">
-
                             <span id="characterCount">
                                 0 / 4000
                             </span>
-
                         </div>
 
                         <div class="tools">
-
-                            <!-- صورة -->
 
                             <button
                                 type="button"
@@ -2250,7 +2038,6 @@
                                 title="إضافة صورة"
                                 aria-label="إضافة صورة"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <rect
                                         x="3"
@@ -2268,10 +2055,7 @@
 
                                     <path d="M21 15l-5-5L5 20"></path>
                                 </svg>
-
                             </button>
-
-                            <!-- تحويل الكلام إلى نص -->
 
                             <button
                                 type="button"
@@ -2280,7 +2064,6 @@
                                 title="تحويل الكلام إلى نص"
                                 aria-label="تحويل الكلام إلى نص"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <rect
                                         x="9"
@@ -2294,10 +2077,7 @@
                                     <path d="M12 18v3"></path>
                                     <path d="M8 21h8"></path>
                                 </svg>
-
                             </button>
-
-                            <!-- المحادثة الصوتية -->
 
                             <button
                                 type="button"
@@ -2306,7 +2086,6 @@
                                 title="المحادثة الصوتية"
                                 aria-label="المحادثة الصوتية"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <path d="M12 2v20"></path>
                                     <path d="M5 9v6"></path>
@@ -2314,10 +2093,7 @@
                                     <path d="M8 6v12"></path>
                                     <path d="M16 6v12"></path>
                                 </svg>
-
                             </button>
-
-                            <!-- قراءة آخر إجابة -->
 
                             <button
                                 type="button"
@@ -2326,16 +2102,12 @@
                                 title="قراءة آخر إجابة"
                                 aria-label="قراءة آخر إجابة"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <path d="M11 5L6 9H3v6h3l5 4z"></path>
                                     <path d="M15 9a4 4 0 0 1 0 6"></path>
                                     <path d="M18 6a8 8 0 0 1 0 12"></path>
                                 </svg>
-
                             </button>
-
-                            <!-- إيقاف القراءة -->
 
                             <button
                                 type="button"
@@ -2345,7 +2117,6 @@
                                 aria-label="إيقاف القراءة"
                                 style="display:none;"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <rect
                                         x="6"
@@ -2355,10 +2126,7 @@
                                         rx="2"
                                     ></rect>
                                 </svg>
-
                             </button>
-
-                            <!-- إيقاف الطلب -->
 
                             <button
                                 type="button"
@@ -2367,7 +2135,6 @@
                                 title="إيقاف الطلب"
                                 aria-label="إيقاف الطلب"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <rect
                                         x="6"
@@ -2377,10 +2144,7 @@
                                         rx="2"
                                     ></rect>
                                 </svg>
-
                             </button>
-
-                            <!-- إرسال -->
 
                             <button
                                 type="submit"
@@ -2389,29 +2153,17 @@
                                 title="إرسال"
                                 aria-label="إرسال"
                             >
-
                                 <svg viewBox="0 0 24 24">
                                     <path d="M22 2L11 13"></path>
                                     <path d="M22 2l-7 20-4-9-9-4z"></path>
                                 </svg>
-
                             </button>
-
                         </div>
-
                     </div>
-
                 </form>
-
             </div>
-
         </main>
-
     </div>
-
-    <!-- =========================================================
-         BACKGROUND INPUT
-    ========================================================== -->
 
     <input
         type="file"
@@ -2419,24 +2171,15 @@
         accept="image/*"
     >
 
-    <!-- =========================================================
-         TOAST
-    ========================================================== -->
-
     <div
         class="toast-container"
         id="toastContainer"
     ></div>
 
-    <!-- =========================================================
-         VOICE PANEL
-    ========================================================== -->
-
     <div
         class="voice-panel"
         id="voicePanel"
     >
-
         <div class="voice-box">
 
             <button
@@ -2461,22 +2204,18 @@
                 class="voice-ai"
                 id="voiceAI"
             >
-
                 <div class="voice-waves">
-
                     <span class="voice-wave"></span>
                     <span class="voice-wave"></span>
                     <span class="voice-wave"></span>
                     <span class="voice-wave"></span>
                     <span class="voice-wave"></span>
                     <span class="voice-wave"></span>
-
                 </div>
 
                 <div class="voice-core">
                     <span>IA</span>
                 </div>
-
             </div>
 
             <div
@@ -2493,13 +2232,11 @@
             >
                 بدء المحادثة
             </button>
-
         </div>
-
     </div>
 
     <!-- =========================================================
-         SERVER ANSWER
+         SERVER DATA
     ========================================================== -->
 
     <div
@@ -2517,6 +2254,15 @@
     >
         {% if generated_image %}
             {{ generated_image }}
+        {% endif %}
+    </div>
+
+    <div
+        id="server-conversation-id"
+        style="display:none;"
+    >
+        {% if conversation_id %}
+            {{ conversation_id }}
         {% endif %}
     </div>
 
@@ -2659,7 +2405,6 @@
         const suggestions =
             document.querySelectorAll(".suggestion");
 
-
         /* =========================================================
            STATE
         ========================================================= */
@@ -2678,7 +2423,7 @@
         const MAX_MESSAGE_LENGTH = 4000;
 
         const STORAGE_CONVERSATIONS =
-            "aido_conversations_v3";
+            "aido_conversations_v4";
 
         const STORAGE_THEME =
             "aido_theme";
@@ -2689,13 +2434,11 @@
         const STORAGE_CURRENT =
             "aido_current_conversation";
 
-
         /* =========================================================
            TOAST
         ========================================================= */
 
         function showToast(message) {
-
             if (!message) {
                 return;
             }
@@ -2703,73 +2446,50 @@
             const toast =
                 document.createElement("div");
 
-            toast.className =
-                "toast";
+            toast.className = "toast";
+            toast.textContent = message;
 
-            toast.textContent =
-                message;
-
-            toastContainer.appendChild(
-                toast
-            );
+            toastContainer.appendChild(toast);
 
             setTimeout(
                 function () {
-
                     if (toast.parentNode) {
                         toast.remove();
                     }
-
                 },
                 3100
             );
         }
-
 
         /* =========================================================
            MOBILE SIDEBAR
         ========================================================= */
 
         function openSidebar() {
-
             sidebar.classList.add("open");
-
-            sidebarOverlay.style.display =
-                "block";
+            sidebarOverlay.style.display = "block";
 
             requestAnimationFrame(
                 function () {
-
-                    sidebarOverlay.style.opacity =
-                        "1";
-
+                    sidebarOverlay.style.opacity = "1";
                 }
             );
         }
 
         function closeSidebar() {
-
-            sidebar.classList.remove(
-                "open"
-            );
-
-            sidebarOverlay.style.opacity =
-                "0";
+            sidebar.classList.remove("open");
+            sidebarOverlay.style.opacity = "0";
 
             setTimeout(
                 function () {
-
                     if (
                         !sidebar.classList.contains(
                             "open"
                         )
                     ) {
-
                         sidebarOverlay.style.display =
                             "none";
-
                     }
-
                 },
                 220
             );
@@ -2790,15 +2510,12 @@
             closeSidebar
         );
 
-
         /* =========================================================
            STORAGE
         ========================================================= */
 
         function loadConversations() {
-
             try {
-
                 const saved =
                     localStorage.getItem(
                         STORAGE_CONVERSATIONS
@@ -2809,12 +2526,14 @@
                         ? JSON.parse(saved)
                         : [];
 
-                if (!Array.isArray(conversations)) {
+                if (
+                    !Array.isArray(
+                        conversations
+                    )
+                ) {
                     conversations = [];
                 }
-
             } catch (error) {
-
                 console.error(
                     "Conversation load error:",
                     error
@@ -2825,18 +2544,14 @@
         }
 
         function saveConversations() {
-
             try {
-
                 localStorage.setItem(
                     STORAGE_CONVERSATIONS,
                     JSON.stringify(
                         conversations
                     )
                 );
-
             } catch (error) {
-
                 console.error(
                     "Conversation save error:",
                     error
@@ -2848,13 +2563,11 @@
             }
         }
 
-
         /* =========================================================
            CURRENT CONVERSATION
         ========================================================= */
 
         function createConversation() {
-
             return {
                 id:
                     "chat_" +
@@ -2875,7 +2588,6 @@
         }
 
         function saveCurrentConversation() {
-
             if (
                 !currentConversation ||
                 !currentConversation.messages.length
@@ -2886,12 +2598,10 @@
             const existingIndex =
                 conversations.findIndex(
                     function (item) {
-
                         return (
                             item.id ===
                             currentConversation.id
                         );
-
                     }
                 );
 
@@ -2899,39 +2609,29 @@
                 new Date().toISOString();
 
             if (existingIndex >= 0) {
-
                 conversations[existingIndex] =
                     currentConversation;
-
             } else {
-
                 conversations.unshift(
                     currentConversation
                 );
             }
 
             if (conversations.length > 50) {
-
                 conversations =
-                    conversations.slice(
-                        0,
-                        50
-                    );
+                    conversations.slice(0, 50);
             }
 
             saveConversations();
 
             try {
-
                 localStorage.setItem(
                     STORAGE_CURRENT,
                     JSON.stringify(
                         currentConversation
                     )
                 );
-
             } catch (error) {
-
                 console.debug(
                     "Current conversation save failed."
                 );
@@ -2945,27 +2645,16 @@
             text,
             image = null
         ) {
-
             if (!currentConversation) {
-
                 currentConversation =
                     createConversation();
             }
 
             currentConversation.messages.push({
-
-                role:
-                    role,
-
-                text:
-                    text || "",
-
-                image:
-                    image || null,
-
-                date:
-                    new Date().toISOString()
-
+                role: role,
+                text: text || "",
+                image: image || null,
+                date: new Date().toISOString()
             });
 
             if (
@@ -2973,7 +2662,6 @@
                     "محادثة جديدة" &&
                 role === "user"
             ) {
-
                 currentConversation.title =
                     text
                         ? text.slice(0, 60)
@@ -2983,15 +2671,12 @@
             saveCurrentConversation();
         }
 
-
         /* =========================================================
            THEME
         ========================================================= */
 
         function loadTheme() {
-
             try {
-
                 const savedTheme =
                     localStorage.getItem(
                         STORAGE_THEME
@@ -3009,9 +2694,7 @@
                     dark
                         ? "الوضع النهاري"
                         : "الوضع الليلي";
-
             } catch (error) {
-
                 console.error(
                     "Theme load error:",
                     error
@@ -3022,23 +2705,19 @@
         themeBtn.addEventListener(
             "click",
             function () {
-
                 const dark =
                     document.body.classList.toggle(
                         "dark"
                     );
 
                 try {
-
                     localStorage.setItem(
                         STORAGE_THEME,
                         dark
                             ? "dark"
                             : "light"
                     );
-
                 } catch (error) {
-
                     console.error(
                         "Theme save error:",
                         error
@@ -3058,15 +2737,12 @@
             }
         );
 
-
         /* =========================================================
            BACKGROUND
         ========================================================= */
 
         function loadBackground() {
-
             try {
-
                 const saved =
                     localStorage.getItem(
                         STORAGE_BACKGROUND
@@ -3084,9 +2760,7 @@
                 document.body.classList.add(
                     "has-background"
                 );
-
             } catch (error) {
-
                 console.error(
                     "Background load error:",
                     error
@@ -3097,16 +2771,13 @@
         backgroundBtn.addEventListener(
             "click",
             function () {
-
                 backgroundInput.click();
-
             }
         );
 
         backgroundInput.addEventListener(
             "change",
             function () {
-
                 const file =
                     backgroundInput.files &&
                     backgroundInput.files[0];
@@ -3115,15 +2786,16 @@
                     return;
                 }
 
-                if (!file.type.startsWith("image/")) {
-
+                if (
+                    !file.type.startsWith(
+                        "image/"
+                    )
+                ) {
                     showToast(
                         "الملف المختار ليس صورة."
                     );
 
-                    backgroundInput.value =
-                        "";
-
+                    backgroundInput.value = "";
                     return;
                 }
 
@@ -3132,7 +2804,6 @@
 
                 reader.onload =
                     function (event) {
-
                         const imageData =
                             event.target.result;
 
@@ -3146,7 +2817,6 @@
                         );
 
                         try {
-
                             localStorage.setItem(
                                 STORAGE_BACKGROUND,
                                 imageData
@@ -3155,9 +2825,7 @@
                             showToast(
                                 "تم تغيير الخلفية."
                             );
-
                         } catch (error) {
-
                             showToast(
                                 "الصورة كبيرة جدًا للحفظ."
                             );
@@ -3166,7 +2834,6 @@
 
                 reader.onerror =
                     function () {
-
                         showToast(
                             "تعذر قراءة صورة الخلفية."
                         );
@@ -3179,7 +2846,6 @@
         clearBackgroundBtn.addEventListener(
             "click",
             function () {
-
                 document.documentElement.style.setProperty(
                     "--custom-background",
                     "none"
@@ -3190,13 +2856,10 @@
                 );
 
                 try {
-
                     localStorage.removeItem(
                         STORAGE_BACKGROUND
                     );
-
                 } catch (error) {
-
                     console.debug(
                         "Background clear failed."
                     );
@@ -3208,7 +2871,6 @@
             }
         );
 
-
         /* =========================================================
            IMAGE
         ========================================================= */
@@ -3216,16 +2878,13 @@
         imageBtn.addEventListener(
             "click",
             function () {
-
                 imageInput.click();
-
             }
         );
 
         imageInput.addEventListener(
             "change",
             function () {
-
                 const file =
                     imageInput.files &&
                     imageInput.files[0];
@@ -3234,30 +2893,27 @@
                     return;
                 }
 
-                if (!file.type.startsWith("image/")) {
-
+                if (
+                    !file.type.startsWith(
+                        "image/"
+                    )
+                ) {
                     showToast(
                         "الملف المختار ليس صورة."
                     );
 
-                    imageInput.value =
-                        "";
-
-                    selectedImage =
-                        null;
-
+                    imageInput.value = "";
+                    selectedImage = null;
                     return;
                 }
 
-                selectedImage =
-                    file;
+                selectedImage = file;
 
                 const reader =
                     new FileReader();
 
                 reader.onload =
                     function (event) {
-
                         previewImage.src =
                             event.target.result;
 
@@ -3272,12 +2928,8 @@
 
                 reader.onerror =
                     function () {
-
-                        selectedImage =
-                            null;
-
-                        imageInput.value =
-                            "";
+                        selectedImage = null;
+                        imageInput.value = "";
 
                         showToast(
                             "تعذر قراءة الصورة."
@@ -3291,22 +2943,15 @@
         removeImage.addEventListener(
             "click",
             function () {
-
-                selectedImage =
-                    null;
-
-                imageInput.value =
-                    "";
-
-                previewImage.src =
-                    "";
+                selectedImage = null;
+                imageInput.value = "";
+                previewImage.src = "";
 
                 imageContainer.classList.remove(
                     "show"
                 );
             }
         );
-
 
         /* =========================================================
            DRAG AND DROP IMAGE
@@ -3317,11 +2962,9 @@
             "dragover"
         ].forEach(
             function (eventName) {
-
                 inputBox.addEventListener(
                     eventName,
                     function (event) {
-
                         event.preventDefault();
 
                         document.body.classList.add(
@@ -3337,11 +2980,9 @@
             "drop"
         ].forEach(
             function (eventName) {
-
                 inputBox.addEventListener(
                     eventName,
                     function (event) {
-
                         event.preventDefault();
 
                         document.body.classList.remove(
@@ -3355,19 +2996,23 @@
         inputBox.addEventListener(
             "drop",
             function (event) {
-
                 const files =
                     event.dataTransfer.files;
 
-                if (!files || !files.length) {
+                if (
+                    !files ||
+                    !files.length
+                ) {
                     return;
                 }
 
-                const file =
-                    files[0];
+                const file = files[0];
 
-                if (!file.type.startsWith("image/")) {
-
+                if (
+                    !file.type.startsWith(
+                        "image/"
+                    )
+                ) {
                     showToast(
                         "يمكن إسقاط الصور فقط."
                     );
@@ -3375,15 +3020,13 @@
                     return;
                 }
 
-                selectedImage =
-                    file;
+                selectedImage = file;
 
                 const reader =
                     new FileReader();
 
                 reader.onload =
                     function (e) {
-
                         previewImage.src =
                             e.target.result;
 
@@ -3400,15 +3043,12 @@
             }
         );
 
-
         /* =========================================================
            TEXTAREA
         ========================================================= */
 
         function resizeTextarea() {
-
-            questionInput.style.height =
-                "auto";
+            questionInput.style.height = "auto";
 
             const height =
                 Math.min(
@@ -3426,7 +3066,6 @@
         }
 
         function updateCharacterCount() {
-
             const length =
                 questionInput.value.length;
 
@@ -3442,12 +3081,10 @@
         questionInput.addEventListener(
             "input",
             function () {
-
                 if (
                     questionInput.value.length >
                     MAX_MESSAGE_LENGTH
                 ) {
-
                     questionInput.value =
                         questionInput.value.slice(
                             0,
@@ -3460,18 +3097,15 @@
             }
         );
 
-
         /* =========================================================
            SUGGESTIONS
         ========================================================= */
 
         suggestions.forEach(
             function (button) {
-
                 button.addEventListener(
                     "click",
                     function () {
-
                         questionInput.value =
                             button.dataset.prompt ||
                             "";
@@ -3485,7 +3119,6 @@
             }
         );
 
-
         /* =========================================================
            ENTER
         ========================================================= */
@@ -3493,43 +3126,34 @@
         questionInput.addEventListener(
             "keydown",
             function (event) {
-
                 if (
                     event.key === "Enter" &&
                     !event.shiftKey
                 ) {
-
                     event.preventDefault();
-
                     chatForm.requestSubmit();
                 }
             }
         );
-
 
         /* =========================================================
            SCROLL
         ========================================================= */
 
         function scrollToBottom() {
-
             requestAnimationFrame(
                 function () {
-
                     chat.scrollTop =
                         chat.scrollHeight;
-
                 }
             );
         }
-
 
         /* =========================================================
            TEXT TO SPEECH
         ========================================================= */
 
         function updateReadingButton() {
-
             stopReadingBtn.style.display =
                 isReading
                     ? "flex"
@@ -3544,16 +3168,13 @@
         function stopReading(
             showMessage = false
         ) {
-
             if (
                 "speechSynthesis" in window
             ) {
-
                 window.speechSynthesis.cancel();
             }
 
-            isReading =
-                false;
+            isReading = false;
 
             voiceAI.classList.remove(
                 "active"
@@ -3562,7 +3183,6 @@
             updateReadingButton();
 
             if (showMessage) {
-
                 showToast(
                     "تم إيقاف القراءة."
                 );
@@ -3570,7 +3190,6 @@
         }
 
         function speakText(text) {
-
             if (!text) {
                 return;
             }
@@ -3578,7 +3197,6 @@
             if (
                 !("speechSynthesis" in window)
             ) {
-
                 showToast(
                     "المتصفح لا يدعم القراءة الصوتية."
                 );
@@ -3593,25 +3211,16 @@
                     text
                 );
 
-            utterance.lang =
-                "ar-SA";
+            utterance.lang = "ar-SA";
+            utterance.rate = .95;
+            utterance.pitch = 1;
 
-            utterance.rate =
-                .95;
-
-            utterance.pitch =
-                1;
-
-            isReading =
-                true;
-
+            isReading = true;
             updateReadingButton();
 
             utterance.onstart =
                 function () {
-
-                    isReading =
-                        true;
+                    isReading = true;
 
                     voiceAI.classList.add(
                         "active"
@@ -3622,9 +3231,7 @@
 
             utterance.onend =
                 function () {
-
-                    isReading =
-                        false;
+                    isReading = false;
 
                     voiceAI.classList.remove(
                         "active"
@@ -3635,14 +3242,12 @@
 
             utterance.onerror =
                 function (event) {
-
                     console.error(
                         "Speech synthesis error:",
                         event
                     );
 
-                    isReading =
-                        false;
+                    isReading = false;
 
                     voiceAI.classList.remove(
                         "active"
@@ -3659,9 +3264,7 @@
         voiceBtn2.addEventListener(
             "click",
             function () {
-
                 if (!lastAnswer) {
-
                     showToast(
                         "لا توجد إجابة لقراءتها."
                     );
@@ -3669,29 +3272,23 @@
                     return;
                 }
 
-                speakText(
-                    lastAnswer
-                );
+                speakText(lastAnswer);
             }
         );
 
         stopReadingBtn.addEventListener(
             "click",
             function () {
-
                 stopReading(true);
-
             }
         );
-
 
         /* =========================================================
            SIMPLE MARKDOWN
         ========================================================= */
 
         function escapeHtml(text) {
-
-            return text
+            return String(text)
                 .replace(
                     /&/g,
                     "&amp;"
@@ -3707,7 +3304,6 @@
         }
 
         function formatAIText(text) {
-
             if (!text) {
                 return "";
             }
@@ -3715,14 +3311,12 @@
             let safe =
                 escapeHtml(text);
 
-            const codeBlocks =
-                [];
+            const codeBlocks = [];
 
             safe =
                 safe.replace(
                     /```([\s\S]*?)```/g,
                     function (_, code) {
-
                         const id =
                             "code_" +
                             Math.random()
@@ -3760,7 +3354,6 @@
 
             codeBlocks.forEach(
                 function (block) {
-
                     const html =
                         `<pre><button class="code-copy" type="button" data-code="${encodeURIComponent(block.code)}">⧉</button>${block.code}</pre>`;
 
@@ -3775,7 +3368,6 @@
             return safe;
         }
 
-
         /* =========================================================
            ADD MESSAGE
         ========================================================= */
@@ -3786,7 +3378,6 @@
             imageUrl = null,
             save = true
         ) {
-
             welcome.classList.add(
                 "hidden"
             );
@@ -3826,28 +3417,19 @@
                 "message-bubble";
 
             if (type === "ai") {
-
                 bubble.innerHTML =
                     formatAIText(
                         text || ""
                     );
-
             } else {
-
                 bubble.textContent =
                     text || "";
             }
 
-            message.appendChild(
-                label
-            );
-
-            message.appendChild(
-                bubble
-            );
+            message.appendChild(label);
+            message.appendChild(bubble);
 
             if (imageUrl) {
-
                 const imageWrap =
                     document.createElement(
                         "div"
@@ -3868,21 +3450,18 @@
                         ? "generated-image"
                         : "message-image";
 
-                image.src =
-                    imageUrl;
+                image.src = imageUrl;
 
                 image.alt =
                     type === "ai"
                         ? "الصورة التي أنشأها Aido AI"
                         : "الصورة المرسلة";
 
-                image.loading =
-                    "lazy";
+                image.loading = "lazy";
 
                 image.addEventListener(
                     "error",
                     function () {
-
                         imageWrap.remove();
 
                         showToast(
@@ -3901,7 +3480,6 @@
             }
 
             if (type === "ai") {
-
                 const actions =
                     document.createElement(
                         "div"
@@ -3918,11 +3496,8 @@
                 copyButton.className =
                     "message-action";
 
-                copyButton.type =
-                    "button";
-
-                copyButton.title =
-                    "نسخ الإجابة";
+                copyButton.type = "button";
+                copyButton.title = "نسخ الإجابة";
 
                 copyButton.innerHTML = `
                     <span class="icon">
@@ -3934,11 +3509,9 @@
                                 height="11"
                                 rx="2"
                             ></rect>
-
                             <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"></path>
                         </svg>
                     </span>
-
                     <span class="message-action-label">
                         نسخ
                     </span>
@@ -3947,9 +3520,7 @@
                 copyButton.addEventListener(
                     "click",
                     function () {
-
                         copyText(text);
-
                     }
                 );
 
@@ -3961,11 +3532,8 @@
                 speakButton.className =
                     "message-action";
 
-                speakButton.type =
-                    "button";
-
-                speakButton.title =
-                    "قراءة الإجابة";
+                speakButton.type = "button";
+                speakButton.title = "قراءة الإجابة";
 
                 speakButton.innerHTML = `
                     <span class="icon">
@@ -3975,7 +3543,6 @@
                             <path d="M18 6a8 8 0 0 1 0 12"></path>
                         </svg>
                     </span>
-
                     <span class="message-action-label">
                         قراءة
                     </span>
@@ -3984,13 +3551,8 @@
                 speakButton.addEventListener(
                     "click",
                     function () {
-
-                        lastAnswer =
-                            text || "";
-
-                        speakText(
-                            lastAnswer
-                        );
+                        lastAnswer = text || "";
+                        speakText(lastAnswer);
                     }
                 );
 
@@ -4002,11 +3564,8 @@
                 stopButton.className =
                     "message-action stop-reading";
 
-                stopButton.type =
-                    "button";
-
-                stopButton.title =
-                    "إيقاف القراءة";
+                stopButton.type = "button";
+                stopButton.title = "إيقاف القراءة";
 
                 stopButton.innerHTML = `
                     <span class="icon">
@@ -4020,7 +3579,6 @@
                             ></rect>
                         </svg>
                     </span>
-
                     <span class="message-action-label">
                         إيقاف
                     </span>
@@ -4029,27 +3587,15 @@
                 stopButton.addEventListener(
                     "click",
                     function () {
-
                         stopReading(true);
-
                     }
                 );
 
-                actions.appendChild(
-                    copyButton
-                );
+                actions.appendChild(copyButton);
+                actions.appendChild(speakButton);
+                actions.appendChild(stopButton);
 
-                actions.appendChild(
-                    speakButton
-                );
-
-                actions.appendChild(
-                    stopButton
-                );
-
-                message.appendChild(
-                    actions
-                );
+                message.appendChild(actions);
             }
 
             chatInner.insertBefore(
@@ -4063,11 +3609,9 @@
                 )
                 .forEach(
                     function (button) {
-
                         button.addEventListener(
                             "click",
                             async function () {
-
                                 const code =
                                     decodeURIComponent(
                                         button.dataset.code ||
@@ -4084,28 +3628,20 @@
 
             scrollToBottom();
 
-            if (
-                save &&
-                text
-            ) {
-
+            if (save && text) {
                 addConversationMessage(
                     type === "user"
                         ? "user"
                         : "assistant",
-
                     text,
-
                     imageUrl
                 );
             }
         }
 
-
         document.addEventListener(
             "click",
             function (event) {
-
                 const image =
                     event.target.closest(
                         ".message-image, .generated-image"
@@ -4126,43 +3662,32 @@
             }
         );
 
-
         /* =========================================================
            COPY
         ========================================================= */
 
         async function copyText(text) {
-
             if (!text) {
                 return;
             }
 
             try {
-
                 if (
                     navigator.clipboard &&
                     window.isSecureContext
                 ) {
-
                     await navigator.clipboard.writeText(
                         text
                     );
-
                 } else {
-
                     const textarea =
                         document.createElement(
                             "textarea"
                         );
 
-                    textarea.value =
-                        text;
-
-                    textarea.style.position =
-                        "fixed";
-
-                    textarea.style.opacity =
-                        "0";
+                    textarea.value = text;
+                    textarea.style.position = "fixed";
+                    textarea.style.opacity = "0";
 
                     document.body.appendChild(
                         textarea
@@ -4177,12 +3702,8 @@
                     textarea.remove();
                 }
 
-                showToast(
-                    "تم النسخ."
-                );
-
+                showToast("تم النسخ.");
             } catch (error) {
-
                 console.error(
                     "Copy error:",
                     error
@@ -4194,18 +3715,15 @@
             }
         }
 
-
         /* =========================================================
            COPY CURRENT CHAT
         ========================================================= */
 
         async function copyCurrentChat() {
-
             if (
                 !currentConversation ||
                 !currentConversation.messages.length
             ) {
-
                 showToast(
                     "لا توجد محادثة لنسخها."
                 );
@@ -4213,12 +3731,10 @@
                 return;
             }
 
-            const parts =
-                [];
+            const parts = [];
 
             currentConversation.messages.forEach(
                 function (message) {
-
                     parts.push(
                         (
                             message.role ===
@@ -4244,18 +3760,15 @@
             copyCurrentChat
         );
 
-
         /* =========================================================
            EXPORT
         ========================================================= */
 
         function exportCurrentChat() {
-
             if (
                 !currentConversation ||
                 !currentConversation.messages.length
             ) {
-
                 showToast(
                     "لا توجد محادثة لتصديرها."
                 );
@@ -4263,12 +3776,10 @@
                 return;
             }
 
-            const parts =
-                [];
+            const parts = [];
 
             currentConversation.messages.forEach(
                 function (message) {
-
                     parts.push(
                         (
                             message.role ===
@@ -4285,9 +3796,7 @@
             const content =
                 "Aido AI\n" +
                 "====================\n\n" +
-                parts.join(
-                    "\n\n"
-                ) +
+                parts.join("\n\n") +
                 "\n\n====================\n" +
                 new Date().toLocaleString(
                     "ar-MA"
@@ -4303,36 +3812,22 @@
                 );
 
             const url =
-                URL.createObjectURL(
-                    blob
-                );
+                URL.createObjectURL(blob);
 
             const link =
-                document.createElement(
-                    "a"
-                );
+                document.createElement("a");
 
-            link.href =
-                url;
-
+            link.href = url;
             link.download =
                 "aido-ai-conversation.txt";
 
-            document.body.appendChild(
-                link
-            );
-
+            document.body.appendChild(link);
             link.click();
-
             link.remove();
 
             setTimeout(
                 function () {
-
-                    URL.revokeObjectURL(
-                        url
-                    );
-
+                    URL.revokeObjectURL(url);
                 },
                 1000
             );
@@ -4347,26 +3842,21 @@
             exportCurrentChat
         );
 
-
         /* =========================================================
            TYPING
         ========================================================= */
 
         function setTyping(show) {
-
             typing.classList.toggle(
                 "show",
                 show
             );
 
             if (show) {
-
                 stopRequestBtn.classList.add(
                     "show"
                 );
-
             } else {
-
                 stopRequestBtn.classList.remove(
                     "show"
                 );
@@ -4375,15 +3865,12 @@
             scrollToBottom();
         }
 
-
         /* =========================================================
            ONLINE STATUS
         ========================================================= */
 
         function setOnlineStatus(online) {
-
             if (online) {
-
                 statusText.textContent =
                     "متصل";
 
@@ -4394,9 +3881,7 @@
                 status.classList.remove(
                     "offline"
                 );
-
             } else {
-
                 statusText.textContent =
                     "غير متصل";
 
@@ -4410,7 +3895,6 @@
             }
         }
 
-
         /* =========================================================
            HISTORY DATE
         ========================================================= */
@@ -4418,47 +3902,33 @@
         function formatConversationDate(
             date
         ) {
-
             if (!date) {
                 return "";
             }
 
             try {
-
                 return new Date(
                     date
                 ).toLocaleString(
                     "ar-MA",
                     {
-                        day:
-                            "2-digit",
-
-                        month:
-                            "2-digit",
-
-                        hour:
-                            "2-digit",
-
-                        minute:
-                            "2-digit"
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit"
                     }
                 );
-
             } catch (error) {
-
                 return "";
             }
         }
-
 
         /* =========================================================
            HISTORY
         ========================================================= */
 
         function renderHistory() {
-
-            history.innerHTML =
-                "";
+            history.innerHTML = "";
 
             const search =
                 historySearch.value
@@ -4472,7 +3942,6 @@
                             conversation,
                             index
                         ) {
-
                             return {
                                 conversation,
                                 index
@@ -4481,7 +3950,6 @@
                     )
                     .filter(
                         function (item) {
-
                             if (!search) {
                                 return true;
                             }
@@ -4492,14 +3960,11 @@
 
                             return title
                                 .toLowerCase()
-                                .includes(
-                                    search
-                                );
+                                .includes(search);
                         }
                     );
 
             if (!filtered.length) {
-
                 const empty =
                     document.createElement(
                         "div"
@@ -4513,16 +3978,12 @@
                         ? "لا توجد نتائج."
                         : "لا توجد محادثات محفوظة.";
 
-                history.appendChild(
-                    empty
-                );
-
+                history.appendChild(empty);
                 return;
             }
 
             filtered.forEach(
                 function (item) {
-
                     const conversation =
                         item.conversation;
 
@@ -4570,9 +4031,7 @@
                     deleteButton.className =
                         "history-delete";
 
-                    deleteButton.type =
-                        "button";
-
+                    deleteButton.type = "button";
                     deleteButton.title =
                         "حذف المحادثة";
 
@@ -4587,7 +4046,6 @@
                     deleteButton.addEventListener(
                         "click",
                         function (event) {
-
                             event.stopPropagation();
 
                             deleteConversation(
@@ -4596,14 +4054,8 @@
                         }
                     );
 
-                    historyItem.appendChild(
-                        title
-                    );
-
-                    historyItem.appendChild(
-                        date
-                    );
-
+                    historyItem.appendChild(title);
+                    historyItem.appendChild(date);
                     historyItem.appendChild(
                         deleteButton
                     );
@@ -4611,7 +4063,6 @@
                     historyItem.addEventListener(
                         "click",
                         function () {
-
                             loadConversation(
                                 index
                             );
@@ -4632,13 +4083,11 @@
             renderHistory
         );
 
-
         /* =========================================================
            DELETE CONVERSATION
         ========================================================= */
 
         function deleteConversation(index) {
-
             if (
                 index < 0 ||
                 index >= conversations.length
@@ -4669,7 +4118,6 @@
                 deleted.id ===
                     currentConversation.id
             ) {
-
                 currentConversation =
                     createConversation();
 
@@ -4683,13 +4131,11 @@
             );
         }
 
-
         /* =========================================================
            LOAD CONVERSATION
         ========================================================= */
 
         function loadConversation(index) {
-
             const conversation =
                 conversations[index];
 
@@ -4716,52 +4162,18 @@
                     currentConversation.messages
                 )
             ) {
-
-                currentConversation.messages =
-                    [];
-
-                if (
-                    conversation.question &&
-                    conversation.answer
-                ) {
-
-                    currentConversation.messages = [
-                        {
-                            role:
-                                "user",
-
-                            text:
-                                conversation.question,
-
-                            date:
-                                conversation.date
-                        },
-
-                        {
-                            role:
-                                "assistant",
-
-                            text:
-                                conversation.answer,
-
-                            date:
-                                conversation.date
-                        }
-                    ];
-                }
+                currentConversation.messages = [];
             }
 
             currentConversation.messages.forEach(
                 function (message) {
-
                     addMessage(
                         message.text,
                         message.role ===
                             "user"
                             ? "user"
                             : "ai",
-                        message.image ||
-                            null,
+                        message.image || null,
                         false
                     );
                 }
@@ -4774,7 +4186,6 @@
                 .reverse()
                 .find(
                     function (message) {
-
                         return (
                             message.role ===
                             "assistant"
@@ -4794,7 +4205,6 @@
             );
         }
 
-
         /* =========================================================
            CLEAR CHAT
         ========================================================= */
@@ -4803,7 +4213,6 @@
             showWelcome = true,
             createNew = true
         ) {
-
             stopReading(false);
 
             const messages =
@@ -4813,42 +4222,33 @@
 
             messages.forEach(
                 function (message) {
-
                     message.remove();
-
                 }
             );
 
-            lastAnswer =
-                "";
+            lastAnswer = "";
 
             if (showWelcome) {
-
                 welcome.classList.remove(
                     "hidden"
                 );
             }
 
             if (createNew) {
-
                 currentConversation =
                     createConversation();
 
                 try {
-
                     localStorage.removeItem(
                         STORAGE_CURRENT
                     );
-
                 } catch (error) {
-
                     console.debug(
                         "Current chat clear failed."
                     );
                 }
             }
         }
-
 
         /* =========================================================
            NEW CHAT
@@ -4857,14 +4257,9 @@
         newChatBtn.addEventListener(
             "click",
             function () {
+                clearChat(true, true);
 
-                clearChat(
-                    true,
-                    true
-                );
-
-                questionInput.value =
-                    "";
+                questionInput.value = "";
 
                 resizeTextarea();
                 updateCharacterCount();
@@ -4881,7 +4276,6 @@
             }
         );
 
-
         /* =========================================================
            CLEAR ALL HISTORY
         ========================================================= */
@@ -4889,9 +4283,7 @@
         clearBtn.addEventListener(
             "click",
             function () {
-
                 if (!conversations.length) {
-
                     showToast(
                         "لا توجد محادثات محفوظة."
                     );
@@ -4908,8 +4300,7 @@
                     return;
                 }
 
-                conversations =
-                    [];
+                conversations = [];
 
                 saveConversations();
 
@@ -4929,15 +4320,17 @@
             }
         );
 
-
         /* =========================================================
            SERVER RESPONSE
+           يدعم الآن:
+           - answer
+           - imageUrl
+           - conversationId
         ========================================================= */
 
         async function extractServerAnswer(
             response
         ) {
-
             const html =
                 await response.text();
 
@@ -4960,6 +4353,11 @@
                     "#server-generated-image"
                 );
 
+            const conversationElement =
+                documentData.querySelector(
+                    "#server-conversation-id"
+                );
+
             return {
                 answer:
                     answerElement
@@ -4975,10 +4373,17 @@
                             imageElement.textContent ||
                             ""
                         ).trim()
+                        : "",
+
+                conversationId:
+                    conversationElement
+                        ? (
+                            conversationElement.textContent ||
+                            ""
+                        ).trim()
                         : ""
             };
         }
-
 
         /* =========================================================
            SEND REQUEST
@@ -4988,19 +4393,29 @@
             question,
             imageFile
         ) {
-
             activeController =
                 new AbortController();
 
             const signal =
                 activeController.signal;
 
-            /* -----------------------------------------------------
-               الصورة
-            ----------------------------------------------------- */
+            /* =====================================================
+               معرف المحادثة الحالية
+            ===================================================== */
+
+            const conversationId =
+                currentConversation &&
+                currentConversation.id
+                    ? String(
+                        currentConversation.id
+                    )
+                    : "";
+
+            /* =====================================================
+               IMAGE REQUEST
+            ===================================================== */
 
             if (imageFile) {
-
                 const formData =
                     new FormData();
 
@@ -5015,44 +4430,57 @@
                     imageFile
                 );
 
+                if (conversationId) {
+                    formData.append(
+                        "conversation_id",
+                        conversationId
+                    );
+                }
+
                 const response =
                     await fetch(
                         "/",
                         {
-                            method:
-                                "POST",
-
-                            body:
-                                formData,
-
+                            method: "POST",
+                            body: formData,
                             signal
                         }
                     );
 
                 if (!response.ok) {
-
                     throw new Error(
                         "HTTP " +
                         response.status
                     );
                 }
 
-                return extractServerAnswer(
-                    response
-                );
+                const result =
+                    await extractServerAnswer(
+                        response
+                    );
+
+                if (
+                    result.conversationId &&
+                    currentConversation
+                ) {
+                    currentConversation.id =
+                        result.conversationId;
+
+                    saveCurrentConversation();
+                }
+
+                return result;
             }
 
-
-            /* -----------------------------------------------------
-               النص / إنشاء صورة بدون رفع صورة
-            ----------------------------------------------------- */
+            /* =====================================================
+               TEXT REQUEST
+            ===================================================== */
 
             const response =
                 await fetch(
                     "/api/chat",
                     {
-                        method:
-                            "POST",
+                        method: "POST",
 
                         headers: {
                             "Content-Type":
@@ -5062,7 +4490,10 @@
                         body:
                             JSON.stringify({
                                 message:
-                                    question
+                                    question,
+
+                                conversation_id:
+                                    conversationId
                             }),
 
                         signal
@@ -5070,7 +4501,6 @@
                 );
 
             if (!response.ok) {
-
                 throw new Error(
                     "HTTP " +
                     response.status
@@ -5080,25 +4510,37 @@
             const data =
                 await response.json();
 
+            const returnedConversationId =
+                data &&
+                data.conversation_id
+                    ? String(
+                        data.conversation_id
+                    )
+                    : conversationId;
+
+            if (
+                returnedConversationId &&
+                currentConversation
+            ) {
+                currentConversation.id =
+                    returnedConversationId;
+
+                saveCurrentConversation();
+            }
+
             const answer =
                 data.answer ||
                 data.response ||
                 data.message ||
                 "";
 
-            /* =====================================================
-               التعديل المهم:
-               إذا أعاد الخادم IMAGE_URL:
-               نحوله إلى imageUrl بدل عرضه كنص.
-            ===================================================== */
-
             if (
                 typeof answer === "string" &&
-                answer.startsWith("IMAGE_URL:")
+                answer.startsWith(
+                    "IMAGE_URL:"
+                )
             ) {
-
                 return {
-
                     answer:
                         "تم إنشاء الصورة بناءً على طلبك.",
 
@@ -5107,13 +4549,20 @@
                             .substring(
                                 "IMAGE_URL:".length
                             )
-                            .trim()
+                            .trim(),
+
+                    conversationId:
+                        returnedConversationId
                 };
             }
 
-            return answer;
-        }
+            return {
+                answer: answer,
 
+                conversationId:
+                    returnedConversationId
+            };
+        }
 
         /* =========================================================
            STOP REQUEST
@@ -5122,26 +4571,20 @@
         stopRequestBtn.addEventListener(
             "click",
             function () {
-
                 if (activeController) {
-
                     activeController.abort();
-
-                    activeController =
-                        null;
+                    activeController = null;
                 }
 
                 setTyping(false);
 
-                sendBtn.disabled =
-                    false;
+                sendBtn.disabled = false;
 
                 showToast(
                     "تم إيقاف الطلب."
                 );
             }
         );
-
 
         /* =========================================================
            SEND MESSAGE
@@ -5150,7 +4593,6 @@
         chatForm.addEventListener(
             "submit",
             async function (event) {
-
                 event.preventDefault();
 
                 if (sendBtn.disabled) {
@@ -5164,9 +4606,7 @@
                     !question &&
                     !selectedImage
                 ) {
-
                     questionInput.focus();
-
                     return;
                 }
 
@@ -5175,11 +4615,9 @@
                 const imageFile =
                     selectedImage;
 
-                let imagePreview =
-                    null;
+                let imagePreview = null;
 
                 if (imageFile) {
-
                     imagePreview =
                         URL.createObjectURL(
                             imageFile
@@ -5187,7 +4625,6 @@
                 }
 
                 if (!currentConversation) {
-
                     currentConversation =
                         createConversation();
                 }
@@ -5199,8 +4636,7 @@
                     imagePreview
                 );
 
-                questionInput.value =
-                    "";
+                questionInput.value = "";
 
                 resizeTextarea();
                 updateCharacterCount();
@@ -5209,33 +4645,27 @@
 
                 setTyping(true);
 
-                sendBtn.disabled =
-                    true;
+                sendBtn.disabled = true;
 
                 setOnlineStatus(true);
 
                 try {
-
-                    let result =
+                    const result =
                         await sendToServer(
                             question,
                             imageFile
                         );
 
-                    activeController =
-                        null;
+                    activeController = null;
 
-                    let answer =
-                        "";
-
-                    let generatedImage =
-                        "";
+                    let answer = "";
+                    let generatedImage = "";
 
                     if (
                         result &&
-                        typeof result === "object"
+                        typeof result ===
+                            "object"
                     ) {
-
                         answer =
                             String(
                                 result.answer ||
@@ -5248,8 +4678,24 @@
                                 ""
                             ).trim();
 
-                    } else {
+                        if (
+                            result.conversationId
+                        ) {
+                            if (
+                                !currentConversation
+                            ) {
+                                currentConversation =
+                                    createConversation();
+                            }
 
+                            currentConversation.id =
+                                String(
+                                    result.conversationId
+                                );
+
+                            saveCurrentConversation();
+                        }
+                    } else {
                         answer =
                             String(
                                 result ||
@@ -5258,38 +4704,29 @@
                     }
 
                     if (!answer) {
-
                         answer =
                             imageFile
                                 ? "تم إرسال الصورة، ولكن لم يتم الحصول على نتيجة من الخادم."
                                 : "أنا Aido AI ولم أجد إجابة حاليًا.";
                     }
 
-                    lastAnswer =
-                        answer;
+                    lastAnswer = answer;
 
                     setTyping(false);
 
                     addMessage(
                         answer,
                         "ai",
-                        generatedImage ||
-                            null
+                        generatedImage || null
                     );
 
                     setOnlineStatus(true);
 
                     if (voiceMode) {
-
-                        speakText(
-                            answer
-                        );
+                        speakText(answer);
                     }
-
                 } catch (error) {
-
-                    activeController =
-                        null;
+                    activeController = null;
 
                     console.error(
                         "AIDO AI ERROR:",
@@ -5320,33 +4757,25 @@
                     );
 
                     if (voiceMode) {
-
                         speakText(
                             errorMessage
                         );
                     }
-
                 } finally {
-
-                    sendBtn.disabled =
-                        false;
+                    sendBtn.disabled = false;
 
                     stopRequestBtn.classList.remove(
                         "show"
                     );
 
-                    activeController =
-                        null;
+                    activeController = null;
 
                     if (imagePreview) {
-
                         setTimeout(
                             function () {
-
                                 URL.revokeObjectURL(
                                     imagePreview
                                 );
-
                             },
                             1000
                         );
@@ -5355,13 +4784,11 @@
             }
         );
 
-
         /* =========================================================
            SPEECH RECOGNITION
         ========================================================= */
 
         function setupSpeechRecognition() {
-
             const SpeechRecognition =
                 window.SpeechRecognition ||
                 window.webkitSpeechRecognition;
@@ -5371,31 +4798,22 @@
             }
 
             try {
-
                 recognition =
                     new SpeechRecognition();
 
-                recognition.lang =
-                    "ar-MA";
-
-                recognition.continuous =
-                    false;
-
-                recognition.interimResults =
-                    true;
+                recognition.lang = "ar-MA";
+                recognition.continuous = false;
+                recognition.interimResults = true;
 
                 recognition.onstart =
                     function () {
-
-                        isRecording =
-                            true;
+                        isRecording = true;
 
                         micBtn.classList.add(
                             "active"
                         );
 
                         if (voiceMode) {
-
                             voiceAI.classList.add(
                                 "active"
                             );
@@ -5407,9 +4825,7 @@
 
                 recognition.onresult =
                     function (event) {
-
-                        let transcript =
-                            "";
+                        let transcript = "";
 
                         for (
                             let i =
@@ -5420,7 +4836,6 @@
 
                             i++
                         ) {
-
                             transcript +=
                                 event.results[i][0]
                                     .transcript;
@@ -5435,14 +4850,12 @@
 
                 recognition.onerror =
                     function (event) {
-
                         console.error(
                             "Speech recognition error:",
                             event.error
                         );
 
-                        isRecording =
-                            false;
+                        isRecording = false;
 
                         micBtn.classList.remove(
                             "active"
@@ -5453,7 +4866,6 @@
                         );
 
                         if (voiceMode) {
-
                             voiceStatus.textContent =
                                 "حدث خطأ أثناء الاستماع.";
 
@@ -5468,16 +4880,13 @@
 
                 recognition.onend =
                     function () {
-
-                        isRecording =
-                            false;
+                        isRecording = false;
 
                         micBtn.classList.remove(
                             "active"
                         );
 
                         if (voiceMode) {
-
                             voiceAI.classList.remove(
                                 "active"
                             );
@@ -5492,26 +4901,20 @@
                             if (
                                 questionInput.value.trim()
                             ) {
-
                                 voiceStatus.textContent =
                                     "جاري إرسال كلامك إلى Aido AI...";
 
                                 chatForm.requestSubmit();
-
                             } else {
-
                                 voiceStatus.textContent =
                                     "لم ألتقط كلامًا واضحًا.";
 
-                                voiceMode =
-                                    false;
+                                voiceMode = false;
 
                                 voiceStart.textContent =
                                     "بدء المحادثة";
                             }
-
                         } else {
-
                             voiceAI.classList.remove(
                                 "active"
                             );
@@ -5519,16 +4922,13 @@
                     };
 
                 return true;
-
             } catch (error) {
-
                 console.error(
                     "Speech setup error:",
                     error
                 );
 
-                recognition =
-                    null;
+                recognition = null;
 
                 return false;
             }
@@ -5537,7 +4937,6 @@
         speechAvailable =
             setupSpeechRecognition();
 
-
         /* =========================================================
            MICROPHONE
         ========================================================= */
@@ -5545,9 +4944,7 @@
         micBtn.addEventListener(
             "click",
             function () {
-
                 if (!speechAvailable) {
-
                     showToast(
                         "المتصفح لا يدعم تحويل الكلام إلى نص."
                     );
@@ -5560,20 +4957,13 @@
                 }
 
                 if (isRecording) {
-
                     recognition.stop();
-
                 } else {
-
-                    voiceMode =
-                        false;
+                    voiceMode = false;
 
                     try {
-
                         recognition.start();
-
                     } catch (error) {
-
                         console.error(
                             "Recognition start error:",
                             error
@@ -5583,7 +4973,6 @@
             }
         );
 
-
         /* =========================================================
            VOICE PANEL
         ========================================================= */
@@ -5591,9 +4980,7 @@
         voiceChatBtn.addEventListener(
             "click",
             function () {
-
                 if (!speechAvailable) {
-
                     showToast(
                         "المتصفح لا يدعم المحادثة الصوتية."
                     );
@@ -5613,9 +5000,7 @@
         voiceClose.addEventListener(
             "click",
             function () {
-
                 stopVoiceChat();
-
                 voicePanel.classList.remove(
                     "show"
                 );
@@ -5625,12 +5010,10 @@
         voicePanel.addEventListener(
             "click",
             function (event) {
-
                 if (
                     event.target ===
                     voicePanel
                 ) {
-
                     stopVoiceChat();
 
                     voicePanel.classList.remove(
@@ -5640,7 +5023,6 @@
             }
         );
 
-
         /* =========================================================
            START VOICE
         ========================================================= */
@@ -5648,9 +5030,7 @@
         voiceStart.addEventListener(
             "click",
             function () {
-
                 if (!speechAvailable) {
-
                     showToast(
                         "المتصفح لا يدعم المحادثة الصوتية."
                     );
@@ -5663,19 +5043,15 @@
                 }
 
                 if (isRecording) {
-
                     stopVoiceChat();
-
                     return;
                 }
 
                 stopReading(false);
 
-                voiceMode =
-                    true;
+                voiceMode = true;
 
-                questionInput.value =
-                    "";
+                questionInput.value = "";
 
                 resizeTextarea();
                 updateCharacterCount();
@@ -5695,18 +5071,14 @@
                 );
 
                 try {
-
                     recognition.start();
-
                 } catch (error) {
-
                     console.error(
                         "Voice start error:",
                         error
                     );
 
-                    voiceMode =
-                        false;
+                    voiceMode = false;
 
                     voiceAI.classList.remove(
                         "active"
@@ -5725,31 +5097,22 @@
             }
         );
 
-
         /* =========================================================
            STOP VOICE
         ========================================================= */
 
         function stopVoiceChat() {
-
-            voiceMode =
-                false;
-
-            isRecording =
-                false;
+            voiceMode = false;
+            isRecording = false;
 
             voiceAI.classList.remove(
                 "active"
             );
 
             if (recognition) {
-
                 try {
-
                     recognition.stop();
-
                 } catch (error) {
-
                     console.debug(
                         "Recognition already stopped."
                     );
@@ -5771,7 +5134,6 @@
                 "اضغط لبدء المحادثة";
         }
 
-
         /* =========================================================
            KEYBOARD SHORTCUTS
         ========================================================= */
@@ -5779,18 +5141,14 @@
         document.addEventListener(
             "keydown",
             function (event) {
-
                 if (
                     (event.ctrlKey ||
                         event.metaKey) &&
                     event.key.toLowerCase() ===
                         "k"
                 ) {
-
                     event.preventDefault();
-
                     questionInput.focus();
-
                     return;
                 }
 
@@ -5800,7 +5158,6 @@
                     event.key.toLowerCase() ===
                         "n"
                 ) {
-
                     event.preventDefault();
 
                     clearChat(
@@ -5808,8 +5165,7 @@
                         true
                     );
 
-                    questionInput.value =
-                        "";
+                    questionInput.value = "";
 
                     resizeTextarea();
                     updateCharacterCount();
@@ -5820,9 +5176,7 @@
                 }
 
                 if (event.key === "Escape") {
-
                     stopReading(false);
-
                     stopVoiceChat();
 
                     voicePanel.classList.remove(
@@ -5834,7 +5188,6 @@
             }
         );
 
-
         /* =========================================================
            PAGE VISIBILITY
         ========================================================= */
@@ -5842,14 +5195,11 @@
         document.addEventListener(
             "visibilitychange",
             function () {
-
                 if (document.hidden) {
-
                     stopReading(false);
                 }
             }
         );
-
 
         /* =========================================================
            WINDOW RESIZE
@@ -5858,12 +5208,9 @@
         window.addEventListener(
             "resize",
             function () {
-
                 resizeTextarea();
-
             }
         );
-
 
         /* =========================================================
            ONLINE / OFFLINE
@@ -5872,47 +5219,36 @@
         window.addEventListener(
             "online",
             function () {
-
                 setOnlineStatus(true);
-
             }
         );
 
         window.addEventListener(
             "offline",
             function () {
-
                 setOnlineStatus(false);
-
             }
         );
-
 
         /* =========================================================
            INITIALIZE
         ========================================================= */
 
         loadConversations();
-
         loadTheme();
-
         loadBackground();
-
         renderHistory();
 
         currentConversation =
             createConversation();
 
         resizeTextarea();
-
         updateCharacterCount();
-
         updateReadingButton();
 
         setOnlineStatus(
             navigator.onLine
         );
-
     </script>
 </body>
 </html>

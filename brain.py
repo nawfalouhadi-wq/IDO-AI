@@ -9,6 +9,13 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai.types import HttpOptions
 
+from memory import (
+    add_conversation_message,
+    build_conversation_context,
+    learn
+)
+
+
 try:
     from mistralai.client import Mistral
     from mistralai.client.models import ToolFileChunk
@@ -45,6 +52,18 @@ OPENROUTER_TIMEOUT = (
 
 
 # =========================================================
+# إعدادات سياق المحادثة
+# =========================================================
+
+CONVERSATION_CONTEXT_LIMIT = int(
+    os.getenv(
+        "CONVERSATION_CONTEXT_LIMIT",
+        "12"
+    )
+)
+
+
+# =========================================================
 # مجلد الصور الناتجة
 # =========================================================
 
@@ -56,11 +75,14 @@ GENERATED_IMAGE_DIR = Path(
 )
 
 try:
+
     GENERATED_IMAGE_DIR.mkdir(
         parents=True,
         exist_ok=True
     )
+
 except Exception as e:
+
     print(
         "GENERATED IMAGE DIRECTORY ERROR:",
         e
@@ -285,11 +307,6 @@ else:
 # =========================================================
 # Mistral Image Generation Agent
 # =========================================================
-#
-# يبقى Agent موجودًا للعمليات التي تعتمد عليه،
-# لكن توليد الصور نفسه أصبح مباشرًا داخل generate_image().
-#
-# =========================================================
 
 mistral_image_agent = None
 
@@ -400,42 +417,16 @@ def normalize_text(text):
         )
 
     text = (
-        text.replace(
-            "ـ",
-            ""
-        )
-        .replace(
-            "ً",
-            ""
-        )
-        .replace(
-            "ٌ",
-            ""
-        )
-        .replace(
-            "ٍ",
-            ""
-        )
-        .replace(
-            "َ",
-            ""
-        )
-        .replace(
-            "ُ",
-            ""
-        )
-        .replace(
-            "ِ",
-            ""
-        )
-        .replace(
-            "ّ",
-            ""
-        )
-        .replace(
-            "ْ",
-            ""
-        )
+        text
+        .replace("ـ", "")
+        .replace("ً", "")
+        .replace("ٌ", "")
+        .replace("ٍ", "")
+        .replace("َ", "")
+        .replace("ُ", "")
+        .replace("ِ", "")
+        .replace("ّ", "")
+        .replace("ْ", "")
     )
 
     while "  " in text:
@@ -446,6 +437,125 @@ def normalize_text(text):
         )
 
     return text
+
+
+# =========================================================
+# بناء رسالة تحتوي على سياق المحادثة
+# =========================================================
+
+def build_context_message(
+    message,
+    conversation_id=None,
+    context_limit=CONVERSATION_CONTEXT_LIMIT
+):
+
+    message = str(
+        message or ""
+    ).strip()
+
+    if not message:
+        return ""
+
+    if not conversation_id:
+
+        return message
+
+    try:
+
+        context = (
+            build_conversation_context(
+                conversation_id,
+                context_limit
+            )
+        )
+
+    except Exception as e:
+
+        print(
+            "CONVERSATION CONTEXT ERROR:",
+            e
+        )
+
+        context = ""
+
+    if not context:
+
+        return message
+
+    return f"""
+أنت Aido AI، مساعد ذكاء اصطناعي.
+
+لديك سياق المحادثة السابقة أدناه.
+استخدمه لفهم الأسئلة المختصرة والأسئلة التي
+تعتمد على الرسائل السابقة.
+
+سياق المحادثة:
+----------------
+{context}
+----------------
+
+الرسالة الجديدة:
+{message}
+
+أجب عن الرسالة الجديدة اعتمادًا على السياق
+عندما يكون ذلك مفيدًا.
+لا تكرر سياق المحادثة كاملًا للمستخدم.
+""".strip()
+
+
+# =========================================================
+# حفظ إجابة المحادثة
+# =========================================================
+
+def save_ai_response(
+    question,
+    answer,
+    conversation_id=None,
+    source="ai"
+):
+
+    if not question or not answer:
+        return
+
+    try:
+
+        # =================================================
+        # حفظ السؤال والجواب في الذاكرة العامة
+        # =================================================
+
+        learn(
+            question,
+            answer,
+            source=source
+        )
+
+    except Exception as e:
+
+        print(
+            "MEMORY LEARN ERROR:",
+            e
+        )
+
+    # =====================================================
+    # حفظهما داخل المحادثة المحددة
+    # =====================================================
+
+    if conversation_id:
+
+        try:
+
+            add_conversation_message(
+                question,
+                answer,
+                conversation_id=conversation_id
+            )
+
+        except Exception as e:
+
+            print(
+                "CONVERSATION SAVE ERROR:",
+                e
+            )
 
 
 # =========================================================
@@ -570,9 +680,9 @@ def extract_generated_images(
             "output(s) received."
         )
 
-        # =====================================================
-        # نبدأ بالـ output الأخير كما في توثيق Mistral
-        # =====================================================
+        # =================================================
+        # نبدأ بالـ output الأخير
+        # =================================================
 
         latest_output = outputs[-1]
 
@@ -647,9 +757,9 @@ def extract_generated_images(
                         file_id
                     )
 
-        # =====================================================
+        # =================================================
         # احتياط: فحص باقي المخرجات
-        # =====================================================
+        # =================================================
 
         if not file_ids:
 
@@ -728,7 +838,6 @@ def extract_generated_images(
                             file_id
                         )
 
-        # إزالة التكرار
         file_ids = list(
             dict.fromkeys(
                 file_ids
@@ -1437,11 +1546,6 @@ def ask_mistral_image(
 # =========================================================
 # توليد صورة جديدة
 # =========================================================
-#
-# تم تغيير هذه الدالة لتستخدم Conversations API مباشرة
-# مع image_generation بدل الاعتماد على Agent أثناء التوليد.
-#
-# =========================================================
 
 def generate_image(prompt):
 
@@ -1474,10 +1578,6 @@ def generate_image(prompt):
             "IMAGE PROMPT:",
             prompt
         )
-
-        # =====================================================
-        # إنشاء الصورة مباشرة عبر Conversations API
-        # =====================================================
 
         response = (
             mistral_client.beta.conversations.start(
@@ -1516,10 +1616,6 @@ def generate_image(prompt):
             len(outputs)
         )
 
-        # =====================================================
-        # استخراج File IDs
-        # =====================================================
-
         file_ids = (
             extract_generated_images(
                 response
@@ -1534,10 +1630,6 @@ def generate_image(prompt):
             )
 
             return None
-
-        # =====================================================
-        # تنزيل الصورة
-        # =====================================================
 
         for file_id in file_ids:
 
@@ -1575,10 +1667,6 @@ def generate_image(prompt):
                 len(image_bytes),
                 "bytes"
             )
-
-            # =================================================
-            # حفظ الصورة
-            # =================================================
 
             image_url = (
                 save_generated_image(
@@ -1697,10 +1785,8 @@ def is_image_generation_request(
 
     for phrase in generation_phrases:
 
-        normalized_phrase = (
-            normalize_text(
-                phrase
-            )
+        normalized_phrase = normalize_text(
+            phrase
         )
 
         if normalized_phrase in text:
@@ -1711,10 +1797,6 @@ def is_image_generation_request(
             )
 
             return True
-
-    # =====================================================
-    # كشف مرن إضافي
-    # =====================================================
 
     has_image_word = any(
         word in text
@@ -1827,10 +1909,6 @@ def get_image_prompt(
                 len(prefix):
             ].strip()
 
-    # =====================================================
-    # إزالة العبارات العامة
-    # =====================================================
-
     cleaned = text
 
     cleanup_prefixes = [
@@ -1872,10 +1950,6 @@ def get_image_prompt(
             ].strip()
 
             break
-
-    # =====================================================
-    # إزالة "صورة" / "صوره" من البداية
-    # =====================================================
 
     for image_word in (
         "صورة",
@@ -2003,7 +2077,7 @@ IMPORTANT:
 - Do not add unrelated objects.
 - Keep the requested replacement visually coherent
   with the original scene.
-"""
+""".strip()
 
 
 # =========================================================
@@ -2026,10 +2100,6 @@ def edit_image(
         "IMAGE EDIT REQUEST:",
         edit_request
     )
-
-    # =====================================================
-    # تحليل الصورة الأصلية
-    # =====================================================
 
     analysis_prompt = (
         "Describe this image in very detailed "
@@ -2069,20 +2139,12 @@ def edit_image(
 
         return None
 
-    # =====================================================
-    # إنشاء Prompt جديد
-    # =====================================================
-
     edit_prompt = (
         build_image_edit_prompt(
             image_description,
             edit_request
         )
     )
-
-    # =====================================================
-    # توليد الصورة المعدلة
-    # =====================================================
 
     generated_image = (
         generate_image(
@@ -2111,7 +2173,9 @@ def edit_image(
 # =========================================================
 
 def get_response(
-    message
+    message,
+    conversation_id=None,
+    save_response=True
 ):
 
     if not message:
@@ -2136,7 +2200,6 @@ def get_response(
 
     # =====================================================
     # إنشاء صورة من الصفر
-    # يجب أن يكون هذا قبل أي نموذج نصي
     # =====================================================
 
     if is_image_generation_request(
@@ -2155,10 +2218,7 @@ def get_response(
         )
 
         if not image_prompt:
-
-            image_prompt = (
-                original_message
-            )
+            image_prompt = original_message
 
         generated = (
             generate_image(
@@ -2167,6 +2227,18 @@ def get_response(
         )
 
         if generated:
+
+            if (
+                save_response
+                and conversation_id
+            ):
+
+                save_ai_response(
+                    original_message,
+                    "تم إنشاء الصورة بناءً على طلبك.",
+                    conversation_id,
+                    source="image_generation"
+                )
 
             return (
                 "IMAGE_URL:"
@@ -2286,18 +2358,49 @@ def get_response(
             key
         ) in message_lower:
 
+            if (
+                save_response
+                and conversation_id
+            ):
+
+                save_ai_response(
+                    original_message,
+                    value,
+                    conversation_id,
+                    source="builtin"
+                )
+
             return value
 
     # =====================================================
+    # تجهيز الرسالة مع السياق
+    # =====================================================
+
+    model_message = (
+        build_context_message(
+            original_message,
+            conversation_id
+        )
+    )
+
+    # =====================================================
     # Gemini أولًا
-    # Gemini للأسئلة النصية فقط
     # =====================================================
 
     answer = ask_gemini(
-        original_message
+        model_message
     )
 
     if answer:
+
+        if save_response:
+
+            save_ai_response(
+                original_message,
+                answer,
+                conversation_id,
+                source="gemini"
+            )
 
         return answer
 
@@ -2311,10 +2414,19 @@ def get_response(
     )
 
     answer = ask_openrouter(
-        original_message
+        model_message
     )
 
     if answer:
+
+        if save_response:
+
+            save_ai_response(
+                original_message,
+                answer,
+                conversation_id,
+                source="openrouter"
+            )
 
         return answer
 
@@ -2328,10 +2440,19 @@ def get_response(
     )
 
     answer = ask_groq(
-        original_message
+        model_message
     )
 
     if answer:
+
+        if save_response:
+
+            save_ai_response(
+                original_message,
+                answer,
+                conversation_id,
+                source="groq"
+            )
 
         return answer
 
@@ -2345,10 +2466,19 @@ def get_response(
     )
 
     answer = ask_mistral(
-        original_message
+        model_message
     )
 
     if answer:
+
+        if save_response:
+
+            save_ai_response(
+                original_message,
+                answer,
+                conversation_id,
+                source="mistral"
+            )
 
         return answer
 
@@ -2356,9 +2486,20 @@ def get_response(
     # فشل جميع الخوادم
     # =====================================================
 
-    return (
+    fallback = (
         "أنا Ido AI ولم أجد إجابة حاليًا."
     )
+
+    if save_response:
+
+        save_ai_response(
+            original_message,
+            fallback,
+            conversation_id,
+            source="fallback"
+        )
+
+    return fallback
 
 
 # =========================================================
@@ -2368,7 +2509,8 @@ def get_response(
 def get_image_response(
     message,
     image_bytes,
-    mime_type
+    mime_type,
+    conversation_id=None
 ):
 
     if not image_bytes:
@@ -2419,6 +2561,15 @@ def get_image_response(
 
         if generated_image:
 
+            if conversation_id:
+
+                save_ai_response(
+                    message,
+                    "تم تعديل الصورة بناءً على طلبك.",
+                    conversation_id,
+                    source="image_edit"
+                )
+
             return (
                 "IMAGE_URL:"
                 f"{generated_image}"
@@ -2440,10 +2591,19 @@ def get_image_response(
 
     if answer:
 
+        if conversation_id:
+
+            save_ai_response(
+                message,
+                answer,
+                conversation_id,
+                source="mistral_vision"
+            )
+
         return answer
 
     # =====================================================
-    # Groq كاحتياط فقط لتحليل الصورة
+    # Groq كاحتياط لتحليل الصورة
     # =====================================================
 
     print(
@@ -2459,12 +2619,32 @@ def get_image_response(
 
     if answer:
 
+        if conversation_id:
+
+            save_ai_response(
+                message,
+                answer,
+                conversation_id,
+                source="groq_vision"
+            )
+
         return answer
 
     # =====================================================
     # فشل جميع خوادم تحليل الصور
     # =====================================================
 
-    return (
+    fallback = (
         "تعذر تحليل الصورة حاليًا."
     )
+
+    if conversation_id:
+
+        save_ai_response(
+            message,
+            fallback,
+            conversation_id,
+            source="image_fallback"
+        )
+
+    return fallback

@@ -9,7 +9,10 @@ from brain import (
 
 from calculator import calculate
 from translator import translate
-from memory import get_answer
+from memory import (
+    get_answer,
+    create_conversation
+)
 
 
 # =========================================================
@@ -17,12 +20,18 @@ from memory import get_answer
 # =========================================================
 
 try:
+
     from api import api
 
     api_available = True
 
 except Exception as e:
-    print("API error:", e)
+
+    print(
+        "API error:",
+        e
+    )
+
     api_available = False
 
 
@@ -45,16 +54,68 @@ if api_available:
 
 
 # =========================================================
-# Ido AI Response
+# إنشاء / استرجاع معرف المحادثة
 # =========================================================
 
-def ai_response(question):
+def resolve_conversation_id(
+    conversation_id=None
+):
+
+    if conversation_id:
+
+        return str(
+            conversation_id
+        ).strip()
 
     try:
 
-        question = question.strip()
+        conversation = (
+            create_conversation(
+                "محادثة جديدة"
+            )
+        )
+
+        if isinstance(
+            conversation,
+            dict
+        ):
+
+            return conversation.get(
+                "id"
+            )
+
+        return str(
+            conversation
+        )
+
+    except Exception as e:
+
+        print(
+            "CONVERSATION CREATE ERROR:",
+            e
+        )
+
+        return None
+
+
+# =========================================================
+# Ido AI Response
+# =========================================================
+
+def ai_response(
+    question,
+    conversation_id=None
+):
+
+    try:
+
+        question = (
+            str(question)
+            .strip()
+        )
 
         if not question:
+
             return "اكتب سؤالاً أولاً"
 
         # =====================================================
@@ -63,10 +124,17 @@ def ai_response(question):
 
         try:
 
-            result = calculate(question)
+            result = calculate(
+                question
+            )
 
             if result is not None:
-                return f"النتيجة: {result}"
+
+                answer = (
+                    f"النتيجة: {result}"
+                )
+
+                return answer
 
         except Exception as e:
 
@@ -81,7 +149,9 @@ def ai_response(question):
 
         try:
 
-            translated = translate(question)
+            translated = translate(
+                question
+            )
 
             if (
                 translated
@@ -109,6 +179,7 @@ def ai_response(question):
             )
 
             if memory_answer:
+
                 return memory_answer
 
         except Exception as e:
@@ -123,7 +194,8 @@ def ai_response(question):
         # =====================================================
 
         answer = get_response(
-            question
+            question,
+            conversation_id=conversation_id
         )
 
         return (
@@ -166,6 +238,21 @@ def home():
             "question",
             ""
         ).strip()
+
+        # =====================================================
+        # معرف المحادثة
+        # =====================================================
+
+        conversation_id = request.form.get(
+            "conversation_id",
+            ""
+        ).strip()
+
+        conversation_id = (
+            resolve_conversation_id(
+                conversation_id
+            )
+        )
 
         # =====================================================
         # رفع صورة
@@ -230,6 +317,11 @@ def home():
                         image_question
                     )
 
+                    print(
+                        "CONVERSATION ID:",
+                        conversation_id
+                    )
+
                     # =========================================
                     # تحليل / تعديل الصورة
                     # =========================================
@@ -237,7 +329,8 @@ def home():
                     result = get_image_response(
                         image_question,
                         image_bytes,
-                        mime_type
+                        mime_type,
+                        conversation_id=conversation_id
                     )
 
                     # =========================================
@@ -245,7 +338,10 @@ def home():
                     # =========================================
 
                     if (
-                        isinstance(result, str)
+                        isinstance(
+                            result,
+                            str
+                        )
                         and result.startswith(
                             "IMAGE_URL:"
                         )
@@ -258,7 +354,7 @@ def home():
                         )
 
                         answer = (
-                            "تم إنشاء الصورة "
+                            "تم تعديل الصورة "
                             "بناءً على طلبك."
                         )
 
@@ -271,7 +367,8 @@ def home():
 
                         answer = (
                             result
-                            or "تعذر معالجة "
+                            or
+                            "تعذر معالجة "
                             "الصورة حاليًا."
                         )
 
@@ -295,7 +392,8 @@ def home():
         elif question:
 
             answer = ai_response(
-                question
+                question,
+                conversation_id=conversation_id
             )
 
     return render_template(
