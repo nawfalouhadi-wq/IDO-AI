@@ -50,7 +50,10 @@ app = Flask(
 # =========================================================
 
 if api_available:
-    app.register_blueprint(api)
+
+    app.register_blueprint(
+        api
+    )
 
 
 # =========================================================
@@ -116,7 +119,9 @@ def ai_response(
 
         if not question:
 
-            return "اكتب سؤالاً أولاً"
+            return (
+                "اكتب سؤالاً أولاً"
+            )
 
         # =====================================================
         # الحاسبة
@@ -130,11 +135,9 @@ def ai_response(
 
             if result is not None:
 
-                answer = (
+                return (
                     f"النتيجة: {result}"
                 )
-
-                return answer
 
         except Exception as e:
 
@@ -272,12 +275,24 @@ def home():
 
                 image_bytes = image.read()
 
-                mime_type = image.mimetype
+                mime_type = (
+                    image.mimetype
+                    or "image/jpeg"
+                )
 
                 if not image_bytes:
 
                     answer = (
                         "لم يتم اختيار "
+                        "صورة صالحة."
+                    )
+
+                elif not mime_type.startswith(
+                    "image/"
+                ):
+
+                    answer = (
+                        "الملف المرسل ليس "
                         "صورة صالحة."
                     )
 

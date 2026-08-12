@@ -1,6 +1,7 @@
 import os
 import base64
 import uuid
+import re
 from pathlib import Path
 
 import requests
@@ -14,7 +15,6 @@ from memory import (
     build_conversation_context,
     learn
 )
-
 
 try:
     from mistralai.client import Mistral
@@ -75,14 +75,12 @@ GENERATED_IMAGE_DIR = Path(
 )
 
 try:
-
     GENERATED_IMAGE_DIR.mkdir(
         parents=True,
         exist_ok=True
     )
 
 except Exception as e:
-
     print(
         "GENERATED IMAGE DIRECTORY ERROR:",
         e
@@ -102,7 +100,6 @@ GEMINI_MODEL = os.getenv(
     "gemini-3.6-flash"
 )
 
-# مهلة Gemini للأسئلة النصية فقط: 30 ثانية
 GEMINI_TIMEOUT_MS = 30000
 
 gemini_client = None
@@ -429,14 +426,126 @@ def normalize_text(text):
         .replace("ْ", "")
     )
 
-    while "  " in text:
+    text = re.sub(
+        r"[،,؛;:!?؟()\[\]{}\"'`]+",
+        " ",
+        text
+    )
 
-        text = text.replace(
-            "  ",
-            " "
-        )
+    text = re.sub(
+        r"\s+",
+        " ",
+        text
+    ).strip()
 
     return text
+
+
+# =========================================================
+# الردود الثابتة
+# =========================================================
+
+BUILTIN_RESPONSES = {
+
+    "hello":
+        "السلام عليكم ورحمة الله وبركاته. "
+        "أنا Ido AI، كيف يمكنني مساعدتك؟",
+
+    "hi":
+        "السلام عليكم ورحمة الله وبركاته. "
+        "أنا Ido AI، كيف يمكنني مساعدتك؟",
+
+    "مرحبا":
+        "السلام عليكم ورحمة الله وبركاته. "
+        "مرحبًا بك، كيف يمكنني مساعدتك؟",
+
+    "سلام":
+        "وعليكم السلام ورحمة الله وبركاته. "
+        "كيف يمكنني مساعدتك؟",
+
+    "السلام عليكم":
+        "وعليكم السلام ورحمة الله وبركاته. "
+        "كيف يمكنني مساعدتك؟",
+
+    "السلام عليكم ورحمة الله وبركاته":
+        "وعليكم السلام ورحمة الله وبركاته. "
+        "كيف يمكنني مساعدتك؟",
+
+    "اسمك":
+        "أنا Ido AI.",
+
+    "ما اسمك":
+        "أنا Ido AI.",
+
+    "كيف حالك":
+        "أنا بخير، شكرًا لسؤالك. "
+        "كيف يمكنني مساعدتك؟",
+
+    "من صنعك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من طورك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من بناك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من هو مطورك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من برمجك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من اخترعك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من انشاك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من صممك":
+        "تم تطويري وبنائي بواسطة "
+        "Noufal Ouhadi، وأنا Ido AI.",
+
+    "من صنع ido ai":
+        "تم تطوير Ido AI وبناؤه "
+        "بواسطة Noufal Ouhadi.",
+
+    "من طور ido ai":
+        "تم تطوير Ido AI بواسطة "
+        "Noufal Ouhadi.",
+
+    "ما هو الذكاء الاصطناعي":
+        "الذكاء الاصطناعي هو مجال من علوم "
+        "الحاسوب يهدف إلى تطوير أنظمة قادرة "
+        "على فهم المعلومات والتعلم منها "
+        "وتنفيذ مهام تحتاج عادةً إلى قدر "
+        "من الذكاء البشري.",
+
+    "ما هي بايثون":
+        "Python هي لغة برمجة قوية وسهلة "
+        "الاستخدام، وتُستخدم في تطوير "
+        "البرامج والذكاء الاصطناعي "
+        "وتحليل البيانات.",
+
+    "ما هي عاصمة المغرب":
+        "عاصمة المغرب هي الرباط.",
+
+    "ما هي عاصمة فرنسا":
+        "عاصمة فرنسا هي باريس.",
+
+    "شكرا":
+        "على الرحب والسعة.",
+
+    "وداعا":
+        "إلى اللقاء! أتمنى لك يومًا سعيدًا."
+}
 
 
 # =========================================================
@@ -457,16 +566,13 @@ def build_context_message(
         return ""
 
     if not conversation_id:
-
         return message
 
     try:
 
-        context = (
-            build_conversation_context(
-                conversation_id,
-                context_limit
-            )
+        context = build_conversation_context(
+            conversation_id,
+            context_limit
         )
 
     except Exception as e:
@@ -479,28 +585,21 @@ def build_context_message(
         context = ""
 
     if not context:
-
         return message
 
-    return f"""
-أنت Aido AI، مساعد ذكاء اصطناعي.
-
-لديك سياق المحادثة السابقة أدناه.
-استخدمه لفهم الأسئلة المختصرة والأسئلة التي
-تعتمد على الرسائل السابقة.
-
-سياق المحادثة:
-----------------
-{context}
-----------------
-
-الرسالة الجديدة:
-{message}
-
-أجب عن الرسالة الجديدة اعتمادًا على السياق
-عندما يكون ذلك مفيدًا.
-لا تكرر سياق المحادثة كاملًا للمستخدم.
-""".strip()
+    return (
+        "أنت Aido AI، مساعد ذكاء اصطناعي.\n\n"
+        "لديك سياق المحادثة السابقة أدناه.\n"
+        "استخدمه لفهم الأسئلة المختصرة والأسئلة "
+        "التي تعتمد على الرسائل السابقة.\n\n"
+        "## سياق المحادثة:\n\n"
+        f"{context}\n\n"
+        "## الرسالة الجديدة:\n\n"
+        f"{message}\n\n"
+        "أجب عن الرسالة الجديدة اعتمادًا على "
+        "السياق عندما يكون ذلك مفيدًا.\n"
+        "لا تكرر سياق المحادثة كاملًا للمستخدم."
+    )
 
 
 # =========================================================
@@ -519,10 +618,6 @@ def save_ai_response(
 
     try:
 
-        # =================================================
-        # حفظ السؤال والجواب في الذاكرة العامة
-        # =================================================
-
         learn(
             question,
             answer,
@@ -535,10 +630,6 @@ def save_ai_response(
             "MEMORY LEARN ERROR:",
             e
         )
-
-    # =====================================================
-    # حفظهما داخل المحادثة المحددة
-    # =====================================================
 
     if conversation_id:
 
@@ -615,8 +706,8 @@ def save_generated_image(
         )
 
         file_path = (
-            GENERATED_IMAGE_DIR
-            / filename
+            GENERATED_IMAGE_DIR /
+            filename
         )
 
         file_path.write_bytes(
@@ -680,10 +771,6 @@ def extract_generated_images(
             "output(s) received."
         )
 
-        # =================================================
-        # نبدأ بالـ output الأخير
-        # =================================================
-
         latest_output = outputs[-1]
 
         latest_content = getattr(
@@ -693,11 +780,6 @@ def extract_generated_images(
         )
 
         if latest_content:
-
-            print(
-                "MISTRAL LATEST OUTPUT CONTENT:",
-                len(latest_content)
-            )
 
             for index, chunk in enumerate(
                 latest_content
@@ -715,23 +797,6 @@ def extract_generated_images(
                     None
                 )
 
-                file_name = getattr(
-                    chunk,
-                    "file_name",
-                    None
-                )
-
-                print(
-                    "MISTRAL IMAGE CHUNK:",
-                    index,
-                    "TYPE:",
-                    chunk_type,
-                    "FILE_ID:",
-                    file_id,
-                    "FILE_NAME:",
-                    file_name
-                )
-
                 if (
                     ToolFileChunk is not None
                     and isinstance(
@@ -741,7 +806,6 @@ def extract_generated_images(
                 ):
 
                     if chunk.file_id:
-
                         file_ids.append(
                             chunk.file_id
                         )
@@ -757,24 +821,9 @@ def extract_generated_images(
                         file_id
                     )
 
-        # =================================================
-        # احتياط: فحص باقي المخرجات
-        # =================================================
-
         if not file_ids:
 
-            print(
-                "MISTRAL IMAGE DEBUG: "
-                "No file in latest output. "
-                "Checking remaining outputs..."
-            )
-
-            for output_index, output in enumerate(
-                outputs
-            ):
-
-                if output is latest_output:
-                    continue
+            for output in outputs:
 
                 content = getattr(
                     output,
@@ -785,9 +834,7 @@ def extract_generated_images(
                 if not content:
                     continue
 
-                for index, chunk in enumerate(
-                    content
-                ):
+                for chunk in content:
 
                     chunk_type = getattr(
                         chunk,
@@ -801,18 +848,6 @@ def extract_generated_images(
                         None
                     )
 
-                    print(
-                        "MISTRAL FALLBACK CHUNK:",
-                        "OUTPUT:",
-                        output_index,
-                        "INDEX:",
-                        index,
-                        "TYPE:",
-                        chunk_type,
-                        "FILE_ID:",
-                        file_id
-                    )
-
                     if (
                         ToolFileChunk is not None
                         and isinstance(
@@ -822,7 +857,6 @@ def extract_generated_images(
                     ):
 
                         if chunk.file_id:
-
                             file_ids.append(
                                 chunk.file_id
                             )
@@ -868,12 +902,6 @@ def extract_generated_images(
 def ask_gemini(message):
 
     if gemini_client is None:
-
-        print(
-            "Gemini ERROR: "
-            "client غير جاهز."
-        )
-
         return None
 
     if not message:
@@ -892,23 +920,24 @@ def ask_gemini(message):
             )
         )
 
-        if response:
+        if not response:
+            return None
 
-            answer = clean_answer(
-                response.text
+        answer = clean_answer(
+            getattr(
+                response,
+                "text",
+                None
+            )
+        )
+
+        if answer:
+
+            print(
+                "Gemini response received."
             )
 
-            if answer:
-
-                print(
-                    "Gemini response received."
-                )
-
-                return answer
-
-        print(
-            "Gemini returned empty response."
-        )
+            return answer
 
         return None
 
@@ -929,12 +958,6 @@ def ask_gemini(message):
 def ask_openrouter(message):
 
     if not OPENROUTER_API_KEY:
-
-        print(
-            "OpenRouter ERROR: "
-            "API key غير موجود."
-        )
-
         return None
 
     if not message:
@@ -951,7 +974,6 @@ def ask_openrouter(message):
             OPENROUTER_URL,
 
             headers={
-
                 "Authorization":
                     f"Bearer {OPENROUTER_API_KEY}",
 
@@ -968,9 +990,7 @@ def ask_openrouter(message):
                     "openrouter/free",
 
                 "messages": [
-
                     {
-
                         "role":
                             "user",
 
@@ -997,26 +1017,9 @@ def ask_openrouter(message):
 
             return None
 
-        answer = (
-            extract_response_content(
-                response.json()
-            )
+        return extract_response_content(
+            response.json()
         )
-
-        if answer:
-
-            print(
-                "OpenRouter response received."
-            )
-
-            return answer
-
-        print(
-            "OpenRouter returned "
-            "empty response."
-        )
-
-        return None
 
     except requests.exceptions.Timeout:
 
@@ -1052,12 +1055,6 @@ def ask_openrouter(message):
 def ask_groq(message):
 
     if not GROQ_API_KEY:
-
-        print(
-            "Groq ERROR: "
-            "API key غير موجود."
-        )
-
         return None
 
     if not message:
@@ -1074,7 +1071,6 @@ def ask_groq(message):
             GROQ_URL,
 
             headers={
-
                 "Authorization":
                     f"Bearer {GROQ_API_KEY}",
 
@@ -1088,9 +1084,7 @@ def ask_groq(message):
                     GROQ_MODEL,
 
                 "messages": [
-
                     {
-
                         "role":
                             "user",
 
@@ -1123,25 +1117,9 @@ def ask_groq(message):
 
             return None
 
-        answer = (
-            extract_response_content(
-                response.json()
-            )
+        return extract_response_content(
+            response.json()
         )
-
-        if answer:
-
-            print(
-                "Groq response received."
-            )
-
-            return answer
-
-        print(
-            "Groq returned empty response."
-        )
-
-        return None
 
     except requests.exceptions.Timeout:
 
@@ -1154,8 +1132,7 @@ def ask_groq(message):
     except requests.exceptions.ConnectionError:
 
         print(
-            "Groq ERROR: "
-            "connection failed."
+            "Groq ERROR: connection failed."
         )
 
         return None
@@ -1177,12 +1154,6 @@ def ask_groq(message):
 def ask_mistral(message):
 
     if not MISTRAL_API_KEY:
-
-        print(
-            "Mistral ERROR: "
-            "API key غير موجود."
-        )
-
         return None
 
     if not message:
@@ -1199,7 +1170,6 @@ def ask_mistral(message):
             MISTRAL_URL,
 
             headers={
-
                 "Authorization":
                     f"Bearer {MISTRAL_API_KEY}",
 
@@ -1213,9 +1183,7 @@ def ask_mistral(message):
                     MISTRAL_MODEL,
 
                 "messages": [
-
                     {
-
                         "role":
                             "user",
 
@@ -1248,25 +1216,9 @@ def ask_mistral(message):
 
             return None
 
-        answer = (
-            extract_response_content(
-                response.json()
-            )
+        return extract_response_content(
+            response.json()
         )
-
-        if answer:
-
-            print(
-                "Mistral response received."
-            )
-
-            return answer
-
-        print(
-            "Mistral returned empty response."
-        )
-
-        return None
 
     except requests.exceptions.Timeout:
 
@@ -1279,8 +1231,7 @@ def ask_mistral(message):
     except requests.exceptions.ConnectionError:
 
         print(
-            "Mistral ERROR: "
-            "connection failed."
+            "Mistral ERROR: connection failed."
         )
 
         return None
@@ -1313,10 +1264,6 @@ def ask_groq_image(
 
     try:
 
-        print(
-            "Trying Groq with image..."
-        )
-
         image_base64 = (
             base64.b64encode(
                 image_bytes
@@ -1335,7 +1282,6 @@ def ask_groq_image(
             GROQ_URL,
 
             headers={
-
                 "Authorization":
                     f"Bearer {GROQ_API_KEY}",
 
@@ -1351,14 +1297,12 @@ def ask_groq_image(
                 "messages": [
 
                     {
-
                         "role":
                             "user",
 
                         "content": [
 
                             {
-
                                 "type":
                                     "text",
 
@@ -1367,12 +1311,10 @@ def ask_groq_image(
                             },
 
                             {
-
                                 "type":
                                     "image_url",
 
                                 "image_url": {
-
                                     "url":
                                         image_data_url
                                 }
@@ -1437,10 +1379,6 @@ def ask_mistral_image(
 
     try:
 
-        print(
-            "Trying Mistral with image..."
-        )
-
         image_base64 = (
             base64.b64encode(
                 image_bytes
@@ -1459,7 +1397,6 @@ def ask_mistral_image(
             MISTRAL_URL,
 
             headers={
-
                 "Authorization":
                     f"Bearer {MISTRAL_API_KEY}",
 
@@ -1475,14 +1412,12 @@ def ask_mistral_image(
                 "messages": [
 
                     {
-
                         "role":
                             "user",
 
                         "content": [
 
                             {
-
                                 "type":
                                     "text",
 
@@ -1491,12 +1426,10 @@ def ask_mistral_image(
                             },
 
                             {
-
                                 "type":
                                     "image_url",
 
                                 "image_url": {
-
                                     "url":
                                         image_data_url
                                 }
@@ -1592,10 +1525,6 @@ def generate_image(prompt):
             )
         )
 
-        print(
-            "MISTRAL IMAGE RESPONSE RECEIVED"
-        )
-
         outputs = getattr(
             response,
             "outputs",
@@ -1610,11 +1539,6 @@ def generate_image(prompt):
             )
 
             return None
-
-        print(
-            "MISTRAL OUTPUT COUNT:",
-            len(outputs)
-        )
 
         file_ids = (
             extract_generated_images(
@@ -1633,40 +1557,25 @@ def generate_image(prompt):
 
         for file_id in file_ids:
 
-            print(
-                "MISTRAL GENERATED FILE:",
-                file_id
-            )
-
             downloaded = (
                 mistral_client.files.download(
                     file_id=file_id
                 )
             )
 
-            image_bytes = (
-                downloaded.read()
-                if hasattr(
-                    downloaded,
-                    "read"
-                )
-                else downloaded
-            )
+            if hasattr(
+                downloaded,
+                "read"
+            ):
+
+                image_bytes = downloaded.read()
+
+            else:
+
+                image_bytes = downloaded
 
             if not image_bytes:
-
-                print(
-                    "MISTRAL IMAGE ERROR: "
-                    "Downloaded image is empty."
-                )
-
                 continue
-
-            print(
-                "MISTRAL IMAGE DOWNLOADED:",
-                len(image_bytes),
-                "bytes"
-            )
 
             image_url = (
                 save_generated_image(
@@ -1682,11 +1591,6 @@ def generate_image(prompt):
                 )
 
                 return image_url
-
-        print(
-            "MISTRAL IMAGE ERROR: "
-            "Could not save generated image."
-        )
 
         return None
 
@@ -1715,81 +1619,81 @@ def is_image_generation_request(
     if not text:
         return False
 
-    generation_phrases = [
+    direct_phrases = [
 
-        # عربي
-        "ولد صوره",
-        "ولد لي صوره",
         "ولد لي صورة",
-        "ولد صوره لي",
-        "ولّد صوره",
-        "ولّد لي صوره",
+        "ولد صورة",
         "ولّد لي صورة",
-        "انشئ صوره",
-        "انشئ لي صوره",
+        "ولّد صورة",
+
         "انشئ لي صورة",
-        "انشئ صوره لي",
-        "انشاء صوره",
-        "انشاء صوره لي",
         "انشئ صورة",
-        "أنشئ صورة",
         "أنشئ لي صورة",
-        "اصنع صوره",
-        "اصنع لي صوره",
+        "أنشئ صورة",
+
         "اصنع لي صورة",
-        "صنع صوره",
-        "ارسم صوره",
-        "ارسم لي صوره",
+        "اصنع صورة",
+
         "ارسم لي صورة",
-        "صمم صوره",
-        "صمم لي صوره",
+        "ارسم صورة",
+
         "صمم لي صورة",
-        "اعمل صوره",
-        "اعمل لي صوره",
+        "صمم صورة",
+
         "اعمل لي صورة",
-        "سوي صوره",
-        "سوي لي صوره",
-        "سوي لي صورة",
-        "ابغى صوره",
-        "اريد صوره",
-        "اريد صورة",
-        "اريدك تولد صورة",
-        "اريدك ان تولد صورة",
-        "اريدك تصنع صورة",
-        "توليد صوره",
+        "اعمل صورة",
+
         "توليد صورة",
         "توليد لي صورة",
-        "انشاء صورة",
-        "إنشاء صورة",
 
-        # إنجليزي
+        "هل يمكنك إنشاء صورة",
+        "هل يمكنك انشاء صورة",
+        "هل يمكنك إنشاء لي صورة",
+        "هل يمكنك انشاء لي صورة",
+
+        "هل تقدر تنشئ لي صورة",
+        "هل تقدر تنشأ لي صورة",
+        "هل تقدر تنشئ صورة",
+        "هل تقدر تنشأ صورة",
+
+        "واش تقدر تنشئ لي صورة",
+        "واش تقدر تنشأ لي صورة",
+        "واش تقدر تنشئ صورة",
+        "واش تقدر تنشأ صورة",
+
+        "ممكن تنشئ لي صورة",
+        "ممكن تنشأ لي صورة",
+        "ممكن تنشئ صورة",
+        "ممكن تنشأ صورة",
+
+        "تقدر تنشئ لي صورة",
+        "تقدر تنشأ لي صورة",
+
+        "بغيتك تنشئ لي صورة",
+        "بغيتك تنشأ لي صورة",
+        "بغيتك تصنع لي صورة",
+        "بغيتك ترسم لي صورة",
+
         "generate an image",
         "generate image",
         "generate a picture",
-        "generate picture",
+
         "create an image",
         "create image",
         "create a picture",
-        "create picture",
+
         "make an image",
         "make image",
         "make a picture",
-        "make picture",
+
         "draw an image",
         "draw image",
-        "draw a picture",
-        "draw picture",
-        "create artwork",
-        "generate artwork"
+        "draw a picture"
     ]
 
-    for phrase in generation_phrases:
+    for phrase in direct_phrases:
 
-        normalized_phrase = normalize_text(
-            phrase
-        )
-
-        if normalized_phrase in text:
+        if phrase in text:
 
             print(
                 "IMAGE GENERATION INTENT DETECTED:",
@@ -1801,10 +1705,11 @@ def is_image_generation_request(
     has_image_word = any(
         word in text
         for word in (
-            "صوره",
             "صورة",
+            "صوره",
+            "image",
             "picture",
-            "image"
+            "artwork"
         )
     )
 
@@ -1822,6 +1727,10 @@ def is_image_generation_request(
             "صمم",
             "اعمل",
             "توليد",
+            "تنشئ",
+            "تنشأ",
+            "يصنع",
+            "يرسم",
             "generate",
             "create",
             "make",
@@ -1860,70 +1769,82 @@ def get_image_prompt(
         message
     ).strip()
 
-    prefixes = [
+    normalized = normalize_text(
+        text
+    )
 
-        "ولد لي صورة",
-        "ولّد لي صورة",
-        "ولد صورة",
-        "ولّد صورة",
-        "أنشئ لي صورة",
-        "أنشئ صورة",
-        "انشئ لي صورة",
-        "انشئ صورة",
-        "اصنع لي صورة",
-        "اصنع صورة",
-        "ارسم لي صورة",
-        "ارسم صورة",
-        "صمم لي صورة",
-        "صمم صورة",
-        "اعمل لي صورة",
-        "اعمل صورة",
-        "توليد صورة",
-        "توليد لي صورة",
+    # -----------------------------------------------------
+    # إزالة صيغة السؤال أولًا
+    # -----------------------------------------------------
 
-        "generate an image of",
-        "generate image of",
-        "generate a picture of",
-        "create an image of",
-        "create image of",
-        "create a picture of",
-        "make an image of",
-        "make image of",
-        "make a picture of",
-        "draw an image of",
-        "draw image of",
-        "draw a picture of"
+    question_prefixes = [
+
+        "هل يمكنك",
+        "هل تقدر",
+        "هل تستطيع",
+        "واش تقدر",
+        "واش ممكن",
+        "ممكن",
+        "تقدر",
+        "تستطيع",
+        "بغيتك"
     ]
 
-    for prefix in prefixes:
+    for prefix in question_prefixes:
 
-        if normalize_text(
-            text
-        ).startswith(
-            normalize_text(
-                prefix
-            )
+        normalized_prefix = normalize_text(
+            prefix
+        )
+
+        if normalized.startswith(
+            normalized_prefix + " "
         ):
 
-            return text[
+            text = text[
                 len(prefix):
             ].strip()
 
-    cleaned = text
+            normalized = normalize_text(
+                text
+            )
 
-    cleanup_prefixes = [
+            break
 
+    # -----------------------------------------------------
+    # إزالة أفعال الإنشاء
+    # -----------------------------------------------------
+
+    action_prefixes = [
+
+        "ولد لي",
         "ولد",
+        "ولّد لي",
         "ولّد",
+
+        "انشئ لي",
         "انشئ",
+        "أنشئ لي",
         "أنشئ",
-        "انشاء",
-        "إنشاء",
+
+        "اصنع لي",
         "اصنع",
+
+        "ارسم لي",
         "ارسم",
+
+        "صمم لي",
         "صمم",
+
+        "اعمل لي",
         "اعمل",
+
+        "توليد لي",
         "توليد",
+
+        "تنشئ لي",
+        "تنشئ",
+        "تنشأ لي",
+        "تنشأ",
 
         "generate",
         "create",
@@ -1931,25 +1852,29 @@ def get_image_prompt(
         "draw"
     ]
 
-    for prefix in cleanup_prefixes:
+    for prefix in action_prefixes:
 
-        normalized_cleaned = normalize_text(
-            cleaned
+        normalized_text = normalize_text(
+            text
         )
 
         normalized_prefix = normalize_text(
             prefix
         )
 
-        if normalized_cleaned.startswith(
+        if normalized_text.startswith(
             normalized_prefix + " "
         ):
 
-            cleaned = cleaned[
+            text = text[
                 len(prefix):
             ].strip()
 
             break
+
+    # -----------------------------------------------------
+    # إزالة كلمة صورة في البداية
+    # -----------------------------------------------------
 
     for image_word in (
         "صورة",
@@ -1958,30 +1883,30 @@ def get_image_prompt(
         "image"
     ):
 
-        normalized_cleaned = normalize_text(
-            cleaned
+        normalized_text = normalize_text(
+            text
         )
 
         normalized_image_word = normalize_text(
             image_word
         )
 
-        if normalized_cleaned.startswith(
-            normalized_image_word
+        if normalized_text.startswith(
+            normalized_image_word + " "
         ):
 
-            cleaned = cleaned[
+            text = text[
                 len(image_word):
             ].strip()
 
             break
 
-    cleaned = cleaned.strip()
+    text = text.strip()
 
-    if not cleaned:
-        return text
+    if not text:
+        return message
 
-    return cleaned
+    return text
 
 
 # =========================================================
@@ -2096,11 +2021,6 @@ def edit_image(
     if not image_bytes:
         return None
 
-    print(
-        "IMAGE EDIT REQUEST:",
-        edit_request
-    )
-
     analysis_prompt = (
         "Describe this image in very detailed "
         "visual terms for a second image model. "
@@ -2146,26 +2066,9 @@ def edit_image(
         )
     )
 
-    generated_image = (
-        generate_image(
-            edit_prompt
-        )
+    return generate_image(
+        edit_prompt
     )
-
-    if generated_image:
-
-        print(
-            "IMAGE EDIT COMPLETED:",
-            generated_image
-        )
-
-        return generated_image
-
-    print(
-        "IMAGE EDIT FAILED."
-    )
-
-    return None
 
 
 # =========================================================
@@ -2179,27 +2082,17 @@ def get_response(
 ):
 
     if not message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
+        return "اكتب رسالة أولًا."
 
     original_message = str(
         message
     ).strip()
 
     if not original_message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
-
-    message_lower = normalize_text(
-        original_message
-    )
+        return "اكتب رسالة أولًا."
 
     # =====================================================
-    # إنشاء صورة من الصفر
+    # إنشاء صورة من الصفر أولًا
     # =====================================================
 
     if is_image_generation_request(
@@ -2211,19 +2104,15 @@ def get_response(
             original_message
         )
 
-        image_prompt = (
-            get_image_prompt(
-                original_message
-            )
+        image_prompt = get_image_prompt(
+            original_message
         )
 
         if not image_prompt:
             image_prompt = original_message
 
-        generated = (
-            generate_image(
-                image_prompt
-            )
+        generated = generate_image(
+            image_prompt
         )
 
         if generated:
@@ -2242,7 +2131,7 @@ def get_response(
 
             return (
                 "IMAGE_URL:"
-                f"{generated}"
+                + generated
             )
 
         return (
@@ -2252,139 +2141,44 @@ def get_response(
         )
 
     # =====================================================
-    # الردود السريعة والثابتة
+    # الردود الثابتة
     # =====================================================
 
-    responses = {
+    normalized_message = normalize_text(
+        original_message
+    )
 
-        "hello":
-            "السلام عليكم ورحمة الله وبركاته. "
-            "أنا Ido AI، كيف يمكنني مساعدتك؟",
+    builtin_answer = BUILTIN_RESPONSES.get(
+        normalized_message
+    )
 
-        "hi":
-            "السلام عليكم ورحمة الله وبركاته. "
-            "أنا Ido AI، كيف يمكنني مساعدتك؟",
+    if builtin_answer:
 
-        "مرحبا":
-            "السلام عليكم ورحمة الله وبركاته. "
-            "مرحبًا بك، كيف يمكنني مساعدتك؟",
+        if (
+            save_response
+            and conversation_id
+        ):
 
-        "سلام":
-            "وعليكم السلام ورحمة الله وبركاته. "
-            "كيف يمكنني مساعدتك؟",
+            save_ai_response(
+                original_message,
+                builtin_answer,
+                conversation_id,
+                source="builtin"
+            )
 
-        "اسمك":
-            "أنا Ido AI.",
-
-        "ما اسمك":
-            "أنا Ido AI.",
-
-        "كيف حالك":
-            "أنا بخير، شكرًا لسؤالك. "
-            "كيف يمكنني مساعدتك؟",
-
-        "من صنعك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من طورك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من بناك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من هو مطورك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من برمجك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من اخترعك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من أنشأك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من صممك":
-            "تم تطويري وبنائي بواسطة "
-            "Noufal Ouhadi، وأنا Ido AI.",
-
-        "من صنع ido ai":
-            "تم تطوير Ido AI وبناؤه "
-            "بواسطة Noufal Ouhadi.",
-
-        "من طور ido ai":
-            "تم تطوير Ido AI بواسطة "
-            "Noufal Ouhadi.",
-
-        "ما هو الذكاء الاصطناعي":
-            "الذكاء الاصطناعي هو مجال من علوم "
-            "الحاسوب يهدف إلى تطوير أنظمة قادرة "
-            "على فهم المعلومات والتعلم منها "
-            "وتنفيذ مهام تحتاج عادةً إلى قدر "
-            "من الذكاء البشري.",
-
-        "ما هي بايثون":
-            "Python هي لغة برمجة قوية وسهلة "
-            "الاستخدام، وتُستخدم في تطوير "
-            "البرامج والذكاء الاصطناعي "
-            "وتحليل البيانات.",
-
-        "ما هي عاصمة المغرب":
-            "عاصمة المغرب هي الرباط.",
-
-        "ما هي عاصمة فرنسا":
-            "عاصمة فرنسا هي باريس.",
-
-        "شكرا":
-            "على الرحب والسعة.",
-
-        "شكراً":
-            "العفو، يسعدني مساعدتك.",
-
-        "وداعا":
-            "إلى اللقاء! أتمنى لك يومًا سعيدًا."
-    }
-
-    for key, value in responses.items():
-
-        if normalize_text(
-            key
-        ) in message_lower:
-
-            if (
-                save_response
-                and conversation_id
-            ):
-
-                save_ai_response(
-                    original_message,
-                    value,
-                    conversation_id,
-                    source="builtin"
-                )
-
-            return value
+        return builtin_answer
 
     # =====================================================
-    # تجهيز الرسالة مع السياق
+    # سياق المحادثة
     # =====================================================
 
-    model_message = (
-        build_context_message(
-            original_message,
-            conversation_id
-        )
+    model_message = build_context_message(
+        original_message,
+        conversation_id
     )
 
     # =====================================================
-    # Gemini أولًا
+    # Gemini
     # =====================================================
 
     answer = ask_gemini(
@@ -2405,7 +2199,7 @@ def get_response(
         return answer
 
     # =====================================================
-    # OpenRouter ثانيًا
+    # OpenRouter
     # =====================================================
 
     print(
@@ -2431,7 +2225,7 @@ def get_response(
         return answer
 
     # =====================================================
-    # Groq ثالثًا
+    # Groq
     # =====================================================
 
     print(
@@ -2457,7 +2251,7 @@ def get_response(
         return answer
 
     # =====================================================
-    # Mistral رابعًا
+    # Mistral
     # =====================================================
 
     print(
@@ -2486,20 +2280,9 @@ def get_response(
     # فشل جميع الخوادم
     # =====================================================
 
-    fallback = (
+    return (
         "أنا Ido AI ولم أجد إجابة حاليًا."
     )
-
-    if save_response:
-
-        save_ai_response(
-            original_message,
-            fallback,
-            conversation_id,
-            source="fallback"
-        )
-
-    return fallback
 
 
 # =========================================================
@@ -2514,26 +2297,19 @@ def get_image_response(
 ):
 
     if not image_bytes:
-
-        return (
-            "لم يتم إرسال صورة صالحة."
-        )
+        return "لم يتم إرسال صورة صالحة."
 
     if not mime_type:
-
         mime_type = "image/jpeg"
 
     if not mime_type.startswith(
         "image/"
     ):
-
-        return (
-            "الملف المرسل ليس صورة صالحة."
-        )
+        return "الملف المرسل ليس صورة صالحة."
 
     if (
         not message
-        or not message.strip()
+        or not str(message).strip()
     ):
 
         message = (
@@ -2541,22 +2317,22 @@ def get_image_response(
             "ما الذي يظهر فيها."
         )
 
-    message = message.strip()
+    message = str(
+        message
+    ).strip()
 
     # =====================================================
-    # طلب تعديل الصورة
+    # تعديل الصورة
     # =====================================================
 
     if is_image_edit_request(
         message
     ):
 
-        generated_image = (
-            edit_image(
-                message,
-                image_bytes,
-                mime_type
-            )
+        generated_image = edit_image(
+            message,
+            image_bytes,
+            mime_type
         )
 
         if generated_image:
@@ -2572,7 +2348,7 @@ def get_image_response(
 
             return (
                 "IMAGE_URL:"
-                f"{generated_image}"
+                + generated_image
             )
 
         return (
@@ -2580,7 +2356,7 @@ def get_image_response(
         )
 
     # =====================================================
-    # تحليل الصورة بـ Mistral
+    # تحليل الصورة بواسطة Mistral
     # =====================================================
 
     answer = ask_mistral_image(
@@ -2603,7 +2379,7 @@ def get_image_response(
         return answer
 
     # =====================================================
-    # Groq كاحتياط لتحليل الصورة
+    # Groq كاحتياط
     # =====================================================
 
     print(
@@ -2631,7 +2407,7 @@ def get_image_response(
         return answer
 
     # =====================================================
-    # فشل جميع خوادم تحليل الصور
+    # فشل تحليل الصورة
     # =====================================================
 
     fallback = (
