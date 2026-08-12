@@ -285,6 +285,11 @@ else:
 # =========================================================
 # Mistral Image Generation Agent
 # =========================================================
+#
+# يبقى Agent موجودًا للعمليات التي تعتمد عليه،
+# لكن توليد الصور نفسه أصبح مباشرًا داخل generate_image().
+#
+# =========================================================
 
 mistral_image_agent = None
 
@@ -566,39 +571,26 @@ def extract_generated_images(
         )
 
         # =====================================================
-        # نفحص آخر output أولًا لأنه المخرج النهائي للصورة
+        # نبدأ بالـ output الأخير كما في توثيق Mistral
         # =====================================================
 
         latest_output = outputs[-1]
 
-        output_type = getattr(
-            latest_output,
-            "type",
-            None
-        )
-
-        print(
-            "MISTRAL IMAGE DEBUG:",
-            "Latest output type:",
-            output_type
-        )
-
-        content = getattr(
+        latest_content = getattr(
             latest_output,
             "content",
             None
         )
 
-        if content:
+        if latest_content:
 
             print(
-                "MISTRAL IMAGE DEBUG:",
-                len(content),
-                "content chunk(s) found."
+                "MISTRAL LATEST OUTPUT CONTENT:",
+                len(latest_content)
             )
 
             for index, chunk in enumerate(
-                content
+                latest_content
             ):
 
                 chunk_type = getattr(
@@ -630,7 +622,6 @@ def extract_generated_images(
                     file_name
                 )
 
-                # الطريقة الرسمية من Mistral SDK
                 if (
                     ToolFileChunk is not None
                     and isinstance(
@@ -647,7 +638,6 @@ def extract_generated_images(
 
                     continue
 
-                # احتياط إضافي
                 if (
                     chunk_type == "tool_file"
                     and file_id
@@ -658,15 +648,15 @@ def extract_generated_images(
                     )
 
         # =====================================================
-        # إذا لم نجد شيئًا في آخر output، نفحص باقي outputs
+        # احتياط: فحص باقي المخرجات
         # =====================================================
 
         if not file_ids:
 
             print(
                 "MISTRAL IMAGE DEBUG: "
-                "No file found in latest output. "
-                "Checking all outputs..."
+                "No file in latest output. "
+                "Checking remaining outputs..."
             )
 
             for output_index, output in enumerate(
@@ -676,24 +666,17 @@ def extract_generated_images(
                 if output is latest_output:
                     continue
 
-                current_content = getattr(
+                content = getattr(
                     output,
                     "content",
                     None
                 )
 
-                if not current_content:
+                if not content:
                     continue
 
-                print(
-                    "MISTRAL OUTPUT",
-                    output_index,
-                    "CONTENT CHUNKS:",
-                    len(current_content)
-                )
-
-                for chunk_index, chunk in enumerate(
-                    current_content
+                for index, chunk in enumerate(
+                    content
                 ):
 
                     chunk_type = getattr(
@@ -710,7 +693,10 @@ def extract_generated_images(
 
                     print(
                         "MISTRAL FALLBACK CHUNK:",
-                        chunk_index,
+                        "OUTPUT:",
+                        output_index,
+                        "INDEX:",
+                        index,
                         "TYPE:",
                         chunk_type,
                         "FILE_ID:",
@@ -1451,6 +1437,11 @@ def ask_mistral_image(
 # =========================================================
 # توليد صورة جديدة
 # =========================================================
+#
+# تم تغيير هذه الدالة لتستخدم Conversations API مباشرة
+# مع image_generation بدل الاعتماد على Agent أثناء التوليد.
+#
+# =========================================================
 
 def generate_image(prompt):
 
@@ -1473,15 +1464,6 @@ def generate_image(prompt):
 
         return None
 
-    if mistral_image_agent is None:
-
-        print(
-            "IMAGE GENERATION ERROR: "
-            "Mistral image agent غير جاهز."
-        )
-
-        return None
-
     try:
 
         print(
@@ -1493,16 +1475,50 @@ def generate_image(prompt):
             prompt
         )
 
+        # =====================================================
+        # إنشاء الصورة مباشرة عبر Conversations API
+        # =====================================================
+
         response = (
             mistral_client.beta.conversations.start(
-                agent_id=mistral_image_agent.id,
-                inputs=prompt
+                model=MISTRAL_IMAGE_MODEL,
+                inputs=prompt,
+                tools=[
+                    {
+                        "type":
+                            "image_generation"
+                    }
+                ]
             )
         )
 
         print(
             "MISTRAL IMAGE RESPONSE RECEIVED"
         )
+
+        outputs = getattr(
+            response,
+            "outputs",
+            None
+        )
+
+        if not outputs:
+
+            print(
+                "MISTRAL IMAGE ERROR: "
+                "No outputs returned."
+            )
+
+            return None
+
+        print(
+            "MISTRAL OUTPUT COUNT:",
+            len(outputs)
+        )
+
+        # =====================================================
+        # استخراج File IDs
+        # =====================================================
 
         file_ids = (
             extract_generated_images(
@@ -1513,102 +1529,71 @@ def generate_image(prompt):
         if not file_ids:
 
             print(
-                "MISTRAL IMAGE GENERATION "
-                "RETURNED NO IMAGE FILE."
+                "MISTRAL IMAGE ERROR: "
+                "No generated image file found."
             )
 
-            outputs = getattr(
-                response,
-                "outputs",
-                None
+            return None
+
+        # =====================================================
+        # تنزيل الصورة
+        # =====================================================
+
+        for file_id in file_ids:
+
+            print(
+                "MISTRAL GENERATED FILE:",
+                file_id
             )
 
-            if outputs:
+            downloaded = (
+                mistral_client.files.download(
+                    file_id=file_id
+                )
+            )
+
+            image_bytes = (
+                downloaded.read()
+                if hasattr(
+                    downloaded,
+                    "read"
+                )
+                else downloaded
+            )
+
+            if not image_bytes:
 
                 print(
-                    "MISTRAL OUTPUT COUNT:",
-                    len(outputs)
+                    "MISTRAL IMAGE ERROR: "
+                    "Downloaded image is empty."
                 )
 
-                for index, output in enumerate(
-                    outputs
-                ):
-
-                    print(
-                        "MISTRAL OUTPUT",
-                        index,
-                        "TYPE:",
-                        getattr(
-                            output,
-                            "type",
-                            None
-                        )
-                    )
-
-                    print(
-                        "MISTRAL OUTPUT",
-                        index,
-                        "CONTENT:",
-                        getattr(
-                            output,
-                            "content",
-                            None
-                        )
-                    )
-
-            return None
-
-        file_id = file_ids[0]
-
-        print(
-            "MISTRAL GENERATED FILE:",
-            file_id
-        )
-
-        downloaded = (
-            mistral_client.files.download(
-                file_id=file_id
-            )
-        )
-
-        image_bytes = (
-            downloaded.read()
-            if hasattr(
-                downloaded,
-                "read"
-            )
-            else downloaded
-        )
-
-        if not image_bytes:
+                continue
 
             print(
-                "MISTRAL IMAGE ERROR: "
-                "Downloaded file is empty."
+                "MISTRAL IMAGE DOWNLOADED:",
+                len(image_bytes),
+                "bytes"
             )
 
-            return None
+            # =================================================
+            # حفظ الصورة
+            # =================================================
 
-        print(
-            "MISTRAL IMAGE DOWNLOADED:",
-            len(image_bytes),
-            "bytes"
-        )
-
-        image_url = (
-            save_generated_image(
-                image_bytes
-            )
-        )
-
-        if image_url:
-
-            print(
-                "GENERATED IMAGE SAVED:",
-                image_url
+            image_url = (
+                save_generated_image(
+                    image_bytes
+                )
             )
 
-            return image_url
+            if image_url:
+
+                print(
+                    "GENERATED IMAGE SAVED:",
+                    image_url
+                )
+
+                return image_url
 
         print(
             "MISTRAL IMAGE ERROR: "
@@ -2151,7 +2136,6 @@ def get_response(
 
     # =====================================================
     # إنشاء صورة من الصفر
-    #
     # يجب أن يكون هذا قبل أي نموذج نصي
     # =====================================================
 
@@ -2191,7 +2175,7 @@ def get_response(
 
         return (
             "تعذر إنشاء الصورة حاليًا. "
-            "تحقق من أن Mistral Image Agent "
+            "تحقق من أن Mistral Image Generation "
             "يعمل بشكل صحيح."
         )
 
@@ -2319,7 +2303,6 @@ def get_response(
 
     # =====================================================
     # OpenRouter ثانيًا
-    # الانتقال مباشر عند فشل Gemini
     # =====================================================
 
     print(
