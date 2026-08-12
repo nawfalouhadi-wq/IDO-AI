@@ -11,8 +11,10 @@ from google.genai.types import HttpOptions
 
 try:
     from mistralai.client import Mistral
+    from mistralai.client.models import ToolFileChunk
 except Exception:
     Mistral = None
+    ToolFileChunk = None
 
 
 # =========================================================
@@ -298,13 +300,16 @@ if mistral_client is not None:
                     "Ido AI image generation agent."
                 ),
                 instructions=(
-                    "Use the image generation tool "
-                    "whenever the user explicitly asks "
-                    "to create, generate, draw, make, "
-                    "or produce an image. "
-                    "Generate photorealistic images "
-                    "when the user requests realistic "
-                    "images."
+                    "You are the image generation agent "
+                    "for Ido AI. "
+                    "Whenever the user asks to create, "
+                    "generate, draw, make, or produce "
+                    "an image, you MUST use the "
+                    "image_generation tool. "
+                    "Do not answer with text instead "
+                    "of an image when an image is requested. "
+                    "Always use the image generation tool "
+                    "for image requests."
                 ),
                 tools=[
                     {
@@ -537,35 +542,74 @@ def extract_generated_images(
     file_ids = []
 
     if response is None:
+
+        print(
+            "MISTRAL IMAGE DEBUG: "
+            "Response is None."
+        )
+
         return file_ids
 
-    outputs = getattr(
-        response,
-        "outputs",
-        None
-    )
+    try:
 
-    if not outputs:
-        return file_ids
+        outputs = getattr(
+            response,
+            "outputs",
+            None
+        )
 
-    for output in outputs:
+        if not outputs:
+
+            print(
+                "MISTRAL IMAGE DEBUG: "
+                "No outputs found."
+            )
+
+            return file_ids
+
+        print(
+            "MISTRAL IMAGE DEBUG: "
+            f"{len(outputs)} output(s) received."
+        )
+
+        # Mistral يضع الناتج النهائي في آخر output.
+        latest_output = outputs[-1]
+
+        output_type = getattr(
+            latest_output,
+            "type",
+            None
+        )
+
+        print(
+            "MISTRAL IMAGE DEBUG: "
+            "Latest output type:",
+            output_type
+        )
 
         content = getattr(
-            output,
+            latest_output,
             "content",
             None
         )
 
         if not content:
-            continue
 
-        for chunk in content:
-
-            file_id = getattr(
-                chunk,
-                "file_id",
-                None
+            print(
+                "MISTRAL IMAGE DEBUG: "
+                "No content found in latest output."
             )
+
+            return file_ids
+
+        print(
+            "MISTRAL IMAGE DEBUG: "
+            f"{len(content)} content chunk(s) found."
+        )
+
+        for index, chunk in enumerate(
+            content
+        ):
 
             chunk_type = getattr(
                 chunk,
@@ -573,16 +617,58 @@ def extract_generated_images(
                 None
             )
 
-            if not file_id:
+            file_id = getattr(
+                chunk,
+                "file_id",
+                None
+            )
+
+            print(
+                "MISTRAL IMAGE CHUNK:",
+                index,
+                "TYPE:",
+                chunk_type,
+                "FILE_ID:",
+                file_id
+            )
+
+            # الطريقة الموثقة من Mistral
+            if (
+                ToolFileChunk is not None
+                and isinstance(
+                    chunk,
+                    ToolFileChunk
+                )
+            ):
+
+                if chunk.file_id:
+
+                    file_ids.append(
+                        chunk.file_id
+                    )
+
                 continue
 
-            if chunk_type == "tool_file":
+            # احتياط إذا تغيّر تمثيل SDK
+            if (
+                chunk_type == "tool_file"
+                and file_id
+            ):
 
                 file_ids.append(
                     file_id
                 )
 
-    return file_ids
+        return file_ids
+
+    except Exception as e:
+
+        print(
+            "EXTRACT GENERATED IMAGES ERROR:",
+            e
+        )
+
+        return file_ids
 
 
 # =========================================================
@@ -704,7 +790,6 @@ def ask_openrouter(message):
                 ]
             },
 
-            # مهلة OpenRouter الخاصة
             timeout=OPENROUTER_TIMEOUT
         )
 
@@ -1320,6 +1405,10 @@ def generate_image(prompt):
             )
         )
 
+        print(
+            "MISTRAL IMAGE RESPONSE RECEIVED"
+        )
+
         file_ids = (
             extract_generated_images(
                 response
@@ -1329,9 +1418,48 @@ def generate_image(prompt):
         if not file_ids:
 
             print(
-                "Mistral image generation "
-                "returned no image."
+                "MISTRAL IMAGE GENERATION "
+                "RETURNED NO IMAGE FILE."
             )
+
+            outputs = getattr(
+                response,
+                "outputs",
+                None
+            )
+
+            if outputs:
+
+                print(
+                    "MISTRAL OUTPUT COUNT:",
+                    len(outputs)
+                )
+
+                for index, output in enumerate(
+                    outputs
+                ):
+
+                    print(
+                        "MISTRAL OUTPUT",
+                        index,
+                        "TYPE:",
+                        getattr(
+                            output,
+                            "type",
+                            None
+                        )
+                    )
+
+                    print(
+                        "MISTRAL OUTPUT",
+                        index,
+                        "CONTENT:",
+                        getattr(
+                            output,
+                            "content",
+                            None
+                        )
+                    )
 
             return None
 
@@ -1357,6 +1485,21 @@ def generate_image(prompt):
             else downloaded
         )
 
+        if not image_bytes:
+
+            print(
+                "MISTRAL IMAGE ERROR: "
+                "Downloaded file is empty."
+            )
+
+            return None
+
+        print(
+            "MISTRAL IMAGE DOWNLOADED:",
+            len(image_bytes),
+            "bytes"
+        )
+
         image_url = (
             save_generated_image(
                 image_bytes
@@ -1371,6 +1514,11 @@ def generate_image(prompt):
             )
 
             return image_url
+
+        print(
+            "MISTRAL IMAGE ERROR: "
+            "Could not save generated image."
+        )
 
         return None
 
@@ -1599,10 +1747,6 @@ def get_image_prompt(
                 len(prefix):
             ].strip()
 
-    # =====================================================
-    # إزالة العبارات العامة
-    # =====================================================
-
     cleaned = text
 
     cleanup_prefixes = [
@@ -1644,10 +1788,6 @@ def get_image_prompt(
             ].strip()
 
             break
-
-    # =====================================================
-    # إزالة "صورة" / "صوره" من البداية
-    # =====================================================
 
     for image_word in (
         "صورة",
@@ -1799,10 +1939,6 @@ def edit_image(
         edit_request
     )
 
-    # =====================================================
-    # تحليل الصورة الأصلية
-    # =====================================================
-
     analysis_prompt = (
         "Describe this image in very detailed "
         "visual terms for a second image model. "
@@ -1841,20 +1977,12 @@ def edit_image(
 
         return None
 
-    # =====================================================
-    # إنشاء Prompt جديد
-    # =====================================================
-
     edit_prompt = (
         build_image_edit_prompt(
             image_description,
             edit_request
         )
     )
-
-    # =====================================================
-    # توليد الصورة المعدلة
-    # =====================================================
 
     generated_image = (
         generate_image(
@@ -1908,7 +2036,6 @@ def get_response(
 
     # =====================================================
     # إنشاء صورة من الصفر
-    # يجب أن يكون هذا قبل أي نموذج نصي
     # =====================================================
 
     if is_image_generation_request(
@@ -2062,7 +2189,6 @@ def get_response(
 
     # =====================================================
     # Gemini أولًا
-    # Gemini للأسئلة النصية فقط
     # =====================================================
 
     answer = ask_gemini(
@@ -2075,7 +2201,6 @@ def get_response(
 
     # =====================================================
     # OpenRouter ثانيًا
-    # الانتقال مباشر عند فشل Gemini
     # =====================================================
 
     print(
