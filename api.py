@@ -1,296 +1,374 @@
-# ============================================================
-# OVERRIDE get_response
-# ============================================================
-#
-# هذا التعريف يحل مشكلة:
-#
-# NameError:
-# name 'quick_response' is not defined
-#
-# ويجعل get_response يعمل حتى إذا لم تكن
-# quick_response موجودة في brain.py الأصلي.
-#
-# ============================================================
+from flask import Blueprint, request, jsonify
 
-def get_response(
-    message,
+from brain import get_response
+from memory import create_conversation
+
+
+# =========================================================
+# إنشاء API Blueprint
+# =========================================================
+
+api = Blueprint(
+    "api",
+    __name__
+)
+
+
+# =========================================================
+# إنشاء / استرجاع Conversation ID
+# =========================================================
+
+def resolve_conversation_id(
     conversation_id=None
 ):
 
-    # ========================================================
-    # التحقق من الرسالة
-    # ========================================================
+    # -----------------------------------------------------
+    # إذا كان المعرف موجودًا بالفعل
+    # -----------------------------------------------------
 
-    if not message:
+    if conversation_id:
 
-        return (
-            "اكتب رسالة أولًا."
+        conversation_id = str(
+            conversation_id
+        ).strip()
+
+        if conversation_id:
+
+            return conversation_id
+
+
+    # -----------------------------------------------------
+    # إنشاء محادثة جديدة
+    # -----------------------------------------------------
+
+    try:
+
+        conversation = create_conversation(
+            "محادثة جديدة"
         )
 
-    original_message = str(
+
+        if isinstance(
+            conversation,
+            dict
+        ):
+
+            return conversation.get(
+                "id"
+            )
+
+
+        if conversation:
+
+            return str(
+                conversation
+            )
+
+
+    except Exception as e:
+
+        print(
+            "CONVERSATION CREATE ERROR:",
+            repr(e)
+        )
+
+
+    return None
+
+
+# =========================================================
+# Chat API
+# =========================================================
+
+@api.route(
+    "/api/chat",
+    methods=["POST"]
+)
+def chat_api():
+
+    # =====================================================
+    # قراءة JSON
+    # =====================================================
+
+    try:
+
+        data = request.get_json(
+            silent=True
+        )
+
+    except Exception as e:
+
+        print(
+            "JSON READ ERROR:",
+            repr(e)
+        )
+
+        return jsonify({
+
+            "answer":
+                "تعذر قراءة الطلب.",
+
+            "error":
+                str(e)
+
+        }), 400
+
+
+    # =====================================================
+    # التحقق من البيانات
+    # =====================================================
+
+    if not data:
+
+        return jsonify({
+
+            "answer":
+                "لم يتم إرسال بيانات.",
+
+            "error":
+                "No data received"
+
+        }), 400
+
+
+    # =====================================================
+    # قراءة الرسالة
+    # =====================================================
+
+    message = data.get(
+        "message",
+        ""
+    )
+
+
+    if message is None:
+
+        message = ""
+
+
+    message = str(
         message
     ).strip()
 
-    if not original_message:
 
-        return (
-            "اكتب رسالة أولًا."
+    if not message:
+
+        return jsonify({
+
+            "answer":
+                "اكتب رسالة أولًا."
+
+        })
+
+
+    # =====================================================
+    # Conversation ID
+    # =====================================================
+
+    conversation_id = (
+        data.get(
+            "conversation_id"
         )
-
-
-    # ========================================================
-    # IMAGE GENERATION
-    # ========================================================
-    #
-    # يجب فحص طلب إنشاء الصورة أولًا.
-    #
-    # حتى لا يتم إرساله إلى مزود النص بالخطأ.
-    #
-    # ========================================================
-
-    try:
-
-        if _smart_is_generation_request(
-            original_message
-        ):
-
-            prompt = _advanced_image_prompt(
-                original_message
-            )
-
-            if prompt:
-
-                print("=" * 60)
-
-                print(
-                    "ADVANCED TEXT -> IMAGE REQUEST"
-                )
-
-                print(
-                    "IMAGE PROMPT:",
-                    prompt
-                )
-
-                print("=" * 60)
-
-                result = _advanced_generate_image_chain(
-                    prompt
-                )
-
-                return result
-
-    except Exception as exc:
-
-        print(
-            "IMAGE GENERATION ROUTER ERROR:",
-            exc
-        )
-
-
-    # ========================================================
-    # QUICK RESPONSE
-    # ========================================================
-    #
-    # quick_response قد تكون موجودة في بعض نسخ brain.py
-    # وغير موجودة في نسخ أخرى.
-    #
-    # لذلك نتحقق منها بطريقة آمنة.
-    #
-    # ========================================================
-
-    try:
-
-        quick_function = globals().get(
-            "quick_response"
-        )
-
-        if callable(
-            quick_function
-        ):
-
-            quick = quick_function(
-                original_message
-            )
-
-            if quick:
-
-                return quick
-
-    except Exception as exc:
-
-        print(
-            "QUICK RESPONSE ERROR:",
-            exc
-        )
-
-
-    # ========================================================
-    # TEXT FAILOVER
-    # ========================================================
-
-    routes = [
-
-        (
-            "GROQ",
-            ask_groq
-        ),
-
-        (
-            "MISTRAL",
-            ask_mistral
-        ),
-
-        (
-            "OPENROUTER",
-            ask_openrouter
-        ),
-
-        (
-            "GEMINI",
-            ask_gemini
-        ),
-
-        (
-            "XAI",
-            ask_xai
-        ),
-
-        (
-            "POLLINATIONS",
-            ask_pollinations
-        )
-    ]
-
-
-    attempts = 0
-
-
-    # ========================================================
-    # تجربة مزودي الذكاء الاصطناعي
-    # ========================================================
-
-    for name, function in routes:
-
-        if attempts >= (
-            ADVANCED_MAX_PROVIDER_ATTEMPTS
-        ):
-
-            print(
-                "Maximum provider attempts reached."
-            )
-
-            break
-
-
-        attempts += 1
-
-
-        # ----------------------------------------------------
-        # التحقق من توفر المزود
-        # ----------------------------------------------------
-
-        try:
-
-            if not provider_available(
-                name
-            ):
-
-                print(
-                    f"{name}: SKIPPED "
-                    "(cooldown)"
-                )
-
-                continue
-
-        except Exception as exc:
-
-            print(
-                f"{name} AVAILABILITY ERROR:",
-                exc
-            )
-
-            continue
-
-
-        print("=" * 40)
-
-        print(
-            "ADVANCED TEXT TRY:",
-            name
-        )
-
-        print("=" * 40)
-
-
-        # ----------------------------------------------------
-        # إرسال الرسالة
-        # ----------------------------------------------------
-
-        try:
-
-            answer = function(
-                original_message
-            )
-
-        except Exception as exc:
-
-            _provider_stat(
-                name,
-                failure=True
-            )
-
-            print(
-                f"{name} ROUTER ERROR:",
-                exc
-            )
-
-            answer = None
-
-
-        # ----------------------------------------------------
-        # نجاح
-        # ----------------------------------------------------
-
-        if answer:
-
-            _provider_stat(
-                name,
-                success=True
-            )
-
-            print(
-                "TEXT ROUTE SUCCESS:",
-                name
-            )
-
-            return answer
-
-
-        # ----------------------------------------------------
-        # فشل وانتقال للمزود التالي
-        # ----------------------------------------------------
-
-        print(
-            f"{name} failed. "
-            "Trying next provider..."
-        )
-
-
-        if ADVANCED_RETRY_DELAY > 0:
-
-            time.sleep(
-                ADVANCED_RETRY_DELAY
-            )
-
-
-    # ========================================================
-    # فشل جميع المزودين
-    # ========================================================
-
-    return (
-        "أنا Ido AI، لكن جميع مزودي "
-        "الذكاء الاصطناعي المتاحين "
-        "فشلوا حاليًا. "
-        "تحقق من المفاتيح والرصيد "
-        "وحالة مزودي الخدمة."
     )
+
+
+    conversation_id = (
+        resolve_conversation_id(
+            conversation_id
+        )
+    )
+
+
+    # =====================================================
+    # تسجيل الطلب
+    # =====================================================
+
+    print("=" * 60)
+
+    print(
+        "API CHAT REQUEST"
+    )
+
+    print(
+        "MESSAGE:",
+        message
+    )
+
+    print(
+        "CONVERSATION ID:",
+        conversation_id
+    )
+
+    print("=" * 60)
+
+
+    # =====================================================
+    # إرسال الرسالة إلى Brain
+    # =====================================================
+
+    try:
+
+        # -------------------------------------------------
+        # نحاول أولًا النسخة الجديدة التي تدعم
+        # conversation_id
+        # -------------------------------------------------
+
+        try:
+
+            answer = get_response(
+                message,
+                conversation_id=conversation_id
+            )
+
+
+        except TypeError as e:
+
+            print(
+                "GET_RESPONSE COMPATIBILITY:",
+                repr(e)
+            )
+
+            # -------------------------------------------------
+            # توافق مع brain.py قديم
+            # -------------------------------------------------
+
+            answer = get_response(
+                message
+            )
+
+
+        # =================================================
+        # معالجة نتيجة Brain
+        # =================================================
+
+        if isinstance(
+            answer,
+            dict
+        ):
+
+            response_data = {
+
+                "answer":
+                    answer.get(
+                        "answer",
+                        "تم تنفيذ الطلب."
+                    ),
+
+                "conversation_id":
+                    conversation_id,
+
+                "imageUrl":
+                    answer.get(
+                        "imageUrl",
+                        ""
+                    ),
+
+                "provider":
+                    answer.get(
+                        "provider"
+                    )
+            }
+
+
+        else:
+
+            response_data = {
+
+                "answer":
+                    str(
+                        answer
+                        or
+                        "لم أجد إجابة حاليًا."
+                    ),
+
+                "conversation_id":
+                    conversation_id,
+
+                "imageUrl":
+                    "",
+
+                "provider":
+                    None
+            }
+
+
+        # =================================================
+        # تسجيل النجاح
+        # =================================================
+
+        print(
+            "API CHAT SUCCESS"
+        )
+
+        print(
+            "ANSWER:",
+            response_data.get(
+                "answer"
+            )
+        )
+
+        print(
+            "IMAGE URL:",
+            response_data.get(
+                "imageUrl"
+            )
+        )
+
+        print(
+            "PROVIDER:",
+            response_data.get(
+                "provider"
+            )
+        )
+
+
+        print("=" * 60)
+
+
+        # =================================================
+        # إرسال JSON
+        # =================================================
+
+        return jsonify(
+            response_data
+        )
+
+
+    # =====================================================
+    # خطأ Brain
+    # =====================================================
+
+    except Exception as e:
+
+        print("=" * 60)
+
+        print(
+            "API CHAT ERROR:"
+        )
+
+        print(
+            repr(e)
+        )
+
+        print("=" * 60)
+
+
+        return jsonify({
+
+            "answer":
+                "حدث خطأ أثناء معالجة "
+                "الرسالة في Aido AI.",
+
+            "error":
+                str(e),
+
+            "conversation_id":
+                conversation_id,
+
+            "imageUrl":
+                "",
+
+            "provider":
+                None
+
+        }), 500
