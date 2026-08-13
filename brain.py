@@ -2,24 +2,26 @@
 # IDO AI - BRAIN.PY
 # ============================================================
 #
-# ARCHITECTURE
+# PROVIDERS USED:
 #
-# PRIMARY TEXT AI:
+# TEXT:
 #     GROQ
+#       ↓
+#     OPENROUTER
 #
-# PRIMARY IMAGE UNDERSTANDING:
+# VISION:
 #     GROQ VISION
-#
-# IMAGE UNDERSTANDING FALLBACK:
+#       ↓
 #     OPENROUTER VISION
 #
-# IMAGE GENERATION:
-#     OPENROUTER IMAGE API
+# IMAGE GENERATION / EDITING:
+#     OPENROUTER
 #
 # IMPORTANT:
-#     Groq does NOT generate images.
-#     Therefore image-generation requests NEVER go to Groq
-#     as normal text requests.
+#     No direct Gemini API
+#     No Mistral
+#     No xAI
+#     No Pollinations
 #
 # ============================================================
 
@@ -60,7 +62,7 @@ OPENROUTER_API_KEY = os.getenv(
 
 
 # ============================================================
-# MODEL CONFIGURATION
+# MODELS
 # ============================================================
 
 # ------------------------------------------------------------
@@ -84,42 +86,29 @@ GROQ_VISION_MODEL = os.getenv(
 
 
 # ------------------------------------------------------------
-# OPENROUTER TEXT / VISION
+# OPENROUTER TEXT
 # ------------------------------------------------------------
-#
-# IMPORTANT:
-# This model MUST support image input when used for vision.
-#
-# You can change it from Railway Variables.
-#
 
-OPENROUTER_VISION_MODEL = os.getenv(
-    "OPENROUTER_VISION_MODEL",
-    "meta-llama/llama-4-maverick"
+OPENROUTER_TEXT_MODEL = os.getenv(
+    "OPENROUTER_TEXT_MODEL",
+    "openai/gpt-oss-20b"
 ).strip()
 
 
 # ------------------------------------------------------------
 # OPENROUTER IMAGE
+#
+# Current image model available through OpenRouter.
 # ------------------------------------------------------------
-#
-# OpenRouter now has a dedicated /images endpoint.
-#
-# Default:
-# Grok Imagine through OpenRouter.
-#
-# You can replace this in Railway Variables with another
-# OpenRouter image-generation model.
-#
 
 OPENROUTER_IMAGE_MODEL = os.getenv(
     "OPENROUTER_IMAGE_MODEL",
-    "x-ai/grok-imagine-image-quality"
+    "google/gemini-3.1-flash-image"
 ).strip()
 
 
 # ============================================================
-# API URLS
+# URLS
 # ============================================================
 
 GROQ_URL = (
@@ -127,18 +116,13 @@ GROQ_URL = (
 )
 
 
-OPENROUTER_CHAT_URL = (
+OPENROUTER_URL = (
     "https://openrouter.ai/api/v1/chat/completions"
 )
 
 
-OPENROUTER_IMAGE_URL = (
-    "https://openrouter.ai/api/v1/images"
-)
-
-
 # ============================================================
-# REQUEST TIMEOUT
+# TIMEOUT
 # ============================================================
 
 REQUEST_TIMEOUT = int(
@@ -178,8 +162,8 @@ print(
 )
 
 print(
-    "OPENROUTER VISION MODEL:",
-    OPENROUTER_VISION_MODEL
+    "OPENROUTER TEXT MODEL:",
+    OPENROUTER_TEXT_MODEL
 )
 
 print(
@@ -197,9 +181,9 @@ print("=" * 70)
 SYSTEM_PROMPT = """
 You are Aido AI.
 
-You are the main AI assistant of the application.
+You are the primary AI assistant of the application.
 
-IMPORTANT RULES:
+RULES:
 
 1. Answer naturally and directly.
 
@@ -207,45 +191,30 @@ IMPORTANT RULES:
 
 3. If the user says:
    "السلام عليكم"
-   and also asks a question or gives a request,
-   answer the actual request.
-   Do NOT return only a greeting.
+   and also asks a question,
+   answer the question normally.
 
-4. If the user says only:
+4. If the user only says:
    "السلام عليكم"
-   respond naturally with:
+
+   respond:
+
    "وعليكم السلام ورحمة الله وبركاته، كيف يمكنني مساعدتك؟"
 
-5. Never pretend that you generated an image if no image
-   was actually generated.
+5. Never pretend to generate an image as text.
 
-6. Image-generation requests are handled by the application's
-   image-generation system.
+6. Image generation is handled by the application image system.
 
-7. Never answer an image-generation request as if it were
-   an ordinary text question.
+7. If the user asks to generate or edit an image,
+   the application will route the request to the image generator.
 
-8. If the user asks to create, generate, draw, make or edit
-   an image, the application will route the request to the
-   image-generation system.
+8. Do not mention internal provider routing unless the user asks.
 
-9. If the user uploads an image and asks a question about it,
-   analyze the actual uploaded image.
+9. Be concise for simple questions.
 
-10. Do not invent API failures.
+10. Be detailed when the user asks for explanations.
 
-11. Do not mention internal provider routing unless the user
-    explicitly asks about it.
-
-12. Be concise for simple questions.
-
-13. Be detailed when the user asks for an explanation.
-
-14. If the user asks for code, provide real code in the
-    requested programming language.
-
-15. Never claim that you cannot see an uploaded image when
-    the image was actually provided to the vision system.
+11. Answer in the language used by the user whenever possible.
 """
 
 
@@ -260,25 +229,13 @@ GREETING_ONLY_PATTERNS = [
     r"^\s*السلام عليكم ورحمة الله وبركاته\s*[.!؟،]*\s*$",
 
     r"^\s*سلام عليكم\s*[.!؟،]*\s*$",
-
-    r"^\s*السلام\s*[.!؟،]*\s*$",
 ]
 
 
 def is_greeting_only(message):
     """
-    Return True only when the complete message is a greeting.
-
-    Examples:
-
-        السلام عليكم
-            -> True
-
-        السلام عليكم أريد صورة لسيارة
-            -> False
-
-        السلام عليكم كيف حالك؟
-            -> False
+    Returns True only when the entire message
+    is a greeting.
     """
 
     if not message:
@@ -299,18 +256,6 @@ def is_greeting_only(message):
 
 
 # ============================================================
-# GREETING RESPONSE
-# ============================================================
-
-def greeting_response():
-
-    return (
-        "وعليكم السلام ورحمة الله وبركاته، "
-        "كيف يمكنني مساعدتك؟"
-    )
-
-
-# ============================================================
 # IMAGE REQUEST DETECTION
 # ============================================================
 
@@ -318,41 +263,28 @@ IMAGE_KEYWORDS_AR = [
 
     "أنشئ صورة",
     "انشئ صورة",
-
     "اصنع صورة",
     "اعمل صورة",
+    "اعمل لي صورة",
 
     "أنشئ لي صورة",
     "انشئ لي صورة",
-
     "اصنع لي صورة",
-    "اعمل لي صورة",
 
-    "ولد صورة",
     "ولّد صورة",
+    "ولد صورة",
 
     "توليد صورة",
     "إنشاء صورة",
 
+    "ارسم",
+    "ارسم لي",
+
     "صمم صورة",
     "تصميم صورة",
 
-    "ارسم صورة",
-    "ارسم لي صورة",
-
-    "ارسم لي",
-
     "صورة",
     "صور",
-
-    "الصورة",
-    "الصور",
-
-    "أنشئ",
-    "اصنع",
-
-    "ولّد",
-    "ولد",
 
     "عدّل الصورة",
     "عدل الصورة",
@@ -361,12 +293,6 @@ IMAGE_KEYWORDS_AR = [
     "تحرير الصورة",
 
     "حرر الصورة",
-
-    "غيّر الصورة",
-    "غير الصورة",
-
-    "حسّن الصورة",
-    "حسن الصورة",
 ]
 
 
@@ -384,28 +310,19 @@ IMAGE_KEYWORDS_EN = [
     "draw an image",
     "draw image",
 
-    "create a picture",
-    "generate a picture",
-
-    "make a picture",
-
     "edit the image",
     "edit image",
 
     "modify the image",
     "modify image",
 
-    "edit the picture",
-    "modify the picture",
-
     "image generation",
+
+    "generate a picture",
+    "create a picture",
 
     "generate a photo",
     "create a photo",
-
-    "picture",
-    "photo",
-    "image",
 ]
 
 
@@ -423,22 +340,12 @@ IMAGE_KEYWORDS_FR = [
 
     "modifier l'image",
     "modifie l'image",
-
-    "créer une image",
-    "creer une image",
-
-    "image",
-    "photo",
 ]
 
 
 def is_image_request(message):
     """
-    Detect image generation/editing requests.
-
-    IMPORTANT:
-    This function is checked BEFORE the normal text AI.
-    Therefore Groq will not answer an image request as text.
+    Detect image generation or editing requests.
     """
 
     if not message:
@@ -446,34 +353,22 @@ def is_image_request(message):
 
     text = str(message).strip().lower()
 
-    # --------------------------------------------------------
     # Arabic
-    # --------------------------------------------------------
-
     for keyword in IMAGE_KEYWORDS_AR:
 
         if keyword.lower() in text:
-
             return True
 
-    # --------------------------------------------------------
     # English
-    # --------------------------------------------------------
-
     for keyword in IMAGE_KEYWORDS_EN:
 
         if keyword.lower() in text:
-
             return True
 
-    # --------------------------------------------------------
     # French
-    # --------------------------------------------------------
-
     for keyword in IMAGE_KEYWORDS_FR:
 
         if keyword.lower() in text:
-
             return True
 
     return False
@@ -485,7 +380,8 @@ def is_image_request(message):
 
 def clean_image_prompt(message):
     """
-    Prepare the user's request for the image generator.
+    Removes common conversational prefixes
+    while preserving the actual image request.
     """
 
     text = str(
@@ -495,30 +391,19 @@ def clean_image_prompt(message):
     if not text:
 
         return (
-            "Create a high-quality image "
-            "based on the user's request."
+            "Create a high-quality professional image."
         )
-
-    # --------------------------------------------------------
-    # Remove conversational prefixes
-    # --------------------------------------------------------
 
     prefixes = [
 
-        "أنشئ لي صورة",
-        "انشئ لي صورة",
+        "أنشئ لي",
+        "انشئ لي",
 
-        "اصنع لي صورة",
-        "اعمل لي صورة",
+        "اصنع لي",
+        "اعمل لي",
 
-        "أنشئ صورة",
-        "انشئ صورة",
-
-        "اصنع صورة",
-        "اعمل صورة",
-
-        "ولد صورة",
-        "ولّد صورة",
+        "ولد لي",
+        "ولّد لي",
 
         "أنشئ",
         "انشئ",
@@ -529,23 +414,10 @@ def clean_image_prompt(message):
         "ولّد",
         "ولد",
 
-        "ارسم لي صورة",
-        "ارسم صورة",
-
-        "generate an image",
-        "generate image",
-
-        "create an image",
-        "create image",
-
-        "make an image",
-        "make image",
-
-        "draw an image",
-        "draw image",
-
-        "create a picture",
-        "generate a picture",
+        "generate",
+        "create",
+        "make",
+        "draw",
     ]
 
     cleaned = text
@@ -570,7 +442,7 @@ def clean_image_prompt(message):
 
 
 # ============================================================
-# HTTP POST HELPER
+# SAFE POST
 # ============================================================
 
 def safe_post(
@@ -595,7 +467,7 @@ def safe_post(
 
 
 # ============================================================
-# EXTRACT TEXT FROM OPENAI-COMPATIBLE RESPONSE
+# EXTRACT OPENAI-COMPATIBLE TEXT
 # ============================================================
 
 def extract_text_response(data):
@@ -604,7 +476,6 @@ def extract_text_response(data):
         data,
         dict
     ):
-
         return ""
 
     choices = data.get(
@@ -612,37 +483,18 @@ def extract_text_response(data):
     )
 
     if not choices:
-
         return ""
 
     first = choices[0]
-
-    if not isinstance(
-        first,
-        dict
-    ):
-
-        return ""
 
     message = first.get(
         "message",
         {}
     )
 
-    if not isinstance(
-        message,
-        dict
-    ):
-
-        return ""
-
     content = message.get(
         "content"
     )
-
-    # --------------------------------------------------------
-    # Simple string
-    # --------------------------------------------------------
 
     if isinstance(
         content,
@@ -650,10 +502,6 @@ def extract_text_response(data):
     ):
 
         return content.strip()
-
-    # --------------------------------------------------------
-    # Content array
-    # --------------------------------------------------------
 
     if isinstance(
         content,
@@ -668,7 +516,6 @@ def extract_text_response(data):
                 item,
                 dict
             ):
-
                 continue
 
             text = item.get(
@@ -686,6 +533,18 @@ def extract_text_response(data):
         ).strip()
 
     return ""
+
+
+# ============================================================
+# GREETING RESPONSE
+# ============================================================
+
+def greeting_response():
+
+    return (
+        "وعليكم السلام ورحمة الله وبركاته، "
+        "كيف يمكنني مساعدتك؟"
+    )
 
 
 # ============================================================
@@ -749,29 +608,15 @@ def groq_text(message):
         json_data=payload
     )
 
-    # --------------------------------------------------------
-    # IMPORTANT:
-    # Show real provider error in Railway logs.
-    # --------------------------------------------------------
-
     if response.status_code >= 400:
 
         raise RuntimeError(
             "Groq HTTP "
             f"{response.status_code}: "
-            f"{response.text[:1000]}"
+            f"{response.text[:700]}"
         )
 
-    try:
-
-        data = response.json()
-
-    except Exception:
-
-        raise RuntimeError(
-            "Groq returned invalid JSON: "
-            f"{response.text[:1000]}"
-        )
+    data = response.json()
 
     answer = extract_text_response(
         data
@@ -787,6 +632,99 @@ def groq_text(message):
 
 
 # ============================================================
+# OPENROUTER TEXT
+# ============================================================
+
+def openrouter_text(message):
+
+    if not OPENROUTER_API_KEY:
+
+        raise RuntimeError(
+            "OPENROUTER_API_KEY is missing."
+        )
+
+    headers = {
+
+        "Authorization":
+            f"Bearer {OPENROUTER_API_KEY}",
+
+        "Content-Type":
+            "application/json",
+
+        "HTTP-Referer":
+            os.getenv(
+                "OPENROUTER_SITE_URL",
+                "https://ido-ai-production.up.railway.app"
+            ),
+
+        "X-Title":
+            "IDO AI",
+    }
+
+    payload = {
+
+        "model":
+            OPENROUTER_TEXT_MODEL,
+
+        "messages": [
+
+            {
+                "role":
+                    "system",
+
+                "content":
+                    SYSTEM_PROMPT,
+            },
+
+            {
+                "role":
+                    "user",
+
+                "content":
+                    message,
+            }
+        ],
+
+        "temperature":
+            0.7,
+
+        "max_tokens":
+            4096,
+    }
+
+    response = safe_post(
+
+        OPENROUTER_URL,
+
+        headers=headers,
+
+        json_data=payload
+    )
+
+    if response.status_code >= 400:
+
+        raise RuntimeError(
+            "OpenRouter HTTP "
+            f"{response.status_code}: "
+            f"{response.text[:700]}"
+        )
+
+    data = response.json()
+
+    answer = extract_text_response(
+        data
+    )
+
+    if not answer:
+
+        raise RuntimeError(
+            "OpenRouter returned an empty response."
+        )
+
+    return answer
+
+
+# ============================================================
 # GROQ VISION
 # ============================================================
 
@@ -795,9 +733,6 @@ def groq_vision(
     image_bytes,
     mime_type
 ):
-    """
-    Analyze a real uploaded image using Groq Vision.
-    """
 
     if not GROQ_API_KEY:
 
@@ -805,31 +740,12 @@ def groq_vision(
             "GROQ_API_KEY is missing."
         )
 
-    if not image_bytes:
-
-        raise RuntimeError(
-            "No image bytes were provided."
-        )
-
-    # --------------------------------------------------------
-    # Encode uploaded image
-    # --------------------------------------------------------
-
     encoded = base64.b64encode(
         image_bytes
-    ).decode(
-        "utf-8"
-    )
-
-    safe_mime_type = (
-        mime_type
-        or
-        "image/jpeg"
-    )
+    ).decode("utf-8")
 
     image_url = (
-        f"data:{safe_mime_type};base64,"
-        f"{encoded}"
+        f"data:{mime_type};base64,{encoded}"
     )
 
     headers = {
@@ -867,11 +783,7 @@ def groq_vision(
                             "text",
 
                         "text":
-                            (
-                                message
-                                or
-                                "حلل هذه الصورة بالتفصيل."
-                            ),
+                            message,
                     },
 
                     {
@@ -882,7 +794,7 @@ def groq_vision(
 
                             "url":
                                 image_url
-                        },
+                        }
                     }
                 ],
             }
@@ -894,25 +806,6 @@ def groq_vision(
         "max_tokens":
             4096,
     }
-
-    print(
-        "GROQ VISION REQUEST:"
-    )
-
-    print(
-        "MODEL:",
-        GROQ_VISION_MODEL
-    )
-
-    print(
-        "MIME:",
-        safe_mime_type
-    )
-
-    print(
-        "IMAGE BYTES:",
-        len(image_bytes)
-    )
 
     response = safe_post(
 
@@ -928,28 +821,17 @@ def groq_vision(
         raise RuntimeError(
             "Groq Vision HTTP "
             f"{response.status_code}: "
-            f"{response.text[:1500]}"
-        )
-
-    try:
-
-        data = response.json()
-
-    except Exception:
-
-        raise RuntimeError(
-            "Groq Vision returned invalid JSON: "
-            f"{response.text[:1500]}"
+            f"{response.text[:700]}"
         )
 
     answer = extract_text_response(
-        data
+        response.json()
     )
 
     if not answer:
 
         raise RuntimeError(
-            "Groq Vision returned empty text."
+            "Groq Vision returned empty response."
         )
 
     return answer
@@ -964,12 +846,6 @@ def openrouter_vision(
     image_bytes,
     mime_type
 ):
-    """
-    Backup image-understanding provider.
-
-    OpenRouter requires a vision-capable model when an
-    image_url is included.
-    """
 
     if not OPENROUTER_API_KEY:
 
@@ -977,27 +853,12 @@ def openrouter_vision(
             "OPENROUTER_API_KEY is missing."
         )
 
-    if not image_bytes:
-
-        raise RuntimeError(
-            "No image bytes were provided."
-        )
-
     encoded = base64.b64encode(
         image_bytes
-    ).decode(
-        "utf-8"
-    )
-
-    safe_mime_type = (
-        mime_type
-        or
-        "image/jpeg"
-    )
+    ).decode("utf-8")
 
     image_url = (
-        f"data:{safe_mime_type};base64,"
-        f"{encoded}"
+        f"data:{mime_type};base64,{encoded}"
     )
 
     headers = {
@@ -1021,7 +882,7 @@ def openrouter_vision(
     payload = {
 
         "model":
-            OPENROUTER_VISION_MODEL,
+            OPENROUTER_TEXT_MODEL,
 
         "messages": [
 
@@ -1044,11 +905,7 @@ def openrouter_vision(
                             "text",
 
                         "text":
-                            (
-                                message
-                                or
-                                "حلل هذه الصورة."
-                            ),
+                            message,
                     },
 
                     {
@@ -1059,7 +916,7 @@ def openrouter_vision(
 
                             "url":
                                 image_url
-                        },
+                        }
                     }
                 ],
             }
@@ -1067,23 +924,11 @@ def openrouter_vision(
 
         "max_tokens":
             4096,
-
-        "temperature":
-            0.4,
     }
-
-    print(
-        "OPENROUTER VISION REQUEST:"
-    )
-
-    print(
-        "MODEL:",
-        OPENROUTER_VISION_MODEL
-    )
 
     response = safe_post(
 
-        OPENROUTER_CHAT_URL,
+        OPENROUTER_URL,
 
         headers=headers,
 
@@ -1095,35 +940,157 @@ def openrouter_vision(
         raise RuntimeError(
             "OpenRouter Vision HTTP "
             f"{response.status_code}: "
-            f"{response.text[:1500]}"
-        )
-
-    try:
-
-        data = response.json()
-
-    except Exception:
-
-        raise RuntimeError(
-            "OpenRouter Vision returned invalid JSON: "
-            f"{response.text[:1500]}"
+            f"{response.text[:700]}"
         )
 
     answer = extract_text_response(
-        data
+        response.json()
     )
 
     if not answer:
 
         raise RuntimeError(
-            "OpenRouter Vision returned empty text."
+            "OpenRouter Vision returned empty response."
         )
 
     return answer
 
 
 # ============================================================
-# OPENROUTER IMAGE GENERATION
+# EXTRACT IMAGE FROM OPENROUTER RESPONSE
+# ============================================================
+
+def extract_openrouter_image(data):
+
+    if not isinstance(
+        data,
+        dict
+    ):
+        return None
+
+    choices = data.get(
+        "choices",
+        []
+    )
+
+    if not choices:
+        return None
+
+    message = choices[0].get(
+        "message",
+        {}
+    )
+
+    # --------------------------------------------------------
+    # Current OpenRouter image response:
+    #
+    # message.images
+    # --------------------------------------------------------
+
+    images = message.get(
+        "images"
+    )
+
+    if isinstance(
+        images,
+        list
+    ):
+
+        for image in images:
+
+            if not isinstance(
+                image,
+                dict
+            ):
+                continue
+
+            image_url = image.get(
+                "image_url"
+            )
+
+            if isinstance(
+                image_url,
+                dict
+            ):
+
+                url = image_url.get(
+                    "url"
+                )
+
+                if url:
+
+                    return url
+
+    # --------------------------------------------------------
+    # Some responses can expose image objects
+    # inside content.
+    # --------------------------------------------------------
+
+    content = message.get(
+        "content"
+    )
+
+    if isinstance(
+        content,
+        list
+    ):
+
+        for item in content:
+
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+            image_url = item.get(
+                "image_url"
+            )
+
+            if isinstance(
+                image_url,
+                dict
+            ):
+
+                url = image_url.get(
+                    "url"
+                )
+
+                if url:
+
+                    return url
+
+            image = item.get(
+                "image"
+            )
+
+            if isinstance(
+                image,
+                dict
+            ):
+
+                image_url = image.get(
+                    "image_url"
+                )
+
+                if isinstance(
+                    image_url,
+                    dict
+                ):
+
+                    url = image_url.get(
+                        "url"
+                    )
+
+                    if url:
+
+                        return url
+
+    return None
+
+
+# ============================================================
+# OPENROUTER IMAGE GENERATION / EDITING
 # ============================================================
 
 def openrouter_generate_image(
@@ -1131,15 +1098,6 @@ def openrouter_generate_image(
     image_bytes=None,
     mime_type=None
 ):
-    """
-    Generate or edit an image using OpenRouter's dedicated
-    Image API.
-
-    Endpoint:
-        POST /api/v1/images
-
-    The API returns base64 image data.
-    """
 
     if not OPENROUTER_API_KEY:
 
@@ -1171,65 +1129,101 @@ def openrouter_generate_image(
             "IDO AI",
     }
 
+    # --------------------------------------------------------
+    # TEXT ONLY
+    # --------------------------------------------------------
+
+    if not image_bytes:
+
+        user_content = prompt
+
+    # --------------------------------------------------------
+    # IMAGE EDITING
+    # --------------------------------------------------------
+
+    else:
+
+        encoded = base64.b64encode(
+            image_bytes
+        ).decode("utf-8")
+
+        image_url = (
+            f"data:{mime_type or 'image/jpeg'}"
+            f";base64,{encoded}"
+        )
+
+        user_content = [
+
+            {
+                "type":
+                    "text",
+
+                "text":
+                    (
+                        "Edit the supplied image according "
+                        "to this instruction. Return the "
+                        "edited image.\n\n"
+                        f"INSTRUCTION:\n{prompt}"
+                    ),
+            },
+
+            {
+                "type":
+                    "image_url",
+
+                "image_url": {
+
+                    "url":
+                        image_url
+                },
+            }
+        ]
+
     payload = {
 
         "model":
             OPENROUTER_IMAGE_MODEL,
 
-        "prompt":
-            prompt,
+        "messages": [
 
-        "n":
-            1,
+            {
+                "role":
+                    "user",
 
-        "resolution":
-            "1K",
+                "content":
+                    user_content,
+            }
+        ],
 
-        "aspect_ratio":
-            "1:1",
+        # ----------------------------------------------------
+        # VERY IMPORTANT:
+        #
+        # OpenRouter image models use image + text modalities.
+        # ----------------------------------------------------
+
+        "modalities": [
+            "image",
+            "text"
+        ],
+
+        "temperature":
+            0.7,
     }
 
-    # --------------------------------------------------------
-    # IMAGE EDITING / REFERENCE IMAGE
-    # --------------------------------------------------------
-    #
-    # If the user uploaded an image, provide it as an
-    # input reference when supported by the selected model.
-    #
-
-    if image_bytes:
-
-        encoded = base64.b64encode(
-            image_bytes
-        ).decode(
-            "utf-8"
-        )
-
-        safe_mime_type = (
-            mime_type
-            or
-            "image/jpeg"
-        )
-
-        reference_data_url = (
-            f"data:{safe_mime_type};base64,"
-            f"{encoded}"
-        )
-
-        payload[
-            "input_references"
-        ] = [
-
-            reference_data_url
-        ]
+    print("=" * 70)
 
     print(
-        "OPENROUTER IMAGE REQUEST:"
+        "OPENROUTER IMAGE REQUEST"
     )
 
     print(
-        "MODEL:",
+        "IMAGE MODEL:",
         OPENROUTER_IMAGE_MODEL
+    )
+
+    print(
+        "HAS INPUT IMAGE:",
+        bool(image_bytes)
     )
 
     print(
@@ -1237,127 +1231,95 @@ def openrouter_generate_image(
         prompt
     )
 
-    print(
-        "HAS REFERENCE IMAGE:",
-        bool(image_bytes)
-    )
+    print("=" * 70)
 
     response = safe_post(
 
-        OPENROUTER_IMAGE_URL,
+        OPENROUTER_URL,
 
         headers=headers,
 
-        json_data=payload
+        json_data=payload,
+
+        timeout=REQUEST_TIMEOUT
     )
+
+    # --------------------------------------------------------
+    # HTTP ERROR
+    # --------------------------------------------------------
 
     if response.status_code >= 400:
 
         raise RuntimeError(
             "OpenRouter Image HTTP "
             f"{response.status_code}: "
-            f"{response.text[:2000]}"
+            f"{response.text[:1500]}"
         )
+
+    # --------------------------------------------------------
+    # JSON
+    # --------------------------------------------------------
 
     try:
 
         data = response.json()
 
-    except Exception:
+    except Exception as e:
 
         raise RuntimeError(
-            "OpenRouter Image returned invalid JSON: "
-            f"{response.text[:2000]}"
+            "OpenRouter returned invalid JSON: "
+            f"{e}"
         )
 
-    images = data.get(
-        "data",
-        []
+    # --------------------------------------------------------
+    # IMAGE
+    # --------------------------------------------------------
+
+    image_url = extract_openrouter_image(
+        data
     )
 
-    if not images:
+    if image_url:
 
-        raise RuntimeError(
-            "OpenRouter Image returned no images."
+        print(
+            "OPENROUTER IMAGE SUCCESS"
         )
+
+        return {
+
+            "image_url":
+                image_url,
+
+            "text":
+                "تم إنشاء الصورة بنجاح.",
+
+            "provider":
+                "OpenRouter",
+
+            "model":
+                OPENROUTER_IMAGE_MODEL,
+        }
 
     # --------------------------------------------------------
-    # Find first valid image
+    # Debug response when no image was found
     # --------------------------------------------------------
 
-    for image in images:
+    print(
+        "OPENROUTER IMAGE RESPONSE:"
+    )
 
-        if not isinstance(
-            image,
-            dict
-        ):
-
-            continue
-
-        b64_json = image.get(
-            "b64_json"
-        )
-
-        if b64_json:
-
-            media_type = image.get(
-                "media_type",
-                "image/png"
-            )
-
-            data_url = (
-                f"data:{media_type};base64,"
-                f"{b64_json}"
-            )
-
-            return {
-
-                "image_url":
-                    data_url,
-
-                "text":
-                    "تم إنشاء الصورة بنجاح.",
-
-                "provider":
-                    "OpenRouter",
-
-                "model":
-                    OPENROUTER_IMAGE_MODEL,
-            }
-
-        # ----------------------------------------------------
-        # Some compatible responses may provide a URL.
-        # ----------------------------------------------------
-
-        url = image.get(
-            "url"
-        )
-
-        if url:
-
-            return {
-
-                "image_url":
-                    url,
-
-                "text":
-                    "تم إنشاء الصورة بنجاح.",
-
-                "provider":
-                    "OpenRouter",
-
-                "model":
-                    OPENROUTER_IMAGE_MODEL,
-            }
+    print(
+        str(data)[:5000]
+    )
 
     raise RuntimeError(
-        "OpenRouter returned image entries "
-        "without b64_json or URL."
+        "OpenRouter completed the request "
+        "but returned no image data."
     )
 
 
 # ============================================================
-# IMAGE GENERATION
+# IMAGE GENERATION FALLBACK
 # ============================================================
 
 def generate_image_with_fallbacks(
@@ -1366,15 +1328,6 @@ def generate_image_with_fallbacks(
     mime_type=None,
     conversation_id=None
 ):
-    """
-    Image generation route.
-
-    IMPORTANT:
-        Only OpenRouter is used for image generation.
-
-    Groq is NOT called here because Groq is the text/vision
-    provider, not the image-generation provider.
-    """
 
     prompt = clean_image_prompt(
         message
@@ -1398,6 +1351,12 @@ def generate_image_with_fallbacks(
 
     print("=" * 70)
 
+    # --------------------------------------------------------
+    # ONLY IMAGE PROVIDER:
+    #
+    # OPENROUTER
+    # --------------------------------------------------------
+
     try:
 
         result = openrouter_generate_image(
@@ -1409,15 +1368,6 @@ def generate_image_with_fallbacks(
             mime_type
         )
 
-        if not isinstance(
-            result,
-            dict
-        ):
-
-            raise RuntimeError(
-                "Invalid OpenRouter image response."
-            )
-
         image_url = result.get(
             "image_url"
         )
@@ -1425,107 +1375,46 @@ def generate_image_with_fallbacks(
         if not image_url:
 
             raise RuntimeError(
-                "OpenRouter returned no image data."
+                "OpenRouter returned no image URL."
             )
 
-        print(
-            "=" * 70
+        # ----------------------------------------------------
+        # IMPORTANT:
+        #
+        # app.py currently expects:
+        #
+        # IMAGE_URL:<url>
+        #
+        # Therefore return exactly that format.
+        # ----------------------------------------------------
+
+        return (
+            "IMAGE_URL:"
+            + image_url
         )
-
-        print(
-            "IMAGE GENERATION SUCCESS"
-        )
-
-        print(
-            "PROVIDER:",
-            result.get(
-                "provider"
-            )
-        )
-
-        print(
-            "MODEL:",
-            result.get(
-                "model"
-            )
-        )
-
-        print(
-            "IMAGE DATA:",
-            "DATA URL"
-            if image_url.startswith(
-                "data:"
-            )
-            else "REMOTE URL"
-        )
-
-        print(
-            "=" * 70
-        )
-
-        return {
-
-            "answer":
-                result.get(
-                    "text",
-                    "تم إنشاء الصورة بنجاح."
-                ),
-
-            "imageUrl":
-                image_url,
-
-            "provider":
-                result.get(
-                    "provider",
-                    "OpenRouter"
-                ),
-
-            "conversation_id":
-                conversation_id,
-        }
 
     except Exception as e:
 
-        print(
-            "=" * 70
-        )
+        print("=" * 70)
 
         print(
-            "OPENROUTER IMAGE GENERATION FAILED:"
+            "OPENROUTER IMAGE FAILED:"
         )
 
         print(
             repr(e)
         )
 
-        print(
-            "=" * 70
+        print("=" * 70)
+
+        return (
+            "تعذر إنشاء الصورة حاليًا. "
+            "حدث خطأ في خدمة توليد الصور."
         )
-
-        return {
-
-            "answer":
-                (
-                    "تعذر إنشاء الصورة حاليًا. "
-                    "حدث خطأ في خدمة توليد الصور."
-                ),
-
-            "imageUrl":
-                "",
-
-            "provider":
-                None,
-
-            "conversation_id":
-                conversation_id,
-
-            "error":
-                str(e),
-        }
 
 
 # ============================================================
-# IMAGE RESPONSE
+# GET IMAGE RESPONSE
 # ============================================================
 
 def get_image_response(
@@ -1534,22 +1423,10 @@ def get_image_response(
     mime_type=None,
     conversation_id=None
 ):
-    """
-    Main image entry point.
 
-    CASE A:
-        Uploaded image + normal question
-        -> Groq Vision
-        -> OpenRouter Vision fallback
-
-    CASE B:
-        Uploaded image + edit/generate request
-        -> OpenRouter Image
-
-    CASE C:
-        No image + generation request
-        -> OpenRouter Image
-    """
+    message = str(
+        message or ""
+    ).strip()
 
     print("=" * 70)
 
@@ -1580,14 +1457,13 @@ def get_image_response(
     print("=" * 70)
 
     # ========================================================
-    # CASE A/B:
-    # User uploaded an image
+    # IMAGE UPLOADED
     # ========================================================
 
     if image_bytes:
 
         # ----------------------------------------------------
-        # Image editing request
+        # Explicit image edit/generation request
         # ----------------------------------------------------
 
         if is_image_request(
@@ -1595,7 +1471,7 @@ def get_image_response(
         ):
 
             print(
-                "IMAGE EDIT REQUEST DETECTED"
+                "IMAGE EDIT REQUEST"
             )
 
             return generate_image_with_fallbacks(
@@ -1610,7 +1486,11 @@ def get_image_response(
             )
 
         # ----------------------------------------------------
-        # Image understanding
+        # IMAGE UNDERSTANDING
+        #
+        # Groq Vision
+        #      ↓
+        # OpenRouter Vision
         # ----------------------------------------------------
 
         vision_providers = [
@@ -1644,9 +1524,10 @@ def get_image_response(
             ),
         ]
 
-        errors = []
-
-        for provider_name, provider_function in vision_providers:
+        for (
+            provider_name,
+            provider_function
+        ) in vision_providers:
 
             try:
 
@@ -1681,30 +1562,17 @@ def get_image_response(
 
             except Exception as e:
 
-                error_text = (
-                    f"{provider_name}: "
-                    f"{repr(e)}"
-                )
-
-                errors.append(
-                    error_text
-                )
-
                 print(
                     "VISION PROVIDER FAILED:",
-                    error_text
-                )
+                    provider_name,
 
-        # ----------------------------------------------------
-        # All vision providers failed
-        # ----------------------------------------------------
+                    repr(e)
+                )
 
         return {
 
             "answer":
-                (
-                    "تعذر تحليل الصورة حاليًا."
-                ),
+                "تعذر تحليل الصورة حاليًا.",
 
             "imageUrl":
                 "",
@@ -1714,16 +1582,10 @@ def get_image_response(
 
             "conversation_id":
                 conversation_id,
-
-            "error":
-                " | ".join(
-                    errors
-                ),
         }
 
     # ========================================================
-    # CASE C:
-    # Text-only image generation
+    # TEXT -> IMAGE
     # ========================================================
 
     return generate_image_with_fallbacks(
@@ -1739,16 +1601,13 @@ def get_image_response(
 
 
 # ============================================================
-# MAIN TEXT RESPONSE
+# GET RESPONSE
 # ============================================================
 
 def get_response(
     message,
     conversation_id=None
 ):
-    """
-    Main brain entry point used by app.py/API.py.
-    """
 
     message = str(
         message or ""
@@ -1790,7 +1649,7 @@ def get_response(
     print("=" * 70)
 
     # ========================================================
-    # GREETING ONLY
+    # GREETING
     # ========================================================
 
     if is_greeting_only(
@@ -1815,21 +1674,6 @@ def get_response(
     # ========================================================
     # IMAGE REQUEST
     # ========================================================
-    #
-    # VERY IMPORTANT:
-    #
-    # Check this BEFORE Groq.
-    #
-    # This prevents:
-    #
-    # User:
-    #     "أنشئ لي صورة لسيارة"
-    #
-    # from becoming:
-    #
-    #     Groq -> "إليك وصفًا للصورة..."
-    #
-    # ========================================================
 
     if is_image_request(
         message
@@ -1839,7 +1683,7 @@ def get_response(
             "IMAGE REQUEST DETECTED"
         )
 
-        return get_image_response(
+        result = get_image_response(
 
             message,
 
@@ -1850,80 +1694,152 @@ def get_response(
             conversation_id
         )
 
-    # ========================================================
-    # PRIMARY TEXT AI
-    # ========================================================
+        # ----------------------------------------------------
+        # app.py expects IMAGE_URL:
+        # ----------------------------------------------------
 
-    try:
+        if isinstance(
+            result,
+            str
+        ):
 
-        print(
-            "TRYING PRIMARY TEXT PROVIDER: GROQ"
-        )
+            if result.startswith(
+                "IMAGE_URL:"
+            ):
 
-        answer = groq_text(
-            message
-        )
+                return {
 
-        if answer:
+                    "answer":
+                        "تم إنشاء الصورة بنجاح.",
 
-            print(
-                "TEXT PROVIDER SUCCESS: GROQ"
-            )
+                    "imageUrl":
+                        result[
+                            len("IMAGE_URL:"):
+                        ].strip(),
+
+                    "provider":
+                        "OpenRouter",
+
+                    "conversation_id":
+                        conversation_id,
+                }
 
             return {
 
                 "answer":
-                    answer,
+                    result,
 
                 "imageUrl":
                     "",
 
                 "provider":
-                    "Groq",
+                    "OpenRouter",
 
                 "conversation_id":
                     conversation_id,
             }
 
-    except Exception as e:
-
-        print(
-            "=" * 70
-        )
-
-        print(
-            "GROQ TEXT FAILED:"
-        )
-
-        print(
-            repr(e)
-        )
-
-        print(
-            "=" * 70
-        )
+        return result
 
     # ========================================================
-    # NO SECONDARY TEXT AI
+    # TEXT PROVIDERS
+    #
+    # GROQ
+    #   ↓
+    # OPENROUTER
     # ========================================================
-    #
-    # According to the requested architecture:
-    #
-    # Groq is the main brain.
-    #
-    # OpenRouter is used for image/vision fallback.
-    #
-    # We do not silently route normal text to Gemini,
-    # Mistral, xAI or Pollinations.
-    #
+
+    providers = [
+
+        (
+            "Groq",
+            groq_text
+        ),
+
+        (
+            "OpenRouter",
+            openrouter_text
+        ),
+    ]
+
+    errors = []
+
+    for (
+        provider_name,
+        provider_function
+    ) in providers:
+
+        try:
+
+            print(
+                "TRYING TEXT PROVIDER:",
+                provider_name
+            )
+
+            answer = provider_function(
+                message
+            )
+
+            if answer:
+
+                print(
+                    "TEXT PROVIDER SUCCESS:",
+                    provider_name
+                )
+
+                return {
+
+                    "answer":
+                        answer,
+
+                    "imageUrl":
+                        "",
+
+                    "provider":
+                        provider_name,
+
+                    "conversation_id":
+                        conversation_id,
+                }
+
+        except Exception as e:
+
+            error_text = (
+
+                f"{provider_name}: "
+                f"{e}"
+            )
+
+            errors.append(
+                error_text
+            )
+
+            print(
+                "TEXT PROVIDER FAILED:",
+                error_text
+            )
+
     # ========================================================
+    # EVERYTHING FAILED
+    # ========================================================
+
+    print(
+        "ALL TEXT PROVIDERS FAILED"
+    )
+
+    for error in errors:
+
+        print(
+            "TEXT ERROR:",
+            error
+        )
 
     return {
 
         "answer":
             (
-                "تعذر الحصول على إجابة من Groq حاليًا. "
-                "تحقق من GROQ_API_KEY أو إعدادات نموذج Groq."
+                "تعذر الحصول على إجابة "
+                "من خدمات الذكاء الاصطناعي حاليًا."
             ),
 
         "imageUrl":
@@ -1944,35 +1860,22 @@ def get_response(
 def quick_response(
     message
 ):
+
     """
     Compatibility function.
 
-    Older app.py versions may call:
+    Older app.py/API.py versions may call:
 
         quick_response(message)
     """
 
-    result = get_response(
+    return get_response(
         message
-    )
-
-    if isinstance(
-        result,
-        dict
-    ):
-
-        return result.get(
-            "answer",
-            ""
-        )
-
-    return str(
-        result or ""
     )
 
 
 # ============================================================
-# SIMPLE ASK FUNCTION
+# ASK
 # ============================================================
 
 def ask(
@@ -2011,7 +1914,7 @@ print(
 print("=" * 70)
 
 print(
-    "PRIMARY AI:"
+    "PRIMARY TEXT AI:"
 )
 
 print(
@@ -2019,15 +1922,15 @@ print(
 )
 
 print(
-    "TEXT:"
+    "TEXT ROUTE:"
 )
 
 print(
-    "    GROQ ONLY"
+    "    GROQ -> OPENROUTER"
 )
 
 print(
-    "VISION:"
+    "VISION ROUTE:"
 )
 
 print(
@@ -2039,11 +1942,19 @@ print(
 )
 
 print(
-    "    OPENROUTER IMAGE API"
+    "    OPENROUTER IMAGE"
 )
 
 print(
-    "GEMINI:"
+    "OPENROUTER IMAGE MODEL:"
+)
+
+print(
+    f"    {OPENROUTER_IMAGE_MODEL}"
+)
+
+print(
+    "DIRECT GEMINI API:"
 )
 
 print(
@@ -2059,7 +1970,7 @@ print(
 )
 
 print(
-    "XAI:"
+    "xAI:"
 )
 
 print(
@@ -2072,14 +1983,6 @@ print(
 
 print(
     "    DISABLED"
-)
-
-print(
-    "GREETING:"
-)
-
-print(
-    "    SMART GREETING DETECTION ENABLED"
 )
 
 print("=" * 70)
