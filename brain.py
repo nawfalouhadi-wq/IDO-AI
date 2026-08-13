@@ -22,25 +22,21 @@
 #
 # ============================================================
 #
-# IMPORTANT:
+# MISTRAL RATE LIMIT RETRY:
 #
-# GROQ:
-#     TEXT ONLY
-#
-# OPENROUTER:
-#     TEXT ONLY
-#
-# GEMINI:
-#     TEXT ONLY
-#
-# MISTRAL:
-#     IMAGES ONLY
+#     429
+#       ↓
+#     exponential backoff
+#       ↓
+#     retry
 #
 # ============================================================
 
 import os
 import re
 import base64
+import time
+import random
 import requests
 
 from dotenv import load_dotenv
@@ -54,7 +50,11 @@ load_dotenv()
 
 
 print("=" * 70)
-print("IDO AI BRAIN.PY LOADED")
+
+print(
+    "IDO AI BRAIN.PY LOADED"
+)
+
 print("=" * 70)
 
 
@@ -112,19 +112,11 @@ GEMINI_TEXT_MODEL = os.getenv(
 # MISTRAL MODELS
 # ============================================================
 
-# ------------------------------------------------------------
-# Vision / image understanding
-# ------------------------------------------------------------
-
 MISTRAL_VISION_MODEL = os.getenv(
     "MISTRAL_VISION_MODEL",
     "mistral-small-latest"
 ).strip()
 
-
-# ------------------------------------------------------------
-# Image generation
-# ------------------------------------------------------------
 
 MISTRAL_IMAGE_MODEL = os.getenv(
     "MISTRAL_IMAGE_MODEL",
@@ -174,6 +166,66 @@ REQUEST_TIMEOUT = int(
 
 
 # ============================================================
+# MISTRAL RETRY SETTINGS
+# ============================================================
+
+MISTRAL_MAX_RETRIES = int(
+    os.getenv(
+        "MISTRAL_MAX_RETRIES",
+        "3"
+    )
+)
+
+
+MISTRAL_RETRY_BASE_DELAY = float(
+    os.getenv(
+        "MISTRAL_RETRY_BASE_DELAY",
+        "2"
+    )
+)
+
+
+MISTRAL_RETRY_MAX_DELAY = float(
+    os.getenv(
+        "MISTRAL_RETRY_MAX_DELAY",
+        "30"
+    )
+)
+
+
+MISTRAL_RETRY_JITTER = float(
+    os.getenv(
+        "MISTRAL_RETRY_JITTER",
+        "0.5"
+    )
+)
+
+
+# ============================================================
+# SANITY CHECK RETRY SETTINGS
+# ============================================================
+
+if MISTRAL_MAX_RETRIES < 0:
+
+    MISTRAL_MAX_RETRIES = 0
+
+
+if MISTRAL_RETRY_BASE_DELAY < 0:
+
+    MISTRAL_RETRY_BASE_DELAY = 0
+
+
+if MISTRAL_RETRY_MAX_DELAY < 0:
+
+    MISTRAL_RETRY_MAX_DELAY = 30
+
+
+if MISTRAL_RETRY_JITTER < 0:
+
+    MISTRAL_RETRY_JITTER = 0
+
+
+# ============================================================
 # CLIENT STATUS
 # ============================================================
 
@@ -182,47 +234,78 @@ print(
     "READY" if GROQ_API_KEY else "MISSING"
 )
 
+
 print(
     "OPENROUTER CLIENT:",
     "READY" if OPENROUTER_API_KEY else "MISSING"
 )
+
 
 print(
     "GEMINI CLIENT:",
     "READY" if GEMINI_API_KEY else "MISSING"
 )
 
+
 print(
     "MISTRAL CLIENT:",
     "READY" if MISTRAL_API_KEY else "MISSING"
 )
 
+
 print("=" * 70)
+
 
 print(
     "GROQ TEXT MODEL:",
     GROQ_TEXT_MODEL
 )
 
+
 print(
     "OPENROUTER TEXT MODEL:",
     OPENROUTER_TEXT_MODEL
 )
+
 
 print(
     "GEMINI TEXT MODEL:",
     GEMINI_TEXT_MODEL
 )
 
+
 print(
     "MISTRAL VISION MODEL:",
     MISTRAL_VISION_MODEL
 )
 
+
 print(
     "MISTRAL IMAGE MODEL:",
     MISTRAL_IMAGE_MODEL
 )
+
+
+print("=" * 70)
+
+
+print(
+    "MISTRAL MAX RETRIES:",
+    MISTRAL_MAX_RETRIES
+)
+
+
+print(
+    "MISTRAL RETRY BASE DELAY:",
+    MISTRAL_RETRY_BASE_DELAY
+)
+
+
+print(
+    "MISTRAL RETRY MAX DELAY:",
+    MISTRAL_RETRY_MAX_DELAY
+)
+
 
 print("=" * 70)
 
@@ -300,11 +383,14 @@ def is_greeting_only(
 ):
 
     if not message:
+
         return False
+
 
     text = str(
         message
     ).strip()
+
 
     for pattern in GREETING_ONLY_PATTERNS:
 
@@ -316,28 +402,12 @@ def is_greeting_only(
 
             return True
 
+
     return False
 
 
 # ============================================================
 # IMAGE GENERATION KEYWORDS
-# ============================================================
-#
-# IMPORTANT:
-#
-# We intentionally DO NOT put:
-#
-#     "صورة"
-#     "صور"
-#
-# by themselves here.
-#
-# This prevents:
-#
-#     "هل يمكنك تحليل الصورة؟"
-#
-# from becoming an image-generation request.
-#
 # ============================================================
 
 IMAGE_GENERATION_KEYWORDS_AR = [
@@ -394,6 +464,7 @@ IMAGE_GENERATION_KEYWORDS_AR = [
     "ارسم لي صوره",
 
     "ارسم",
+
     "ارسم لي",
 
     "صمم صورة",
@@ -543,11 +614,6 @@ IMAGE_GENERATION_KEYWORDS_FR = [
 # ============================================================
 # IMAGE ANALYSIS KEYWORDS
 # ============================================================
-#
-# These NEVER trigger image generation when there is no
-# uploaded image.
-#
-# ============================================================
 
 IMAGE_ANALYSIS_KEYWORDS_AR = [
 
@@ -670,6 +736,7 @@ IMAGE_ANALYSIS_KEYWORDS_FR = [
     "decris cette image",
 
     "qu'est-ce qu'il y a dans l'image",
+
     "que montre l'image",
 
     "explique l'image",
@@ -728,6 +795,7 @@ IMAGE_EDIT_KEYWORDS = [
 
     "modifier",
     "modifie",
+
     "changer",
 
     "supprimer",
@@ -738,7 +806,7 @@ IMAGE_EDIT_KEYWORDS = [
 
 
 # ============================================================
-# IMAGE REQUEST HELPERS
+# KEYWORD HELPER
 # ============================================================
 
 def contains_any_keyword(
@@ -752,19 +820,27 @@ def contains_any_keyword(
 
             return True
 
+
     return False
 
+
+# ============================================================
+# IMAGE ANALYSIS REQUEST
+# ============================================================
 
 def is_image_analysis_request(
     message
 ):
 
     if not message:
+
         return False
+
 
     text = str(
         message
     ).strip().lower()
+
 
     if contains_any_keyword(
         text,
@@ -773,12 +849,14 @@ def is_image_analysis_request(
 
         return True
 
+
     if contains_any_keyword(
         text,
         IMAGE_ANALYSIS_KEYWORDS_EN
     ):
 
         return True
+
 
     if contains_any_keyword(
         text,
@@ -787,19 +865,27 @@ def is_image_analysis_request(
 
         return True
 
+
     return False
 
+
+# ============================================================
+# IMAGE EDIT REQUEST
+# ============================================================
 
 def is_image_edit_request(
     message
 ):
 
     if not message:
+
         return False
+
 
     text = str(
         message
     ).strip().lower()
+
 
     return contains_any_keyword(
         text,
@@ -807,16 +893,23 @@ def is_image_edit_request(
     )
 
 
+# ============================================================
+# IMAGE GENERATION REQUEST
+# ============================================================
+
 def is_image_generation_request(
     message
 ):
 
     if not message:
+
         return False
+
 
     text = str(
         message
     ).strip().lower()
+
 
     if contains_any_keyword(
         text,
@@ -825,12 +918,14 @@ def is_image_generation_request(
 
         return True
 
+
     if contains_any_keyword(
         text,
         IMAGE_GENERATION_KEYWORDS_EN
     ):
 
         return True
+
 
     if contains_any_keyword(
         text,
@@ -839,19 +934,17 @@ def is_image_generation_request(
 
         return True
 
+
     return False
 
+
+# ============================================================
+# GENERAL IMAGE REQUEST
+# ============================================================
 
 def is_image_request(
     message
 ):
-
-    """
-    Returns True only for an actual image-generation
-    request.
-
-    Image-analysis questions are intentionally excluded.
-    """
 
     return is_image_generation_request(
         message
@@ -870,11 +963,13 @@ def clean_image_prompt(
         message or ""
     ).strip()
 
+
     if not text:
 
         return (
             "Create a high-quality professional image."
         )
+
 
     prefixes = [
 
@@ -1022,7 +1117,9 @@ def clean_image_prompt(
         "draw",
     ]
 
+
     cleaned = text
+
 
     for prefix in prefixes:
 
@@ -1036,20 +1133,24 @@ def clean_image_prompt(
 
             break
 
+
     # --------------------------------------------------------
-    # Remove Arabic greeting from image prompt.
+    # Remove Arabic greeting
     # --------------------------------------------------------
 
     greeting_prefixes = [
 
         "السلام عليكم ورحمة الله وبركاته",
+
         "السلام عليكم ورحمه الله وبركاته",
 
         "السلام عليكم ورحمه الله",
+
         "السلام عليكم",
 
         "سلام عليكم",
     ]
+
 
     for greeting in greeting_prefixes:
 
@@ -1063,8 +1164,9 @@ def clean_image_prompt(
 
             break
 
+
     # --------------------------------------------------------
-    # Remove common polite prefix.
+    # Remove polite prefixes
     # --------------------------------------------------------
 
     polite_prefixes = [
@@ -1080,6 +1182,7 @@ def clean_image_prompt(
         "could you",
     ]
 
+
     for prefix in polite_prefixes:
 
         if cleaned.lower().startswith(
@@ -1092,9 +1195,11 @@ def clean_image_prompt(
 
             break
 
+
     if not cleaned:
 
         cleaned = text
+
 
     return cleaned
 
@@ -1145,6 +1250,491 @@ def safe_get(
 
 
 # ============================================================
+# RETRY-AFTER PARSER
+# ============================================================
+
+def get_retry_after_seconds(
+    response
+):
+
+    if response is None:
+
+        return None
+
+
+    value = response.headers.get(
+        "Retry-After"
+    )
+
+
+    if value is None:
+
+        return None
+
+
+    value = str(
+        value
+    ).strip()
+
+
+    if not value:
+
+        return None
+
+
+    # --------------------------------------------------------
+    # Standard numeric Retry-After
+    # --------------------------------------------------------
+
+    try:
+
+        seconds = float(
+            value
+        )
+
+        if seconds < 0:
+
+            seconds = 0
+
+
+        return min(
+            seconds,
+            MISTRAL_RETRY_MAX_DELAY
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
+
+        return None
+
+
+# ============================================================
+# MISTRAL POST WITH AUTOMATIC 429 RETRIES
+# ============================================================
+
+def mistral_post_with_retry(
+    url,
+    headers=None,
+    json_data=None,
+    timeout=REQUEST_TIMEOUT
+):
+    """
+    Send a Mistral POST request.
+
+    When Mistral returns 429:
+
+        attempt 1
+            ↓
+        wait
+            ↓
+        attempt 2
+            ↓
+        wait
+            ↓
+        attempt 3
+            ↓
+        wait
+            ↓
+        final attempt
+
+    Retry-After is respected when available.
+
+    Otherwise:
+
+        base_delay * 2^retry + jitter
+    """
+
+    total_attempts = (
+        MISTRAL_MAX_RETRIES
+        + 1
+    )
+
+
+    last_response = None
+
+
+    for attempt_index in range(
+        total_attempts
+    ):
+
+        attempt_number = (
+            attempt_index
+            + 1
+        )
+
+
+        print("=" * 70)
+
+        print(
+            "MISTRAL REQUEST ATTEMPT:",
+            f"{attempt_number}/{total_attempts}"
+        )
+
+        print("=" * 70)
+
+
+        try:
+
+            response = safe_post(
+
+                url,
+
+                headers=headers,
+
+                json_data=json_data,
+
+                timeout=timeout
+            )
+
+        except requests.RequestException as e:
+
+            print(
+                "MISTRAL REQUEST EXCEPTION:",
+                repr(e)
+            )
+
+            raise
+
+
+        last_response = response
+
+
+        # ====================================================
+        # SUCCESS
+        # ====================================================
+
+        if response.status_code != 429:
+
+            return response
+
+
+        # ====================================================
+        # RATE LIMITED
+        # ====================================================
+
+        print("=" * 70)
+
+        print(
+            "MISTRAL RATE LIMIT HIT"
+        )
+
+        print(
+            "HTTP STATUS:",
+            response.status_code
+        )
+
+        print(
+            "ATTEMPT:",
+            f"{attempt_number}/{total_attempts}"
+        )
+
+
+        retry_after = (
+            get_retry_after_seconds(
+                response
+            )
+        )
+
+
+        # ====================================================
+        # NO RETRIES REMAIN
+        # ====================================================
+
+        if (
+            attempt_index
+            >= MISTRAL_MAX_RETRIES
+        ):
+
+            print(
+                "MISTRAL RETRIES EXHAUSTED"
+            )
+
+            print("=" * 70)
+
+            return response
+
+
+        # ====================================================
+        # CALCULATE BACKOFF
+        # ====================================================
+
+        exponential_delay = (
+
+            MISTRAL_RETRY_BASE_DELAY
+            *
+            (
+                2
+                **
+                attempt_index
+            )
+        )
+
+
+        exponential_delay = min(
+            exponential_delay,
+            MISTRAL_RETRY_MAX_DELAY
+        )
+
+
+        jitter = (
+
+            random.uniform(
+                0,
+                MISTRAL_RETRY_JITTER
+            )
+
+            if MISTRAL_RETRY_JITTER > 0
+
+            else 0
+        )
+
+
+        calculated_delay = min(
+
+            exponential_delay
+            + jitter,
+
+            MISTRAL_RETRY_MAX_DELAY
+        )
+
+
+        # ====================================================
+        # RETRY-AFTER TAKES PRIORITY
+        # ====================================================
+
+        if retry_after is not None:
+
+            wait_seconds = retry_after
+
+            print(
+                "RETRY-AFTER HEADER:",
+                retry_after
+            )
+
+        else:
+
+            wait_seconds = calculated_delay
+
+            print(
+                "CALCULATED BACKOFF:",
+                calculated_delay
+            )
+
+
+        print(
+            "WAITING:",
+            round(
+                wait_seconds,
+                2
+            ),
+            "seconds"
+        )
+
+        print("=" * 70)
+
+
+        if wait_seconds > 0:
+
+            time.sleep(
+                wait_seconds
+            )
+
+
+    return last_response
+
+
+# ============================================================
+# MISTRAL GET WITH AUTOMATIC 429 RETRIES
+# ============================================================
+
+def mistral_get_with_retry(
+    url,
+    headers=None,
+    timeout=REQUEST_TIMEOUT,
+    params=None
+):
+    """
+    GET version of the same Mistral 429 retry strategy.
+    Used for retrieving signed image URLs.
+    """
+
+    total_attempts = (
+        MISTRAL_MAX_RETRIES
+        + 1
+    )
+
+
+    last_response = None
+
+
+    for attempt_index in range(
+        total_attempts
+    ):
+
+        attempt_number = (
+            attempt_index
+            + 1
+        )
+
+
+        print("=" * 70)
+
+        print(
+            "MISTRAL GET ATTEMPT:",
+            f"{attempt_number}/{total_attempts}"
+        )
+
+        print("=" * 70)
+
+
+        try:
+
+            response = safe_get(
+
+                url,
+
+                headers=headers,
+
+                timeout=timeout,
+
+                params=params
+            )
+
+        except requests.RequestException as e:
+
+            print(
+                "MISTRAL GET EXCEPTION:",
+                repr(e)
+            )
+
+            raise
+
+
+        last_response = response
+
+
+        if response.status_code != 429:
+
+            return response
+
+
+        print("=" * 70)
+
+        print(
+            "MISTRAL GET RATE LIMIT HIT"
+        )
+
+        print(
+            "HTTP STATUS:",
+            response.status_code
+        )
+
+
+        if (
+            attempt_index
+            >= MISTRAL_MAX_RETRIES
+        ):
+
+            print(
+                "MISTRAL GET RETRIES EXHAUSTED"
+            )
+
+            print("=" * 70)
+
+            return response
+
+
+        retry_after = (
+            get_retry_after_seconds(
+                response
+            )
+        )
+
+
+        exponential_delay = (
+
+            MISTRAL_RETRY_BASE_DELAY
+            *
+            (
+                2
+                **
+                attempt_index
+            )
+        )
+
+
+        exponential_delay = min(
+            exponential_delay,
+            MISTRAL_RETRY_MAX_DELAY
+        )
+
+
+        jitter = (
+
+            random.uniform(
+                0,
+                MISTRAL_RETRY_JITTER
+            )
+
+            if MISTRAL_RETRY_JITTER > 0
+
+            else 0
+        )
+
+
+        calculated_delay = min(
+
+            exponential_delay
+            + jitter,
+
+            MISTRAL_RETRY_MAX_DELAY
+        )
+
+
+        if retry_after is not None:
+
+            wait_seconds = retry_after
+
+            print(
+                "RETRY-AFTER HEADER:",
+                retry_after
+            )
+
+        else:
+
+            wait_seconds = calculated_delay
+
+            print(
+                "CALCULATED BACKOFF:",
+                calculated_delay
+            )
+
+
+        print(
+            "WAITING:",
+            round(
+                wait_seconds,
+                2
+            ),
+            "seconds"
+        )
+
+        print("=" * 70)
+
+
+        if wait_seconds > 0:
+
+            time.sleep(
+                wait_seconds
+            )
+
+
+    return last_response
+
+
+# ============================================================
 # CONTENT TEXT EXTRACTION
 # ============================================================
 
@@ -1159,6 +1749,7 @@ def extract_content_text(
 
         return content.strip()
 
+
     if not isinstance(
         content,
         list
@@ -1166,7 +1757,9 @@ def extract_content_text(
 
         return ""
 
+
     parts = []
+
 
     for item in content:
 
@@ -1177,9 +1770,11 @@ def extract_content_text(
 
             continue
 
+
         item_type = item.get(
             "type"
         )
+
 
         if item_type == "text":
 
@@ -1195,9 +1790,11 @@ def extract_content_text(
 
             continue
 
+
         text = item.get(
             "text"
         )
+
 
         if text:
 
@@ -1205,13 +1802,14 @@ def extract_content_text(
                 str(text)
             )
 
+
     return "\n".join(
         parts
     ).strip()
 
 
 # ============================================================
-# OPENAI-COMPATIBLE TEXT EXTRACTOR
+# OPENAI-COMPATIBLE TEXT RESPONSE
 # ============================================================
 
 def extract_text_response(
@@ -1225,9 +1823,11 @@ def extract_text_response(
 
         return ""
 
+
     choices = data.get(
         "choices"
     )
+
 
     if not isinstance(
         choices,
@@ -1236,7 +1836,9 @@ def extract_text_response(
 
         return ""
 
+
     first = choices[0]
+
 
     if not isinstance(
         first,
@@ -1245,13 +1847,11 @@ def extract_text_response(
 
         return ""
 
-    # --------------------------------------------------------
-    # Standard message
-    # --------------------------------------------------------
 
     message = first.get(
         "message"
     )
+
 
     if isinstance(
         message,
@@ -1262,21 +1862,21 @@ def extract_text_response(
             "content"
         )
 
+
         answer = extract_content_text(
             content
         )
+
 
         if answer:
 
             return answer
 
-    # --------------------------------------------------------
-    # Tool messages
-    # --------------------------------------------------------
 
     messages = first.get(
         "messages"
     )
+
 
     if isinstance(
         messages,
@@ -1284,6 +1884,7 @@ def extract_text_response(
     ):
 
         parts = []
+
 
         for item in messages:
 
@@ -1294,13 +1895,16 @@ def extract_text_response(
 
                 continue
 
+
             content = item.get(
                 "content"
             )
 
+
             answer = extract_content_text(
                 content
             )
+
 
             if answer:
 
@@ -1308,11 +1912,13 @@ def extract_text_response(
                     answer
                 )
 
+
         if parts:
 
             return "\n".join(
                 parts
             ).strip()
+
 
     return ""
 
@@ -1324,18 +1930,6 @@ def extract_text_response(
 def extract_mistral_image_reference(
     data
 ):
-    """
-    Supports:
-
-        direct image URLs
-        [Image: https://...]
-        image_url
-        tool_file
-        file_id
-        nested messages
-        nested content
-        nested choices
-    """
 
     if not isinstance(
         data,
@@ -1348,10 +1942,6 @@ def extract_mistral_image_reference(
     def walk(
         value
     ):
-
-        # ====================================================
-        # DICTIONARY
-        # ====================================================
 
         if isinstance(
             value,
@@ -1370,6 +1960,7 @@ def extract_mistral_image_reference(
                     "file_id"
                 )
 
+
                 if file_id:
 
                     return {
@@ -1383,12 +1974,13 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # generic file_id
+            # file_id
             # ------------------------------------------------
 
             file_id = value.get(
                 "file_id"
             )
+
 
             if file_id:
 
@@ -1410,23 +2002,30 @@ def extract_mistral_image_reference(
                 "image_url"
             )
 
+
             if isinstance(
                 image_url,
                 str
             ):
 
                 if (
+
                     image_url.startswith(
                         "http://"
                     )
+
                     or
+
                     image_url.startswith(
                         "https://"
                     )
+
                     or
+
                     image_url.startswith(
                         "data:image/"
                     )
+
                 ):
 
                     return {
@@ -1452,6 +2051,7 @@ def extract_mistral_image_reference(
                     "url"
                 )
 
+
                 if url:
 
                     return {
@@ -1465,7 +2065,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Direct URL
+            # Direct URL fields
             # ------------------------------------------------
 
             for key in (
@@ -1477,23 +2077,30 @@ def extract_mistral_image_reference(
                     key
                 )
 
+
                 if isinstance(
                     item,
                     str
                 ):
 
                     if (
+
                         item.startswith(
                             "http://"
                         )
+
                         or
+
                         item.startswith(
                             "https://"
                         )
+
                         or
+
                         item.startswith(
                             "data:image/"
                         )
+
                     ):
 
                         return {
@@ -1507,7 +2114,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Search text content for [Image: URL]
+            # Search text for image URL
             # ------------------------------------------------
 
             for key in (
@@ -1518,6 +2125,7 @@ def extract_mistral_image_reference(
                 item = value.get(
                     key
                 )
+
 
                 if isinstance(
                     item,
@@ -1531,6 +2139,7 @@ def extract_mistral_image_reference(
                         item
                     )
 
+
                     if match:
 
                         url = match.group(
@@ -1538,6 +2147,7 @@ def extract_mistral_image_reference(
                         ).rstrip(
                             ".,;)]}>"
                         )
+
 
                         return {
 
@@ -1550,7 +2160,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Known nested fields
+            # Nested fields
             # ------------------------------------------------
 
             for key in (
@@ -1566,11 +2176,13 @@ def extract_mistral_image_reference(
                     key
                 )
 
+
                 if child is not None:
 
                     result = walk(
                         child
                     )
+
 
                     if result:
 
@@ -1587,14 +2199,11 @@ def extract_mistral_image_reference(
                     child
                 )
 
+
                 if result:
 
                     return result
 
-
-        # ====================================================
-        # LIST
-        # ====================================================
 
         elif isinstance(
             value,
@@ -1607,9 +2216,11 @@ def extract_mistral_image_reference(
                     item
                 )
 
+
                 if result:
 
                     return result
+
 
         return None
 
@@ -1630,6 +2241,7 @@ def mistral_headers():
         raise RuntimeError(
             "MISTRAL_API_KEY is missing."
         )
+
 
     return {
 
@@ -1667,6 +2279,7 @@ def groq_text(
             "GROQ_API_KEY is missing."
         )
 
+
     payload = {
 
         "model":
@@ -1698,6 +2311,7 @@ def groq_text(
             4096
     }
 
+
     response = safe_post(
 
         GROQ_URL,
@@ -1714,6 +2328,7 @@ def groq_text(
         json_data=payload
     )
 
+
     if response.status_code >= 400:
 
         raise RuntimeError(
@@ -1721,6 +2336,7 @@ def groq_text(
             f"{response.status_code}: "
             f"{response.text[:1500]}"
         )
+
 
     try:
 
@@ -1733,15 +2349,18 @@ def groq_text(
             f"{e}"
         )
 
+
     answer = extract_text_response(
         data
     )
+
 
     if not answer:
 
         raise RuntimeError(
             "Groq returned an empty response."
         )
+
 
     return answer
 
@@ -1759,6 +2378,7 @@ def openrouter_text(
         raise RuntimeError(
             "OPENROUTER_API_KEY is missing."
         )
+
 
     payload = {
 
@@ -1791,6 +2411,7 @@ def openrouter_text(
             4096
     }
 
+
     headers = {
 
         "Authorization":
@@ -1809,6 +2430,7 @@ def openrouter_text(
             "IDO AI"
     }
 
+
     response = safe_post(
 
         OPENROUTER_URL,
@@ -1818,6 +2440,7 @@ def openrouter_text(
         json_data=payload
     )
 
+
     if response.status_code >= 400:
 
         raise RuntimeError(
@@ -1825,6 +2448,7 @@ def openrouter_text(
             f"{response.status_code}: "
             f"{response.text[:1500]}"
         )
+
 
     try:
 
@@ -1837,15 +2461,18 @@ def openrouter_text(
             f"{e}"
         )
 
+
     answer = extract_text_response(
         data
     )
+
 
     if not answer:
 
         raise RuntimeError(
             "OpenRouter returned an empty response."
         )
+
 
     return answer
 
@@ -1864,10 +2491,12 @@ def gemini_text(
             "GEMINI_API_KEY is missing."
         )
 
+
     url = (
         f"{GEMINI_URL}/models/"
         f"{GEMINI_TEXT_MODEL}:generateContent"
     )
+
 
     payload = {
 
@@ -1885,6 +2514,7 @@ def gemini_text(
         "contents": [
 
             {
+
                 "role":
                     "user",
 
@@ -1908,6 +2538,7 @@ def gemini_text(
         }
     }
 
+
     response = safe_post(
 
         url,
@@ -1925,6 +2556,7 @@ def gemini_text(
         }
     )
 
+
     if response.status_code >= 400:
 
         raise RuntimeError(
@@ -1932,6 +2564,7 @@ def gemini_text(
             f"{response.status_code}: "
             f"{response.text[:1800]}"
         )
+
 
     try:
 
@@ -1944,9 +2577,11 @@ def gemini_text(
             f"{e}"
         )
 
+
     candidates = data.get(
         "candidates"
     )
+
 
     if not isinstance(
         candidates,
@@ -1957,7 +2592,9 @@ def gemini_text(
             "Gemini returned no candidates."
         )
 
+
     first = candidates[0]
+
 
     if not isinstance(
         first,
@@ -1968,17 +2605,21 @@ def gemini_text(
             "Gemini returned an invalid candidate."
         )
 
+
     content = first.get(
         "content",
         {}
     )
+
 
     parts = content.get(
         "parts",
         []
     )
 
+
     result_parts = []
+
 
     for part in parts:
 
@@ -1989,9 +2630,11 @@ def gemini_text(
 
             continue
 
+
         text = part.get(
             "text"
         )
+
 
         if text:
 
@@ -1999,15 +2642,18 @@ def gemini_text(
                 str(text)
             )
 
+
     answer = "\n".join(
         result_parts
     ).strip()
+
 
     if not answer:
 
         raise RuntimeError(
             "Gemini returned an empty response."
         )
+
 
     return answer
 
@@ -2021,11 +2667,6 @@ def mistral_vision(
     image_bytes,
     mime_type
 ):
-    """
-    Mistral-only image understanding.
-
-    Image must be supplied by the user.
-    """
 
     if not MISTRAL_API_KEY:
 
@@ -2033,11 +2674,13 @@ def mistral_vision(
             "MISTRAL_API_KEY is missing."
         )
 
+
     if not image_bytes:
 
         raise RuntimeError(
             "No image data was supplied."
         )
+
 
     encoded = base64.b64encode(
         image_bytes
@@ -2045,14 +2688,17 @@ def mistral_vision(
         "utf-8"
     )
 
+
     safe_mime = (
         mime_type
         or "image/jpeg"
     )
 
+
     image_data_url = (
         f"data:{safe_mime};base64,{encoded}"
     )
+
 
     question = (
 
@@ -2066,6 +2712,7 @@ def mistral_vision(
         "حلل هذه الصورة واشرح لي بالتفصيل ما الذي يظهر فيها."
     )
 
+
     payload = {
 
         "model":
@@ -2074,12 +2721,14 @@ def mistral_vision(
         "messages": [
 
             {
+
                 "role":
                     "user",
 
                 "content": [
 
                     {
+
                         "type":
                             "text",
 
@@ -2088,6 +2737,7 @@ def mistral_vision(
                     },
 
                     {
+
                         "type":
                             "image_url",
 
@@ -2105,6 +2755,7 @@ def mistral_vision(
             4096
     }
 
+
     print("=" * 70)
 
     print(
@@ -2114,11 +2765,6 @@ def mistral_vision(
     print(
         "MODEL:",
         MISTRAL_VISION_MODEL
-    )
-
-    print(
-        "MIME TYPE:",
-        safe_mime
     )
 
     print(
@@ -2134,7 +2780,8 @@ def mistral_vision(
 
     print("=" * 70)
 
-    response = safe_post(
+
+    response = mistral_post_with_retry(
 
         MISTRAL_CHAT_URL,
 
@@ -2145,10 +2792,12 @@ def mistral_vision(
         timeout=REQUEST_TIMEOUT
     )
 
+
     print(
         "MISTRAL VISION STATUS:",
         response.status_code
     )
+
 
     if response.status_code >= 400:
 
@@ -2166,6 +2815,7 @@ def mistral_vision(
             f"{response.text[:2500]}"
         )
 
+
     try:
 
         data = response.json()
@@ -2177,9 +2827,11 @@ def mistral_vision(
             f"{e}"
         )
 
+
     answer = extract_text_response(
         data
     )
+
 
     if not answer:
 
@@ -2195,9 +2847,11 @@ def mistral_vision(
             "Mistral Vision returned an empty response."
         )
 
+
     print(
         "MISTRAL VISION SUCCESS"
     )
+
 
     return answer
 
@@ -2215,6 +2869,7 @@ def mistral_file_signed_url(
 
         return None
 
+
     safe_expiry = max(
         1,
         min(
@@ -2225,12 +2880,14 @@ def mistral_file_signed_url(
         )
     )
 
+
     url = (
         f"{MISTRAL_FILES_URL}/"
         f"{file_id}/url"
     )
 
-    response = safe_get(
+
+    response = mistral_get_with_retry(
 
         url,
 
@@ -2244,10 +2901,12 @@ def mistral_file_signed_url(
         timeout=REQUEST_TIMEOUT
     )
 
+
     print(
         "MISTRAL FILE URL STATUS:",
         response.status_code
     )
+
 
     if response.status_code >= 400:
 
@@ -2265,6 +2924,7 @@ def mistral_file_signed_url(
             f"{response.text[:2500]}"
         )
 
+
     try:
 
         data = response.json()
@@ -2276,15 +2936,18 @@ def mistral_file_signed_url(
             f"{e}"
         )
 
+
     signed_url = data.get(
         "url"
     )
+
 
     if not signed_url:
 
         raise RuntimeError(
             "Mistral did not return a signed image URL."
         )
+
 
     return str(
         signed_url
@@ -2298,14 +2961,6 @@ def mistral_file_signed_url(
 def mistral_generate_image(
     prompt
 ):
-    """
-    Mistral-only image generation.
-
-    Built-in tool:
-        image_generation
-
-    The request explicitly requires tool use.
-    """
 
     if not MISTRAL_API_KEY:
 
@@ -2313,15 +2968,18 @@ def mistral_generate_image(
             "MISTRAL_API_KEY is missing."
         )
 
+
     clean_prompt = clean_image_prompt(
         prompt
     )
+
 
     if not clean_prompt:
 
         clean_prompt = (
             "Create a high-quality professional image."
         )
+
 
     payload = {
 
@@ -2331,6 +2989,7 @@ def mistral_generate_image(
         "messages": [
 
             {
+
                 "role":
                     "system",
 
@@ -2347,6 +3006,7 @@ def mistral_generate_image(
             },
 
             {
+
                 "role":
                     "user",
 
@@ -2358,6 +3018,7 @@ def mistral_generate_image(
         "tools": [
 
             {
+
                 "type":
                     "image_generation"
             }
@@ -2369,6 +3030,7 @@ def mistral_generate_image(
         "temperature":
             0.3
     }
+
 
     print("=" * 70)
 
@@ -2398,7 +3060,8 @@ def mistral_generate_image(
 
     print("=" * 70)
 
-    response = safe_post(
+
+    response = mistral_post_with_retry(
 
         MISTRAL_CHAT_URL,
 
@@ -2409,10 +3072,12 @@ def mistral_generate_image(
         timeout=REQUEST_TIMEOUT
     )
 
+
     print(
         "MISTRAL IMAGE STATUS:",
         response.status_code
     )
+
 
     if response.status_code >= 400:
 
@@ -2424,11 +3089,26 @@ def mistral_generate_image(
             response.text[:7000]
         )
 
+
+        # ----------------------------------------------------
+        # Specific 429 message
+        # ----------------------------------------------------
+
+        if response.status_code == 429:
+
+            raise RuntimeError(
+                "Mistral Image HTTP 429: "
+                "Rate limit exceeded after automatic retries. "
+                f"{response.text[:2500]}"
+            )
+
+
         raise RuntimeError(
             "Mistral Image HTTP "
             f"{response.status_code}: "
             f"{response.text[:3000]}"
         )
+
 
     try:
 
@@ -2441,6 +3121,7 @@ def mistral_generate_image(
             f"{e}"
         )
 
+
     print(
         "MISTRAL IMAGE JSON:"
     )
@@ -2449,17 +3130,20 @@ def mistral_generate_image(
         str(data)[:12000]
     )
 
+
     reference = (
         extract_mistral_image_reference(
             data
         )
     )
 
+
     if not reference:
 
         text_answer = extract_text_response(
             data
         )
+
 
         if text_answer:
 
@@ -2469,18 +3153,22 @@ def mistral_generate_image(
                 f"Response: {text_answer[:2500]}"
             )
 
+
         raise RuntimeError(
             "Mistral completed the request but "
             "no generated image reference was found."
         )
 
+
     reference_type = reference.get(
         "type"
     )
 
+
     reference_value = reference.get(
         "value"
     )
+
 
     if not reference_value:
 
@@ -2488,8 +3176,9 @@ def mistral_generate_image(
             "Mistral returned an empty image reference."
         )
 
+
     # --------------------------------------------------------
-    # Direct URL
+    # DIRECT URL
     # --------------------------------------------------------
 
     if reference_type == "url":
@@ -2498,8 +3187,9 @@ def mistral_generate_image(
             reference_value
         )
 
+
     # --------------------------------------------------------
-    # file_id
+    # FILE ID
     # --------------------------------------------------------
 
     elif reference_type == "file_id":
@@ -2509,12 +3199,14 @@ def mistral_generate_image(
             reference_value
         )
 
+
         image_url = (
             mistral_file_signed_url(
                 reference_value,
                 expiry_hours=24
             )
         )
+
 
     else:
 
@@ -2523,12 +3215,14 @@ def mistral_generate_image(
             f"{reference_type}"
         )
 
+
     if not image_url:
 
         raise RuntimeError(
             "Mistral generated an image but "
             "no usable image URL was obtained."
         )
+
 
     print("=" * 70)
 
@@ -2542,6 +3236,7 @@ def mistral_generate_image(
     )
 
     print("=" * 70)
+
 
     return {
 
@@ -2568,21 +3263,13 @@ def mistral_edit_image(
     image_bytes,
     mime_type
 ):
-    """
-    Mistral-only image editing/transformation.
-
-    Uploaded image:
-        ↓
-    Mistral Vision
-        ↓
-    Mistral image generation
-    """
 
     if not image_bytes:
 
         raise RuntimeError(
             "No source image was supplied."
         )
+
 
     print("=" * 70)
 
@@ -2596,6 +3283,7 @@ def mistral_edit_image(
     )
 
     print("=" * 70)
+
 
     source_description = mistral_vision(
 
@@ -2613,13 +3301,16 @@ def mistral_edit_image(
         mime_type
     )
 
+
     print(
         "MISTRAL SOURCE IMAGE DESCRIPTION:"
     )
 
+
     print(
         source_description[:5000]
     )
+
 
     transformed_prompt = f"""
 Create the final image based on the original image
@@ -2640,13 +3331,16 @@ Apply the requested modification accurately.
 Return the final visual result.
 """.strip()
 
+
     result = mistral_generate_image(
         transformed_prompt
     )
 
+
     result["text"] = (
         "تم تعديل الصورة بنجاح."
     )
+
 
     return result
 
@@ -2665,6 +3359,7 @@ def generate_image_with_fallbacks(
     prompt = clean_image_prompt(
         message
     )
+
 
     print("=" * 70)
 
@@ -2699,6 +3394,7 @@ def generate_image_with_fallbacks(
 
     print("=" * 70)
 
+
     try:
 
         if image_bytes:
@@ -2718,9 +3414,11 @@ def generate_image_with_fallbacks(
                 prompt
             )
 
+
         image_url = result.get(
             "image_url"
         )
+
 
         if not image_url:
 
@@ -2728,10 +3426,12 @@ def generate_image_with_fallbacks(
                 "Mistral returned no usable image URL."
             )
 
+
         return (
             "IMAGE_URL:"
             + image_url
         )
+
 
     except Exception as e:
 
@@ -2758,6 +3458,26 @@ def generate_image_with_fallbacks(
 
         print("=" * 70)
 
+
+        # ----------------------------------------------------
+        # Better user-facing response for rate limits
+        # ----------------------------------------------------
+
+        if (
+            "HTTP 429" in str(e)
+            or
+            "Rate limit exceeded" in str(e)
+        ):
+
+            return (
+                "خدمة الصور في Mistral مشغولة حاليًا "
+                "وتم الوصول إلى حد الطلبات المؤقت. "
+                "تمت إعادة المحاولة تلقائيًا، "
+                "لكن الطلب ما زال مرفوضًا. "
+                "انتظر قليلًا ثم أعد المحاولة."
+            )
+
+
         return (
             "تعذر إنشاء أو تعديل الصورة حاليًا. "
             "حدث خطأ في خدمة الصور Mistral."
@@ -2778,6 +3498,7 @@ def get_image_response(
     message = str(
         message or ""
     ).strip()
+
 
     print("=" * 70)
 
@@ -2820,7 +3541,7 @@ def get_image_response(
     if image_bytes:
 
         # ----------------------------------------------------
-        # Image edit
+        # EDIT
         # ----------------------------------------------------
 
         if is_image_edit_request(
@@ -2830,6 +3551,7 @@ def get_image_response(
             print(
                 "MISTRAL IMAGE EDIT REQUEST"
             )
+
 
             try:
 
@@ -2841,6 +3563,7 @@ def get_image_response(
 
                     mime_type
                 )
+
 
                 return {
 
@@ -2863,12 +3586,14 @@ def get_image_response(
                         conversation_id
                 }
 
+
             except Exception as e:
 
                 print(
                     "MISTRAL IMAGE EDIT FAILED:",
                     repr(e)
                 )
+
 
                 return {
 
@@ -2890,12 +3615,13 @@ def get_image_response(
 
 
         # ----------------------------------------------------
-        # Image analysis
+        # ANALYSIS
         # ----------------------------------------------------
 
         print(
             "MISTRAL VISION ANALYSIS"
         )
+
 
         try:
 
@@ -2907,6 +3633,7 @@ def get_image_response(
 
                 mime_type
             )
+
 
             return {
 
@@ -2923,12 +3650,14 @@ def get_image_response(
                     conversation_id
             }
 
+
         except Exception as e:
 
             print(
                 "MISTRAL VISION FAILED:",
                 repr(e)
             )
+
 
             return {
 
@@ -2950,15 +3679,8 @@ def get_image_response(
 
 
     # ========================================================
-    # NO IMAGE UPLOADED
+    # NO UPLOADED IMAGE
     # ========================================================
-
-    # --------------------------------------------------------
-    # Analysis request without an uploaded image.
-    #
-    # IMPORTANT:
-    # Do NOT send it to image generation.
-    # --------------------------------------------------------
 
     if is_image_analysis_request(
         message
@@ -2967,6 +3689,7 @@ def get_image_response(
         print(
             "IMAGE ANALYSIS REQUEST WITHOUT IMAGE"
         )
+
 
         return {
 
@@ -3002,12 +3725,15 @@ def get_image_response(
         conversation_id
     )
 
+
     if (
         isinstance(
             result,
             str
         )
+
         and
+
         result.startswith(
             "IMAGE_URL:"
         )
@@ -3016,6 +3742,7 @@ def get_image_response(
         image_url = result[
             len("IMAGE_URL:"):
         ].strip()
+
 
         return {
 
@@ -3062,6 +3789,7 @@ def get_response(
         message or ""
     ).strip()
 
+
     if not message:
 
         return {
@@ -3100,7 +3828,7 @@ def get_response(
 
 
     # ========================================================
-    # GREETING ONLY
+    # GREETING
     # ========================================================
 
     if is_greeting_only(
@@ -3124,15 +3852,7 @@ def get_response(
 
 
     # ========================================================
-    # ANALYSIS WITHOUT IMAGE
-    # ========================================================
-    #
-    # Example:
-    #
-    #     هل يمكنك تحليل الصوره
-    #
-    # We DO NOT generate an image.
-    #
+    # IMAGE ANALYSIS WITHOUT IMAGE
     # ========================================================
 
     if is_image_analysis_request(
@@ -3142,6 +3862,7 @@ def get_response(
         print(
             "IMAGE ANALYSIS REQUEST WITHOUT UPLOADED IMAGE"
         )
+
 
         return {
 
@@ -3174,6 +3895,7 @@ def get_response(
             "IMAGE GENERATION REQUEST DETECTED"
         )
 
+
         return get_image_response(
 
             message,
@@ -3188,12 +3910,6 @@ def get_response(
 
     # ========================================================
     # TEXT PROVIDERS
-    #
-    # GROQ
-    #   ↓
-    # OPENROUTER
-    #   ↓
-    # GEMINI
     # ========================================================
 
     providers = [
@@ -3214,6 +3930,7 @@ def get_response(
         )
     ]
 
+
     errors = []
 
 
@@ -3229,9 +3946,11 @@ def get_response(
                 provider_name
             )
 
+
             answer = provider_function(
                 message
             )
+
 
             if answer:
 
@@ -3239,6 +3958,7 @@ def get_response(
                     "TEXT PROVIDER SUCCESS:",
                     provider_name
                 )
+
 
                 return {
 
@@ -3264,9 +3984,11 @@ def get_response(
                 f"{e}"
             )
 
+
             errors.append(
                 error_text
             )
+
 
             print(
                 "TEXT PROVIDER FAILED:",
@@ -3282,12 +4004,14 @@ def get_response(
         "ALL TEXT PROVIDERS FAILED"
     )
 
+
     for error in errors:
 
         print(
             "TEXT ERROR:",
             error
         )
+
 
     return {
 
@@ -3347,10 +4071,12 @@ print(
     "COMPATIBILITY: quick_response available"
 )
 
+
 print(
     "COMPATIBILITY: "
     "get_response(message, conversation_id=None)"
 )
+
 
 print(
     "COMPATIBILITY: "
@@ -3359,126 +4085,186 @@ print(
     "conversation_id=None)"
 )
 
+
 print("=" * 70)
+
 
 print(
     "FINAL PROVIDER ROUTING"
 )
 
+
 print("-" * 70)
+
 
 print(
     "TEXT:"
 )
 
+
 print(
     "    GROQ"
 )
 
+
 print(
     "      ↓"
 )
+
 
 print(
     "    OPENROUTER"
 )
 
+
 print(
     "      ↓"
 )
+
 
 print(
     "    GEMINI"
 )
 
+
 print("-" * 70)
+
 
 print(
     "IMAGE ANALYSIS:"
 )
 
+
 print(
     "    MISTRAL ONLY"
 )
 
+
 print("-" * 70)
+
 
 print(
     "IMAGE GENERATION:"
 )
 
+
 print(
     "    MISTRAL ONLY"
 )
 
+
 print("-" * 70)
+
 
 print(
     "IMAGE EDITING:"
 )
 
+
 print(
     "    MISTRAL ONLY"
 )
 
+
 print("-" * 70)
+
 
 print(
     "GROQ:"
 )
 
+
 print(
     "    TEXT ONLY"
 )
 
+
 print("-" * 70)
+
 
 print(
     "OPENROUTER:"
 )
 
+
 print(
     "    TEXT ONLY"
 )
 
+
 print("-" * 70)
+
 
 print(
     "GEMINI:"
 )
 
+
 print(
     "    TEXT ONLY"
 )
 
+
 print("-" * 70)
+
 
 print(
     "MISTRAL:"
 )
 
+
 print(
     "    IMAGES ONLY"
 )
 
+
 print("-" * 70)
+
+
+print(
+    "MISTRAL RATE LIMIT RETRY:"
+)
+
+
+print(
+    "    ENABLED"
+)
+
+
+print(
+    "    429 -> EXPONENTIAL BACKOFF"
+)
+
+
+print(
+    "    RETRY-AFTER -> SUPPORTED"
+)
+
+
+print("-" * 70)
+
 
 print(
     "xAI:"
 )
 
+
 print(
     "    DISABLED"
 )
 
+
 print("-" * 70)
+
 
 print(
     "POLLINATIONS:"
 )
 
+
 print(
     "    DISABLED"
 )
+
 
 print("=" * 70)
