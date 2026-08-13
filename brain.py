@@ -2,24 +2,24 @@
 # IDO AI - BRAIN.PY
 # ============================================================
 #
-# CURRENT TEST PROVIDER
+# FINAL SIMPLE PROVIDER ROUTING
 #
-# TEXT:
+# TEXT / CHAT:
 #     MISTRAL ONLY
 #
 # IMAGE UNDERSTANDING:
-#     MISTRAL VISION ONLY
+#     GEMINI ONLY
 #
 # IMAGE GENERATION:
-#     DISABLED TEMPORARILY
+#     GEMINI ONLY
 #
 # IMAGE EDITING:
-#     DISABLED TEMPORARILY
+#     GEMINI ONLY
 #
-# IMPORTANT:
-#     لا يوجد MISTRAL_IMAGE_MODEL هنا.
-#
-#     نستخدم Mistral للنص وتحليل الصور فقط.
+# NO:
+#     XAI
+#     GROQ
+#     OPENROUTER
 #
 # ============================================================
 
@@ -53,7 +53,7 @@ logger = logging.getLogger("IDO_AI")
 
 
 # ============================================================
-# API KEY
+# API KEYS
 # ============================================================
 
 MISTRAL_API_KEY = os.getenv(
@@ -62,20 +62,62 @@ MISTRAL_API_KEY = os.getenv(
 ).strip()
 
 
+GEMINI_API_KEY = os.getenv(
+    "GEMINI_API_KEY",
+    ""
+).strip()
+
+
 # ============================================================
-# MISTRAL MODELS
+# MODELS
 # ============================================================
+
+# ------------------------------------------------------------
+# MISTRAL - TEXT ONLY
+# ------------------------------------------------------------
 
 MISTRAL_TEXT_MODEL = os.getenv(
     "MISTRAL_TEXT_MODEL",
     "mistral-medium-latest"
-).strip()
+)
 
 
-MISTRAL_VISION_MODEL = os.getenv(
-    "MISTRAL_VISION_MODEL",
-    "mistral-small-latest"
-).strip()
+# ------------------------------------------------------------
+# GEMINI - TEXT MODEL
+#
+# Kept in ENV for compatibility.
+# It is NOT used for normal chat.
+# ------------------------------------------------------------
+
+GEMINI_TEXT_MODEL = os.getenv(
+    "GEMINI_TEXT_MODEL",
+    "gemini-3.5-flash"
+)
+
+
+# ------------------------------------------------------------
+# GEMINI - IMAGE
+#
+# Used for:
+#     - image understanding
+#     - image generation
+#     - image editing
+# ------------------------------------------------------------
+
+GEMINI_IMAGE_MODEL = os.getenv(
+    "GEMINI_IMAGE_MODEL",
+    "gemini-3.1-flash-image"
+)
+
+
+# ------------------------------------------------------------
+# GEMINI IMAGE EDIT MODEL
+# ------------------------------------------------------------
+
+GEMINI_IMAGE_EDIT_MODEL = os.getenv(
+    "GEMINI_IMAGE_EDIT_MODEL",
+    GEMINI_IMAGE_MODEL
+)
 
 
 # ============================================================
@@ -107,11 +149,16 @@ AI_REQUEST_TIMEOUT = int(
 
 
 # ============================================================
-# ENDPOINT
+# ENDPOINTS
 # ============================================================
 
 MISTRAL_BASE_URL = (
     "https://api.mistral.ai/v1"
+)
+
+
+GEMINI_INTERACTIONS_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/interactions"
 )
 
 
@@ -131,99 +178,82 @@ print(
 )
 
 print(
+    "GEMINI CLIENT:",
+    "READY"
+    if GEMINI_API_KEY
+    else "DISABLED"
+)
+
+print("=" * 70)
+
+print(
     "MISTRAL TEXT MODEL:",
     MISTRAL_TEXT_MODEL
 )
 
 print(
-    "MISTRAL VISION MODEL:",
-    MISTRAL_VISION_MODEL
+    "GEMINI TEXT MODEL:",
+    GEMINI_TEXT_MODEL
 )
 
 print(
-    "MISTRAL MAX RETRIES:",
-    MISTRAL_MAX_RETRIES
+    "GEMINI IMAGE MODEL:",
+    GEMINI_IMAGE_MODEL
 )
 
 print(
-    "MISTRAL RETRY BASE SECONDS:",
-    MISTRAL_RETRY_BASE_SECONDS
-)
-
-print(
-    "AI REQUEST TIMEOUT:",
-    AI_REQUEST_TIMEOUT
+    "GEMINI IMAGE EDIT MODEL:",
+    GEMINI_IMAGE_EDIT_MODEL
 )
 
 print("=" * 70)
 
 print("""
-FINAL TEST PROVIDER ROUTING
+FINAL PROVIDER ROUTING
 
 TEXT:
     MISTRAL ONLY
 
 IMAGE UNDERSTANDING:
-    MISTRAL VISION ONLY
+    GEMINI ONLY
 
 IMAGE GENERATION:
-    DISABLED
+    GEMINI ONLY
 
 IMAGE EDITING:
-    DISABLED
+    GEMINI ONLY
 """)
 
 print("=" * 70)
 
 
 # ============================================================
-# HTTP HEADERS
+# HTTP HELPERS
 # ============================================================
 
-def _headers(
-    api_key: str
-) -> dict:
+def _mistral_headers() -> dict:
 
     return {
         "Authorization":
-            f"Bearer {api_key}",
+            f"Bearer {MISTRAL_API_KEY}",
 
         "Content-Type":
             "application/json",
     }
 
 
-# ============================================================
-# HTTP POST
-# ============================================================
+def _gemini_headers() -> dict:
 
-def _post(
-    url: str,
-    headers: dict,
-    payload: dict,
-    timeout: Optional[int] = None,
-):
+    return {
+        "x-goog-api-key":
+            GEMINI_API_KEY,
 
-    timeout = (
-        timeout
-        or AI_REQUEST_TIMEOUT
-    )
-
-    return requests.post(
-        url,
-        headers=headers,
-        json=payload,
-        timeout=timeout,
-    )
+        "Content-Type":
+            "application/json",
+    }
 
 
-# ============================================================
-# SAFE JSON
-# ============================================================
-
-def _safe_json(
-    response
-) -> dict:
+def _safe_json(response) -> dict:
 
     try:
 
@@ -236,14 +266,13 @@ def _safe_json(
             return data
 
     except Exception:
-
         pass
 
     return {}
 
 
 # ============================================================
-# EXTRACT TEXT
+# TEXT EXTRACTION
 # ============================================================
 
 def _extract_text(
@@ -258,7 +287,7 @@ def _extract_text(
 
 
     # ========================================================
-    # CHAT COMPLETIONS
+    # OpenAI-compatible
     # ========================================================
 
     choices = data.get(
@@ -272,96 +301,138 @@ def _extract_text(
 
         choice = choices[0]
 
-        if not isinstance(
+        if isinstance(
             choice,
             dict
         ):
-            return ""
 
-
-        message = choice.get(
-            "message",
-            {}
-        )
-
-
-        if isinstance(
-            message,
-            dict
-        ):
-
-            content = message.get(
-                "content"
+            message = choice.get(
+                "message"
             )
 
-
-            # ------------------------------------------------
-            # Normal string
-            # ------------------------------------------------
-
             if isinstance(
-                content,
-                str
+                message,
+                dict
             ):
 
-                return content.strip()
+                content = message.get(
+                    "content"
+                )
 
+                if isinstance(
+                    content,
+                    str
+                ):
+                    return content.strip()
 
-            # ------------------------------------------------
-            # Content array
-            # ------------------------------------------------
+                if isinstance(
+                    content,
+                    list
+                ):
 
-            if isinstance(
-                content,
-                list
-            ):
+                    parts = []
 
-                parts = []
+                    for item in content:
 
-                for item in content:
+                        if not isinstance(
+                            item,
+                            dict
+                        ):
+                            continue
 
-                    if not isinstance(
-                        item,
-                        dict
-                    ):
-                        continue
-
-                    text = item.get(
-                        "text"
-                    )
-
-                    if text:
-
-                        parts.append(
-                            str(text)
+                        text = item.get(
+                            "text"
                         )
 
+                        if text:
+                            parts.append(
+                                str(text)
+                            )
 
-                if parts:
+                    if parts:
+                        return "\n".join(
+                            parts
+                        ).strip()
 
-                    return "\n".join(
-                        parts
-                    ).strip()
 
+            text = choice.get(
+                "text"
+            )
 
-        # ----------------------------------------------------
-        # Legacy text
-        # ----------------------------------------------------
-
-        text = choice.get(
-            "text"
-        )
-
-        if isinstance(
-            text,
-            str
-        ):
-
-            return text.strip()
+            if isinstance(
+                text,
+                str
+            ):
+                return text.strip()
 
 
     # ========================================================
-    # OUTPUT TEXT
+    # Gemini legacy structure
+    # ========================================================
+
+    candidates = data.get(
+        "candidates"
+    )
+
+    if isinstance(
+        candidates,
+        list
+    ) and candidates:
+
+        candidate = candidates[0]
+
+        if isinstance(
+            candidate,
+            dict
+        ):
+
+            content = candidate.get(
+                "content",
+                {}
+            )
+
+            if isinstance(
+                content,
+                dict
+            ):
+
+                parts = content.get(
+                    "parts",
+                    []
+                )
+
+                if isinstance(
+                    parts,
+                    list
+                ):
+
+                    result = []
+
+                    for part in parts:
+
+                        if not isinstance(
+                            part,
+                            dict
+                        ):
+                            continue
+
+                        text = part.get(
+                            "text"
+                        )
+
+                        if text:
+                            result.append(
+                                str(text)
+                            )
+
+                    if result:
+                        return "\n".join(
+                            result
+                        ).strip()
+
+
+    # ========================================================
+    # Gemini Interactions API
     # ========================================================
 
     output_text = data.get(
@@ -376,31 +447,349 @@ def _extract_text(
         return output_text.strip()
 
 
+    # ========================================================
+    # Search through steps
+    # ========================================================
+
+    steps = data.get(
+        "steps"
+    )
+
+    if isinstance(
+        steps,
+        list
+    ):
+
+        result = []
+
+        for step in steps:
+
+            if not isinstance(
+                step,
+                dict
+            ):
+                continue
+
+            step_text = step.get(
+                "text"
+            )
+
+            if isinstance(
+                step_text,
+                str
+            ):
+                result.append(
+                    step_text
+                )
+
+            content = step.get(
+                "content"
+            )
+
+            if isinstance(
+                content,
+                list
+            ):
+
+                for item in content:
+
+                    if not isinstance(
+                        item,
+                        dict
+                    ):
+                        continue
+
+                    text = item.get(
+                        "text"
+                    )
+
+                    if text:
+                        result.append(
+                            str(text)
+                        )
+
+        if result:
+            return "\n".join(
+                result
+            ).strip()
+
+
     return ""
 
 
 # ============================================================
-# IMAGE -> DATA URL
+# GEMINI IMAGE EXTRACTION
 # ============================================================
 
-def _image_to_data_url(
-    image_bytes: bytes,
-    mime_type: Optional[str],
-) -> str:
+def _extract_gemini_image(
+    data: Any
+) -> Optional[str]:
 
-    mime_type = (
-        mime_type
-        or "image/png"
+    if not isinstance(
+        data,
+        dict
+    ):
+        return None
+
+
+    # ========================================================
+    # output_image
+    # ========================================================
+
+    output_image = data.get(
+        "output_image"
     )
 
-    encoded = base64.b64encode(
+    if isinstance(
+        output_image,
+        dict
+    ):
+
+        image_data = output_image.get(
+            "data"
+        )
+
+        if isinstance(
+            image_data,
+            str
+        ) and image_data:
+
+            mime_type = (
+                output_image.get(
+                    "mime_type"
+                )
+                or
+                "image/png"
+            )
+
+            return (
+                f"data:{mime_type};base64,"
+                f"{image_data}"
+            )
+
+
+    # ========================================================
+    # steps
+    # ========================================================
+
+    steps = data.get(
+        "steps"
+    )
+
+    if isinstance(
+        steps,
+        list
+    ):
+
+        for step in steps:
+
+            if not isinstance(
+                step,
+                dict
+            ):
+                continue
+
+
+            content = step.get(
+                "content"
+            )
+
+            if not isinstance(
+                content,
+                list
+            ):
+                continue
+
+
+            for item in content:
+
+                if not isinstance(
+                    item,
+                    dict
+                ):
+                    continue
+
+
+                # ------------------------------------------------
+                # Direct data
+                # ------------------------------------------------
+
+                image_data = item.get(
+                    "data"
+                )
+
+                if isinstance(
+                    image_data,
+                    str
+                ) and image_data:
+
+                    item_type = item.get(
+                        "type",
+                        ""
+                    )
+
+                    if (
+                        item_type == "image"
+                        or
+                        item.get(
+                            "mime_type"
+                        )
+                    ):
+
+                        mime_type = (
+                            item.get(
+                                "mime_type"
+                            )
+                            or
+                            "image/png"
+                        )
+
+                        return (
+                            f"data:{mime_type};base64,"
+                            f"{image_data}"
+                        )
+
+
+                # ------------------------------------------------
+                # Inline data
+                # ------------------------------------------------
+
+                inline_data = item.get(
+                    "inline_data"
+                )
+
+                if isinstance(
+                    inline_data,
+                    dict
+                ):
+
+                    encoded = inline_data.get(
+                        "data"
+                    )
+
+                    if isinstance(
+                        encoded,
+                        str
+                    ) and encoded:
+
+                        mime_type = (
+                            inline_data.get(
+                                "mime_type"
+                            )
+                            or
+                            "image/png"
+                        )
+
+                        return (
+                            f"data:{mime_type};base64,"
+                            f"{encoded}"
+                        )
+
+
+    # ========================================================
+    # Legacy Gemini parts
+    # ========================================================
+
+    candidates = data.get(
+        "candidates"
+    )
+
+    if isinstance(
+        candidates,
+        list
+    ):
+
+        for candidate in candidates:
+
+            if not isinstance(
+                candidate,
+                dict
+            ):
+                continue
+
+            content = candidate.get(
+                "content",
+                {}
+            )
+
+            if not isinstance(
+                content,
+                dict
+            ):
+                continue
+
+            parts = content.get(
+                "parts",
+                []
+            )
+
+            if not isinstance(
+                parts,
+                list
+            ):
+                continue
+
+            for part in parts:
+
+                if not isinstance(
+                    part,
+                    dict
+                ):
+                    continue
+
+                inline_data = part.get(
+                    "inlineData"
+                )
+
+                if not inline_data:
+                    inline_data = part.get(
+                        "inline_data"
+                    )
+
+                if isinstance(
+                    inline_data,
+                    dict
+                ):
+
+                    encoded = inline_data.get(
+                        "data"
+                    )
+
+                    if encoded:
+
+                        mime_type = (
+                            inline_data.get(
+                                "mimeType"
+                            )
+                            or
+                            inline_data.get(
+                                "mime_type"
+                            )
+                            or
+                            "image/png"
+                        )
+
+                        return (
+                            f"data:{mime_type};base64,"
+                            f"{encoded}"
+                        )
+
+
+    return None
+
+
+# ============================================================
+# IMAGE -> BASE64
+# ============================================================
+
+def _image_to_base64(
+    image_bytes: bytes
+) -> str:
+
+    return base64.b64encode(
         image_bytes
     ).decode(
         "utf-8"
-    )
-
-    return (
-        f"data:{mime_type};base64,{encoded}"
     )
 
 
@@ -415,24 +804,15 @@ def _mistral_text(
     if not MISTRAL_API_KEY:
 
         print(
-            "MISTRAL TEXT:",
-            "API KEY NOT CONFIGURED"
+            "MISTRAL TEXT: API KEY DISABLED"
         )
 
         return None
 
 
-    print("=" * 60)
-    print("TEXT PROVIDER: MISTRAL")
     print(
-        "MODEL:",
-        MISTRAL_TEXT_MODEL
+        "TEXT PROVIDER: MISTRAL"
     )
-    print(
-        "MESSAGE:",
-        message
-    )
-    print("=" * 60)
 
 
     payload = {
@@ -471,46 +851,29 @@ def _mistral_text(
     }
 
 
-    # ========================================================
-    # RETRIES
-    # ========================================================
-
     for attempt in range(
         MISTRAL_MAX_RETRIES + 1
     ):
 
         try:
 
-            print(
-                "MISTRAL REQUEST ATTEMPT:",
-                f"{attempt + 1}/"
-                f"{MISTRAL_MAX_RETRIES + 1}"
-            )
-
-
-            response = _post(
+            response = requests.post(
 
                 f"{MISTRAL_BASE_URL}"
                 "/chat/completions",
 
-                _headers(
-                    MISTRAL_API_KEY
-                ),
+                headers=
+                    _mistral_headers(),
 
-                payload,
+                json=
+                    payload,
+
+                timeout=
+                    AI_REQUEST_TIMEOUT,
             )
 
 
-            # =================================================
-            # RATE LIMIT
-            # =================================================
-
             if response.status_code == 429:
-
-                print(
-                    "MISTRAL RATE LIMIT"
-                )
-
 
                 if (
                     attempt
@@ -518,56 +881,25 @@ def _mistral_text(
                     MISTRAL_MAX_RETRIES
                 ):
 
+                    print(
+                        "MISTRAL RATE LIMIT"
+                    )
+
                     return None
 
 
-                retry_after = (
-                    response.headers.get(
-                        "Retry-After"
+                delay = (
+                    MISTRAL_RETRY_BASE_SECONDS
+                    *
+                    (
+                        2 ** attempt
                     )
                 )
-
-
-                try:
-
-                    if retry_after:
-
-                        delay = float(
-                            retry_after
-                        )
-
-                    else:
-
-                        delay = (
-                            MISTRAL_RETRY_BASE_SECONDS
-                            *
-                            (
-                                2 ** attempt
-                            )
-                        )
-
-                except Exception:
-
-                    delay = (
-                        MISTRAL_RETRY_BASE_SECONDS
-                        *
-                        (
-                            2 ** attempt
-                        )
-                    )
-
-
-                delay = min(
-                    delay,
-                    30
-                )
-
 
                 print(
-                    "WAITING:",
-                    f"{delay}s"
+                    "MISTRAL RATE LIMIT - "
+                    f"WAIT {delay}s"
                 )
-
 
                 import time
 
@@ -578,49 +910,31 @@ def _mistral_text(
                 continue
 
 
-            # =================================================
-            # OTHER API ERROR
-            # =================================================
-
             if response.status_code >= 400:
 
                 print(
                     "MISTRAL TEXT ERROR:",
-                    response.status_code
-                )
-
-                print(
-                    response.text[:1000]
+                    response.status_code,
+                    response.text[:1000],
                 )
 
                 return None
 
 
-            # =================================================
-            # SUCCESS
-            # =================================================
-
-            data = _safe_json(
-                response
-            )
-
             text = _extract_text(
-                data
+                _safe_json(
+                    response
+                )
             )
 
 
             if text:
 
-                print(
-                    "MISTRAL TEXT SUCCESS"
-                )
-
                 return text
 
 
             print(
-                "MISTRAL TEXT:",
-                "EMPTY RESPONSE"
+                "MISTRAL RETURNED EMPTY RESPONSE"
             )
 
             return None
@@ -640,105 +954,324 @@ def _mistral_text(
 
 
 # ============================================================
-# MISTRAL VISION
+# GEMINI IMAGE REQUEST
 # ============================================================
 
-def _mistral_vision(
-    message: str,
-    image_bytes: bytes,
-    mime_type: str,
-) -> Optional[str]:
+def _gemini_image_request(
+    prompt: str,
+    image_bytes: Optional[bytes] = None,
+    mime_type: Optional[str] = None,
+    model: Optional[str] = None,
+) -> Optional[dict]:
 
-    if not MISTRAL_API_KEY:
+    if not GEMINI_API_KEY:
 
         print(
-            "MISTRAL VISION:",
-            "API KEY NOT CONFIGURED"
+            "GEMINI IMAGE: API KEY DISABLED"
         )
 
         return None
 
 
-    print("=" * 60)
-    print("IMAGE UNDERSTANDING")
-    print("VISION PROVIDER: MISTRAL")
+    model = (
+        model
+        or
+        GEMINI_IMAGE_MODEL
+    )
+
+
+    print("=" * 70)
+
+    print(
+        "GEMINI IMAGE REQUEST"
+    )
+
     print(
         "MODEL:",
-        MISTRAL_VISION_MODEL
-    )
-    print("=" * 60)
-
-
-    image_url = _image_to_data_url(
-        image_bytes,
-        mime_type,
+        model
     )
 
+    print(
+        "HAS INPUT IMAGE:",
+        bool(image_bytes)
+    )
+
+    print(
+        "PROMPT:",
+        prompt
+    )
+
+    print("=" * 70)
+
+
+    # ========================================================
+    # INPUT
+    # ========================================================
+
+    inputs = []
+
+
+    # --------------------------------------------------------
+    # Existing image
+    # --------------------------------------------------------
+
+    if image_bytes:
+
+        encoded = _image_to_base64(
+            image_bytes
+        )
+
+        inputs.append({
+
+            "type":
+                "image",
+
+            "mime_type":
+                mime_type
+                or
+                "image/png",
+
+            "data":
+                encoded,
+        })
+
+
+    # --------------------------------------------------------
+    # Prompt
+    # --------------------------------------------------------
+
+    inputs.append({
+
+        "type":
+            "text",
+
+        "text":
+            prompt,
+    })
+
+
+    # ========================================================
+    # PAYLOAD
+    # ========================================================
 
     payload = {
 
         "model":
-            MISTRAL_VISION_MODEL,
+            model,
 
-        "messages": [
+        "input":
+            inputs,
 
-            {
-                "role":
-                    "user",
+        "response_format": {
 
-                "content": [
+            "type":
+                "image",
 
-                    {
-                        "type":
-                            "text",
+            "mime_type":
+                "image/png",
 
-                        "text":
-                            message,
-                    },
+            "aspect_ratio":
+                "1:1",
 
-                    {
-                        "type":
-                            "image_url",
-
-                        "image_url":
-                            {
-                                "url":
-                                    image_url
-                            },
-                    },
-                ],
-            },
-        ],
-
-        "max_tokens":
-            4096,
+            "image_size":
+                "1K",
+        },
     }
 
 
+    # ========================================================
+    # REQUEST
+    # ========================================================
+
     try:
 
-        response = _post(
+        response = requests.post(
 
-            f"{MISTRAL_BASE_URL}"
-            "/chat/completions",
+            GEMINI_INTERACTIONS_URL,
 
-            _headers(
-                MISTRAL_API_KEY
-            ),
+            headers=
+                _gemini_headers(),
 
-            payload,
+            json=
+                payload,
+
+            timeout=
+                AI_REQUEST_TIMEOUT,
         )
 
 
         if response.status_code >= 400:
 
             print(
-                "MISTRAL VISION ERROR:",
-                response.status_code
+                "GEMINI IMAGE ERROR:",
+                response.status_code,
+                response.text[:2000],
             )
 
+            return None
+
+
+        data = _safe_json(
+            response
+        )
+
+
+        image_url = _extract_gemini_image(
+            data
+        )
+
+
+        text = _extract_text(
+            data
+        )
+
+
+        if image_url:
+
             print(
-                response.text[:1000]
+                "GEMINI IMAGE SUCCESS"
+            )
+
+            return {
+
+                "imageUrl":
+                    image_url,
+
+                "answer":
+                    text
+                    or
+                    "تم إنشاء الصورة بنجاح.",
+
+                "provider":
+                    "Gemini",
+            }
+
+
+        print(
+            "GEMINI IMAGE RESPONSE "
+            "DID NOT CONTAIN IMAGE"
+        )
+
+        print(
+            "RESPONSE:",
+            str(data)[:3000]
+        )
+
+
+    except Exception as exc:
+
+        print(
+            "GEMINI IMAGE EXCEPTION:",
+            repr(exc)
+        )
+
+
+    return None
+
+
+# ============================================================
+# GEMINI IMAGE UNDERSTANDING
+# ============================================================
+
+def _gemini_vision(
+    message: str,
+    image_bytes: bytes,
+    mime_type: str = "image/png",
+) -> Optional[str]:
+
+    if not GEMINI_API_KEY:
+
+        print(
+            "GEMINI VISION: API KEY DISABLED"
+        )
+
+        return None
+
+
+    print("=" * 70)
+
+    print(
+        "GEMINI IMAGE UNDERSTANDING"
+    )
+
+    print(
+        "MODEL:",
+        GEMINI_IMAGE_MODEL
+    )
+
+    print("=" * 70)
+
+
+    encoded = _image_to_base64(
+        image_bytes
+    )
+
+
+    payload = {
+
+        "model":
+            GEMINI_IMAGE_MODEL,
+
+        "input": [
+
+            {
+                "type":
+                    "image",
+
+                "mime_type":
+                    mime_type,
+
+                "data":
+                    encoded,
+            },
+
+            {
+                "type":
+                    "text",
+
+                "text":
+                    (
+                        message
+                        or
+                        "حلل هذه الصورة واشرح لي "
+                        "ما الذي يظهر فيها بالتفصيل."
+                    ),
+            },
+        ],
+
+        "response_format": [
+
+            {
+                "type":
+                    "text"
+            }
+        ],
+    }
+
+
+    try:
+
+        response = requests.post(
+
+            GEMINI_INTERACTIONS_URL,
+
+            headers=
+                _gemini_headers(),
+
+            json=
+                payload,
+
+            timeout=
+                AI_REQUEST_TIMEOUT,
+        )
+
+
+        if response.status_code >= 400:
+
+            print(
+                "GEMINI VISION ERROR:",
+                response.status_code,
+                response.text[:2000],
             )
 
             return None
@@ -757,28 +1290,26 @@ def _mistral_vision(
         if text:
 
             print(
-                "MISTRAL VISION SUCCESS"
+                "GEMINI VISION SUCCESS"
             )
 
             return text
 
 
         print(
-            "MISTRAL VISION:",
-            "EMPTY RESPONSE"
+            "GEMINI VISION EMPTY RESPONSE"
         )
-
-        return None
 
 
     except Exception as exc:
 
         print(
-            "MISTRAL VISION EXCEPTION:",
+            "GEMINI VISION EXCEPTION:",
             repr(exc)
         )
 
-        return None
+
+    return None
 
 
 # ============================================================
@@ -790,18 +1321,13 @@ def is_image_request(
 ) -> bool:
 
     if not message:
-
         return False
 
 
-    text = (
-        str(message)
-        .lower()
-        .strip()
-    )
+    text = message.lower().strip()
 
 
-    image_words = [
+    words = [
 
         "صورة",
         "صوره",
@@ -809,7 +1335,6 @@ def is_image_request(
 
         "أنشئ صورة",
         "انشئ صورة",
-
         "أنشئ صوره",
         "انشئ صوره",
 
@@ -838,7 +1363,6 @@ def is_image_request(
         "draw",
 
         "image generation",
-
         "picture",
         "photo",
     ]
@@ -846,7 +1370,7 @@ def is_image_request(
 
     return any(
         word in text
-        for word in image_words
+        for word in words
     )
 
 
@@ -859,18 +1383,13 @@ def is_image_edit_request(
 ) -> bool:
 
     if not message:
-
         return False
 
 
-    text = (
-        str(message)
-        .lower()
-        .strip()
-    )
+    text = message.lower()
 
 
-    edit_words = [
+    words = [
 
         "عدل الصورة",
         "عدل الصوره",
@@ -881,6 +1400,12 @@ def is_image_edit_request(
         "حرر الصورة",
         "حرر الصوره",
 
+        "غير الصورة",
+        "غير الصوره",
+
+        "غيّر الصورة",
+        "غيّر الصوره",
+
         "edit image",
         "edit the image",
 
@@ -888,44 +1413,50 @@ def is_image_edit_request(
         "modify the image",
 
         "change the image",
+
+        "transform the image",
     ]
 
 
     return any(
         word in text
-        for word in edit_words
+        for word in words
     )
 
 
 # ============================================================
-# IMAGE GENERATION
+# GENERATE IMAGE
 # ============================================================
 
 def generate_image(
     prompt: str
 ) -> Optional[str]:
 
-    print("=" * 60)
-    print("IMAGE GENERATION REQUEST")
-    print("=" * 60)
+    result = _gemini_image_request(
 
-    print(
-        "MISTRAL IMAGE GENERATION:",
-        "DISABLED"
+        prompt=prompt,
+
+        image_bytes=None,
+
+        mime_type=None,
+
+        model=
+            GEMINI_IMAGE_MODEL,
     )
 
-    print(
-        "REASON:",
-        "No MISTRAL_IMAGE_MODEL configured."
-    )
 
-    print("=" * 60)
+    if result:
+
+        return result.get(
+            "imageUrl"
+        )
+
 
     return None
 
 
 # ============================================================
-# IMAGE EDITING
+# EDIT IMAGE
 # ============================================================
 
 def edit_image(
@@ -934,27 +1465,31 @@ def edit_image(
     mime_type: str = "image/png",
 ) -> Optional[str]:
 
-    print("=" * 60)
-    print("IMAGE EDITING REQUEST")
-    print("=" * 60)
+    result = _gemini_image_request(
 
-    print(
-        "MISTRAL IMAGE EDITING:",
-        "DISABLED"
+        prompt=prompt,
+
+        image_bytes=image_bytes,
+
+        mime_type=mime_type,
+
+        model=
+            GEMINI_IMAGE_EDIT_MODEL,
     )
 
-    print(
-        "REASON:",
-        "No MISTRAL_IMAGE_MODEL configured."
-    )
 
-    print("=" * 60)
+    if result:
+
+        return result.get(
+            "imageUrl"
+        )
+
 
     return None
 
 
 # ============================================================
-# IMAGE RESPONSE
+# GET IMAGE RESPONSE
 # ============================================================
 
 def get_image_response(
@@ -965,74 +1500,44 @@ def get_image_response(
 ):
 
     print("=" * 70)
-    print("IMAGE REQUEST")
+
+    print(
+        "IMAGE REQUEST"
+    )
+
     print(
         "MESSAGE:",
         message
     )
+
     print(
         "HAS INPUT IMAGE:",
         bool(image_bytes)
     )
-    print(
-        "MIME TYPE:",
-        mime_type
-    )
+
     print(
         "CONVERSATION ID:",
         conversation_id
     )
+
     print("=" * 70)
 
 
     # ========================================================
-    # UPLOADED IMAGE
+    # 1. EDIT EXISTING IMAGE
     # ========================================================
 
-    if image_bytes:
-
-        # ----------------------------------------------------
-        # If user explicitly asks to edit the image
-        # ----------------------------------------------------
-
-        if is_image_edit_request(
+    if (
+        image_bytes
+        and
+        is_image_edit_request(
             message
-        ):
+        )
+    ):
 
-            return {
+        result = edit_image(
 
-                "type":
-                    "error",
-
-                "answer":
-                    (
-                        "تعديل الصور غير متاح "
-                        "في نسخة الاختبار الحالية."
-                    ),
-
-                "imageUrl":
-                    "",
-
-                "provider":
-                    "Mistral",
-
-                "conversation_id":
-                    conversation_id,
-            }
-
-
-        # ----------------------------------------------------
-        # Analyze uploaded image
-        # ----------------------------------------------------
-
-        result = _mistral_vision(
-
-            message
-            or
-            (
-                "حلل هذه الصورة واشرح "
-                "بالتفصيل ما الذي يظهر فيها."
-            ),
+            message,
 
             image_bytes,
 
@@ -1046,17 +1551,14 @@ def get_image_response(
 
             return {
 
-                "type":
-                    "text",
-
                 "answer":
-                    result,
+                    "تم تعديل الصورة بنجاح.",
 
                 "imageUrl":
-                    "",
+                    result,
 
                 "provider":
-                    "Mistral",
+                    "Gemini",
 
                 "conversation_id":
                     conversation_id,
@@ -1065,20 +1567,14 @@ def get_image_response(
 
         return {
 
-            "type":
-                "error",
-
             "answer":
-                (
-                    "تعذر تحليل الصورة حاليًا "
-                    "عبر Mistral."
-                ),
+                "تعذر تعديل الصورة حاليًا عبر Gemini.",
 
             "imageUrl":
                 "",
 
             "provider":
-                "Mistral",
+                "Gemini",
 
             "conversation_id":
                 conversation_id,
@@ -1086,31 +1582,51 @@ def get_image_response(
 
 
     # ========================================================
-    # IMAGE GENERATION
+    # 2. ANALYZE EXISTING IMAGE
     # ========================================================
 
-    if is_image_request(
-        message
-    ):
+    if image_bytes:
+
+        result = _gemini_vision(
+
+            message,
+
+            image_bytes,
+
+            mime_type
+            or
+            "image/png",
+        )
+
+
+        if result:
+
+            return {
+
+                "answer":
+                    result,
+
+                "imageUrl":
+                    "",
+
+                "provider":
+                    "Gemini",
+
+                "conversation_id":
+                    conversation_id,
+            }
+
 
         return {
 
-            "type":
-                "error",
-
             "answer":
-                (
-                    "إنشاء الصور غير متاح "
-                    "في نسخة الاختبار الحالية. "
-                    "نحن نختبر Mistral للنص "
-                    "وتحليل الصور فقط."
-                ),
+                "تعذر تحليل الصورة حاليًا عبر Gemini.",
 
             "imageUrl":
                 "",
 
             "provider":
-                "Mistral",
+                "Gemini",
 
             "conversation_id":
                 conversation_id,
@@ -1118,22 +1634,45 @@ def get_image_response(
 
 
     # ========================================================
-    # NO IMAGE
+    # 3. GENERATE IMAGE
     # ========================================================
+
+    result = generate_image(
+        message
+    )
+
+
+    if result:
+
+        return {
+
+            "answer":
+                "تم إنشاء الصورة بنجاح.",
+
+            "imageUrl":
+                result,
+
+            "provider":
+                "Gemini",
+
+            "conversation_id":
+                conversation_id,
+        }
+
 
     return {
 
-        "type":
-            "error",
-
         "answer":
-            "لم يتم إرسال صورة.",
+            (
+                "تعذر إنشاء الصورة حاليًا "
+                "عبر Gemini."
+            ),
 
         "imageUrl":
             "",
 
         "provider":
-            "Mistral",
+            "Gemini",
 
         "conversation_id":
             conversation_id,
@@ -1141,71 +1680,13 @@ def get_image_response(
 
 
 # ============================================================
-# IMAGE UNDERSTANDING PUBLIC FUNCTION
-# ============================================================
-
-def analyze_image(
-    message: str,
-    image_bytes: bytes,
-    mime_type: str = "image/png",
-) -> Optional[str]:
-
-    print("=" * 70)
-    print("IMAGE UNDERSTANDING START")
-    print("PROVIDER: MISTRAL ONLY")
-    print("=" * 70)
-
-
-    result = _mistral_vision(
-
-        message,
-
-        image_bytes,
-
-        mime_type,
-    )
-
-
-    if result:
-
-        print(
-            "VISION PROVIDER: MISTRAL"
-        )
-
-        return result
-
-
-    print(
-        "IMAGE UNDERSTANDING FAILED"
-    )
-
-    return None
-
-
-# ============================================================
-# MAIN TEXT RESPONSE
+# MAIN RESPONSE
 # ============================================================
 
 def get_response(
     message: str,
     conversation_id: Optional[str] = None,
 ):
-
-    print("=" * 70)
-    print("DYNAMIC AI RESPONSE")
-    print(
-        "PROVIDER: MISTRAL ONLY"
-    )
-    print(
-        "MESSAGE:",
-        message
-    )
-    print(
-        "CONVERSATION ID:",
-        conversation_id
-    )
-    print("=" * 70)
-
 
     message = str(
         message or ""
@@ -1219,8 +1700,86 @@ def get_response(
         )
 
 
+    print("=" * 70)
+
+    print(
+        "DYNAMIC AI RESPONSE"
+    )
+
+    print(
+        "MESSAGE:",
+        message
+    )
+
+    print(
+        "CONVERSATION ID:",
+        conversation_id
+    )
+
+    print("=" * 70)
+
+
     # ========================================================
-    # MISTRAL ONLY
+    # IMAGE GENERATION FROM TEXT
+    #
+    # This is important because app.py sends normal text
+    # requests through get_response().
+    # ========================================================
+
+    if is_image_request(
+        message
+    ):
+
+        print(
+            "IMAGE REQUEST DETECTED"
+        )
+
+        print(
+            "IMAGE PROVIDER: GEMINI ONLY"
+        )
+
+
+        result = generate_image(
+            message
+        )
+
+
+        if result:
+
+            return {
+
+                "answer":
+                    "تم إنشاء الصورة بنجاح.",
+
+                "imageUrl":
+                    result,
+
+                "provider":
+                    "Gemini",
+
+                "conversation_id":
+                    conversation_id,
+            }
+
+
+        return {
+
+            "answer":
+                "تعذر إنشاء الصورة حاليًا عبر Gemini.",
+
+            "imageUrl":
+                "",
+
+            "provider":
+                "Gemini",
+
+            "conversation_id":
+                conversation_id,
+        }
+
+
+    # ========================================================
+    # NORMAL TEXT
     # ========================================================
 
     result = _mistral_text(
@@ -1230,28 +1789,39 @@ def get_response(
 
     if result:
 
-        print("=" * 70)
-        print("API CHAT SUCCESS")
-        print("PROVIDER: MISTRAL")
-        print("=" * 70)
+        return {
 
-        return result
+            "answer":
+                result,
 
+            "imageUrl":
+                "",
 
-    # ========================================================
-    # NO FALLBACK
-    # ========================================================
+            "provider":
+                "Mistral",
 
-    print("=" * 70)
-    print("MISTRAL FAILED")
-    print("NO FALLBACK PROVIDER")
-    print("=" * 70)
+            "conversation_id":
+                conversation_id,
+        }
 
 
-    return (
-        "عذرًا، لم أتمكن من الحصول "
-        "على إجابة من Mistral حاليًا."
-    )
+    return {
+
+        "answer":
+            (
+                "عذرًا، لم أتمكن من الحصول "
+                "على إجابة من Mistral حاليًا."
+            ),
+
+        "imageUrl":
+            "",
+
+        "provider":
+            "Mistral",
+
+        "conversation_id":
+            conversation_id,
+    }
 
 
 # ============================================================
@@ -1263,8 +1833,7 @@ def quick_response(
 ) -> str:
 
     result = get_response(
-        message,
-        conversation_id=None,
+        message
     )
 
 
@@ -1281,17 +1850,6 @@ def quick_response(
         dict
     ):
 
-        text = result.get(
-            "text"
-        )
-
-        if text:
-
-            return str(
-                text
-            )
-
-
         answer = result.get(
             "answer"
         )
@@ -1303,17 +1861,6 @@ def quick_response(
             )
 
 
-        message_text = result.get(
-            "message"
-        )
-
-        if message_text:
-
-            return str(
-                message_text
-            )
-
-
     return (
         "لم أتمكن من الحصول "
         "على إجابة حاليًا."
@@ -1321,7 +1868,7 @@ def quick_response(
 
 
 # ============================================================
-# COMPATIBILITY ROUTER
+# COMPATIBILITY
 # ============================================================
 
 def ask_ollama(
@@ -1329,69 +1876,13 @@ def ask_ollama(
 ) -> Optional[str]:
 
     """
-    Compatibility function.
+    Ollama compatibility function.
 
-    Ollama is not part of the current
-    Mistral-only routing.
+    It is intentionally disabled in the
+    final provider routing.
     """
 
-    ollama_url = os.getenv(
-        "OLLAMA_URL",
-        ""
-    ).strip()
-
-
-    if not ollama_url:
-
-        return None
-
-
-    ollama_model = os.getenv(
-        "OLLAMA_MODEL",
-        "llama3.1:8b"
-    )
-
-
-    try:
-
-        response = requests.post(
-
-            f"{ollama_url.rstrip('/')}"
-            "/api/generate",
-
-            json={
-
-                "model":
-                    ollama_model,
-
-                "prompt":
-                    message,
-
-                "stream":
-                    False,
-            },
-
-            timeout=
-                AI_REQUEST_TIMEOUT,
-        )
-
-
-        if response.status_code >= 400:
-
-            return None
-
-
-        data = response.json()
-
-
-        return data.get(
-            "response"
-        )
-
-
-    except Exception:
-
-        return None
+    return None
 
 
 # ============================================================
@@ -1407,21 +1898,26 @@ def provider_status():
                 MISTRAL_API_KEY
             ),
 
+        "gemini":
+            bool(
+                GEMINI_API_KEY
+            ),
+
         "text": [
             "mistral"
         ],
 
         "vision": [
-            "mistral"
+            "gemini"
         ],
 
-        "image": [],
+        "image": [
+            "gemini"
+        ],
 
-        "image_generation":
-            False,
-
-        "image_editing":
-            False,
+        "image_edit": [
+            "gemini"
+        ],
     }
 
 
@@ -1446,5 +1942,5 @@ print(
 )
 
 print("=" * 70)
-print("CURRENT PROVIDER: MISTRAL ONLY")
+print("IDO AI BRAIN READY")
 print("=" * 70)
