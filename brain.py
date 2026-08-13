@@ -2,9 +2,9 @@
 # IDO AI - BRAIN.PY
 # ============================================================
 #
-# FINAL SIMPLE PROVIDER ROUTING
+# FINAL PROVIDER ROUTING
 #
-# TEXT / CHAT:
+# TEXT:
 #     MISTRAL ONLY
 #
 # IMAGE UNDERSTANDING:
@@ -16,15 +16,10 @@
 # IMAGE EDITING:
 #     GEMINI ONLY
 #
-# NO:
-#     XAI
-#     GROQ
-#     OPENROUTER
-#
 # ============================================================
 
-
 import os
+import time
 import base64
 import logging
 from typing import Optional, Any
@@ -61,7 +56,6 @@ MISTRAL_API_KEY = os.getenv(
     ""
 ).strip()
 
-
 GEMINI_API_KEY = os.getenv(
     "GEMINI_API_KEY",
     ""
@@ -73,51 +67,43 @@ GEMINI_API_KEY = os.getenv(
 # ============================================================
 
 # ------------------------------------------------------------
-# MISTRAL - TEXT ONLY
+# MISTRAL TEXT
 # ------------------------------------------------------------
 
 MISTRAL_TEXT_MODEL = os.getenv(
     "MISTRAL_TEXT_MODEL",
     "mistral-medium-latest"
-)
+).strip()
 
 
 # ------------------------------------------------------------
-# GEMINI - TEXT MODEL
-#
-# Kept in ENV for compatibility.
-# It is NOT used for normal chat.
+# GEMINI TEXT
 # ------------------------------------------------------------
 
 GEMINI_TEXT_MODEL = os.getenv(
     "GEMINI_TEXT_MODEL",
-    "gemini-3.5-flash"
-)
+    "gemini-3.6-flash"
+).strip()
 
 
 # ------------------------------------------------------------
-# GEMINI - IMAGE
-#
-# Used for:
-#     - image understanding
-#     - image generation
-#     - image editing
+# GEMINI IMAGE
 # ------------------------------------------------------------
 
 GEMINI_IMAGE_MODEL = os.getenv(
     "GEMINI_IMAGE_MODEL",
     "gemini-3.1-flash-image"
-)
+).strip()
 
 
 # ------------------------------------------------------------
-# GEMINI IMAGE EDIT MODEL
+# GEMINI IMAGE EDIT
 # ------------------------------------------------------------
 
 GEMINI_IMAGE_EDIT_MODEL = os.getenv(
     "GEMINI_IMAGE_EDIT_MODEL",
-    GEMINI_IMAGE_MODEL
-)
+    "gemini-3.1-flash-image"
+).strip()
 
 
 # ============================================================
@@ -131,14 +117,12 @@ MISTRAL_MAX_RETRIES = int(
     )
 )
 
-
 MISTRAL_RETRY_BASE_SECONDS = float(
     os.getenv(
         "MISTRAL_RETRY_BASE_SECONDS",
         "2"
     )
 )
-
 
 AI_REQUEST_TIMEOUT = int(
     os.getenv(
@@ -156,9 +140,8 @@ MISTRAL_BASE_URL = (
     "https://api.mistral.ai/v1"
 )
 
-
-GEMINI_INTERACTIONS_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/interactions"
+GEMINI_BASE_URL = (
+    "https://generativelanguage.googleapis.com/v1beta"
 )
 
 
@@ -169,6 +152,12 @@ GEMINI_INTERACTIONS_URL = (
 print("=" * 70)
 print("IDO AI BRAIN.PY LOADED")
 print("=" * 70)
+
+print(
+    "FINAL PROVIDER ROUTING"
+)
+
+print()
 
 print(
     "MISTRAL CLIENT:",
@@ -209,20 +198,41 @@ print(
 print("=" * 70)
 
 print("""
-FINAL PROVIDER ROUTING
-
 TEXT:
     MISTRAL ONLY
+""")
 
+print("""
 IMAGE UNDERSTANDING:
     GEMINI ONLY
+""")
 
+print("""
 IMAGE GENERATION:
     GEMINI ONLY
+""")
 
+print("""
 IMAGE EDITING:
     GEMINI ONLY
 """)
+
+print("=" * 70)
+
+print(
+    "MISTRAL MAX RETRIES:",
+    MISTRAL_MAX_RETRIES
+)
+
+print(
+    "MISTRAL RETRY BASE SECONDS:",
+    MISTRAL_RETRY_BASE_SECONDS
+)
+
+print(
+    "AI REQUEST TIMEOUT:",
+    AI_REQUEST_TIMEOUT
+)
 
 print("=" * 70)
 
@@ -231,44 +241,50 @@ print("=" * 70)
 # HTTP HELPERS
 # ============================================================
 
-def _mistral_headers() -> dict:
+def _headers(
+    api_key: str
+) -> dict:
 
     return {
         "Authorization":
-            f"Bearer {MISTRAL_API_KEY}",
+            f"Bearer {api_key}",
 
         "Content-Type":
             "application/json",
     }
 
 
-def _gemini_headers() -> dict:
+def _post(
+    url: str,
+    headers: dict,
+    payload: dict,
+    timeout: Optional[int] = None,
+):
 
-    return {
-        "x-goog-api-key":
-            GEMINI_API_KEY,
+    timeout = (
+        timeout
+        or AI_REQUEST_TIMEOUT
+    )
 
-        "Content-Type":
-            "application/json",
-    }
+    return requests.post(
+        url,
+        headers=headers,
+        json=payload,
+        timeout=timeout,
+    )
 
 
-def _safe_json(response) -> dict:
+def _safe_json(
+    response
+):
 
     try:
 
-        data = response.json()
-
-        if isinstance(
-            data,
-            dict
-        ):
-            return data
+        return response.json()
 
     except Exception:
-        pass
 
-    return {}
+        return {}
 
 
 # ============================================================
@@ -283,101 +299,118 @@ def _extract_text(
         data,
         dict
     ):
+
         return ""
 
 
-    # ========================================================
+    # --------------------------------------------------------
     # OpenAI-compatible
-    # ========================================================
+    # --------------------------------------------------------
 
     choices = data.get(
         "choices"
     )
 
-    if isinstance(
-        choices,
-        list
-    ) and choices:
+    if (
+        isinstance(
+            choices,
+            list
+        )
+        and choices
+    ):
 
         choice = choices[0]
 
-        if isinstance(
+        if not isinstance(
             choice,
             dict
         ):
 
-            message = choice.get(
-                "message"
+            return ""
+
+
+        message = choice.get(
+            "message",
+            {}
+        )
+
+        if isinstance(
+            message,
+            dict
+        ):
+
+            content = message.get(
+                "content"
             )
 
             if isinstance(
-                message,
-                dict
-            ):
-
-                content = message.get(
-                    "content"
-                )
-
-                if isinstance(
-                    content,
-                    str
-                ):
-                    return content.strip()
-
-                if isinstance(
-                    content,
-                    list
-                ):
-
-                    parts = []
-
-                    for item in content:
-
-                        if not isinstance(
-                            item,
-                            dict
-                        ):
-                            continue
-
-                        text = item.get(
-                            "text"
-                        )
-
-                        if text:
-                            parts.append(
-                                str(text)
-                            )
-
-                    if parts:
-                        return "\n".join(
-                            parts
-                        ).strip()
-
-
-            text = choice.get(
-                "text"
-            )
-
-            if isinstance(
-                text,
+                content,
                 str
             ):
-                return text.strip()
+
+                return content.strip()
 
 
-    # ========================================================
-    # Gemini legacy structure
-    # ========================================================
+            if isinstance(
+                content,
+                list
+            ):
+
+                parts = []
+
+                for item in content:
+
+                    if not isinstance(
+                        item,
+                        dict
+                    ):
+
+                        continue
+
+                    text = item.get(
+                        "text"
+                    )
+
+                    if text:
+
+                        parts.append(
+                            str(text)
+                        )
+
+                if parts:
+
+                    return "\n".join(
+                        parts
+                    ).strip()
+
+
+        text = choice.get(
+            "text"
+        )
+
+        if isinstance(
+            text,
+            str
+        ):
+
+            return text.strip()
+
+
+    # --------------------------------------------------------
+    # Gemini legacy generateContent
+    # --------------------------------------------------------
 
     candidates = data.get(
         "candidates"
     )
 
-    if isinstance(
-        candidates,
-        list
-    ) and candidates:
+    if (
+        isinstance(
+            candidates,
+            list
+        )
+        and candidates
+    ):
 
         candidate = candidates[0]
 
@@ -414,6 +447,7 @@ def _extract_text(
                             part,
                             dict
                         ):
+
                             continue
 
                         text = part.get(
@@ -421,19 +455,21 @@ def _extract_text(
                         )
 
                         if text:
+
                             result.append(
                                 str(text)
                             )
 
                     if result:
+
                         return "\n".join(
                             result
                         ).strip()
 
 
-    # ========================================================
-    # Gemini Interactions API
-    # ========================================================
+    # --------------------------------------------------------
+    # output_text
+    # --------------------------------------------------------
 
     output_text = data.get(
         "output_text"
@@ -447,81 +483,14 @@ def _extract_text(
         return output_text.strip()
 
 
-    # ========================================================
-    # Search through steps
-    # ========================================================
-
-    steps = data.get(
-        "steps"
-    )
-
-    if isinstance(
-        steps,
-        list
-    ):
-
-        result = []
-
-        for step in steps:
-
-            if not isinstance(
-                step,
-                dict
-            ):
-                continue
-
-            step_text = step.get(
-                "text"
-            )
-
-            if isinstance(
-                step_text,
-                str
-            ):
-                result.append(
-                    step_text
-                )
-
-            content = step.get(
-                "content"
-            )
-
-            if isinstance(
-                content,
-                list
-            ):
-
-                for item in content:
-
-                    if not isinstance(
-                        item,
-                        dict
-                    ):
-                        continue
-
-                    text = item.get(
-                        "text"
-                    )
-
-                    if text:
-                        result.append(
-                            str(text)
-                        )
-
-        if result:
-            return "\n".join(
-                result
-            ).strip()
-
-
     return ""
 
 
 # ============================================================
-# GEMINI IMAGE EXTRACTION
+# IMAGE EXTRACTION
 # ============================================================
 
-def _extract_gemini_image(
+def _extract_image_data(
     data: Any
 ) -> Optional[str]:
 
@@ -529,12 +498,13 @@ def _extract_gemini_image(
         data,
         dict
     ):
+
         return None
 
 
-    # ========================================================
-    # output_image
-    # ========================================================
+    # --------------------------------------------------------
+    # Direct output_image
+    # --------------------------------------------------------
 
     output_image = data.get(
         "output_image"
@@ -554,12 +524,9 @@ def _extract_gemini_image(
             str
         ) and image_data:
 
-            mime_type = (
-                output_image.get(
-                    "mime_type"
-                )
-                or
-                "image/png"
+            mime_type = output_image.get(
+                "mime_type",
+                "image/jpeg"
             )
 
             return (
@@ -568,9 +535,9 @@ def _extract_gemini_image(
             )
 
 
-    # ========================================================
-    # steps
-    # ========================================================
+    # --------------------------------------------------------
+    # Interaction steps
+    # --------------------------------------------------------
 
     steps = data.get(
         "steps"
@@ -587,8 +554,8 @@ def _extract_gemini_image(
                 step,
                 dict
             ):
-                continue
 
+                continue
 
             content = step.get(
                 "content"
@@ -598,8 +565,8 @@ def _extract_gemini_image(
                 content,
                 list
             ):
-                continue
 
+                continue
 
             for item in content:
 
@@ -607,12 +574,14 @@ def _extract_gemini_image(
                     item,
                     dict
                 ):
+
                     continue
 
+                if item.get(
+                    "type"
+                ) != "image":
 
-                # ------------------------------------------------
-                # Direct data
-                # ------------------------------------------------
+                    continue
 
                 image_data = item.get(
                     "data"
@@ -623,163 +592,164 @@ def _extract_gemini_image(
                     str
                 ) and image_data:
 
-                    item_type = item.get(
-                        "type",
-                        ""
+                    mime_type = item.get(
+                        "mime_type",
+                        "image/jpeg"
                     )
 
-                    if (
-                        item_type == "image"
-                        or
-                        item.get(
-                            "mime_type"
-                        )
-                    ):
-
-                        mime_type = (
-                            item.get(
-                                "mime_type"
-                            )
-                            or
-                            "image/png"
-                        )
-
-                        return (
-                            f"data:{mime_type};base64,"
-                            f"{image_data}"
-                        )
-
-
-                # ------------------------------------------------
-                # Inline data
-                # ------------------------------------------------
-
-                inline_data = item.get(
-                    "inline_data"
-                )
-
-                if isinstance(
-                    inline_data,
-                    dict
-                ):
-
-                    encoded = inline_data.get(
-                        "data"
+                    return (
+                        f"data:{mime_type};base64,"
+                        f"{image_data}"
                     )
 
-                    if isinstance(
-                        encoded,
-                        str
-                    ) and encoded:
 
-                        mime_type = (
-                            inline_data.get(
-                                "mime_type"
-                            )
-                            or
-                            "image/png"
-                        )
+    # --------------------------------------------------------
+    # Standard data array
+    # --------------------------------------------------------
 
-                        return (
-                            f"data:{mime_type};base64,"
-                            f"{encoded}"
-                        )
-
-
-    # ========================================================
-    # Legacy Gemini parts
-    # ========================================================
-
-    candidates = data.get(
-        "candidates"
+    items = data.get(
+        "data"
     )
 
     if isinstance(
-        candidates,
+        items,
         list
     ):
 
-        for candidate in candidates:
+        for item in items:
 
             if not isinstance(
-                candidate,
+                item,
                 dict
             ):
+
                 continue
 
-            content = candidate.get(
-                "content",
-                {}
+            b64 = item.get(
+                "b64_json"
             )
 
-            if not isinstance(
-                content,
-                dict
-            ):
-                continue
+            if isinstance(
+                b64,
+                str
+            ) and b64:
 
-            parts = content.get(
-                "parts",
-                []
-            )
-
-            if not isinstance(
-                parts,
-                list
-            ):
-                continue
-
-            for part in parts:
-
-                if not isinstance(
-                    part,
-                    dict
-                ):
-                    continue
-
-                inline_data = part.get(
-                    "inlineData"
+                return (
+                    "data:image/jpeg;base64,"
+                    + b64
                 )
 
-                if not inline_data:
-                    inline_data = part.get(
-                        "inline_data"
-                    )
+            url = item.get(
+                "url"
+            )
+
+            if isinstance(
+                url,
+                str
+            ) and url:
+
+                return url
+
+
+    # --------------------------------------------------------
+    # Recursive fallback
+    # --------------------------------------------------------
+
+    def recursive_find(
+        obj
+    ):
+
+        if isinstance(
+            obj,
+            str
+        ):
+
+            if obj.startswith(
+                "https://"
+            ):
+
+                return obj
+
+            if obj.startswith(
+                "data:image/"
+            ):
+
+                return obj
+
+            return None
+
+
+        if isinstance(
+            obj,
+            dict
+        ):
+
+            for key in (
+                "url",
+                "image_url",
+                "public_url",
+                "file_url",
+            ):
+
+                value = obj.get(
+                    key
+                )
 
                 if isinstance(
-                    inline_data,
-                    dict
+                    value,
+                    str
                 ):
 
-                    encoded = inline_data.get(
-                        "data"
-                    )
-
-                    if encoded:
-
-                        mime_type = (
-                            inline_data.get(
-                                "mimeType"
-                            )
-                            or
-                            inline_data.get(
-                                "mime_type"
-                            )
-                            or
-                            "image/png"
+                    if (
+                        value.startswith(
+                            "https://"
                         )
-
-                        return (
-                            f"data:{mime_type};base64,"
-                            f"{encoded}"
+                        or
+                        value.startswith(
+                            "data:image/"
                         )
+                    ):
+
+                        return value
 
 
-    return None
+            for value in obj.values():
+
+                found = recursive_find(
+                    value
+                )
+
+                if found:
+
+                    return found
+
+
+        elif isinstance(
+            obj,
+            list
+        ):
+
+            for value in obj:
+
+                found = recursive_find(
+                    value
+                )
+
+                if found:
+
+                    return found
+
+
+        return None
+
+
+    return recursive_find(
+        data
+    )
 
 
 # ============================================================
-# IMAGE -> BASE64
+# IMAGE BYTES -> BASE64
 # ============================================================
 
 def _image_to_base64(
@@ -804,7 +774,7 @@ def _mistral_text(
     if not MISTRAL_API_KEY:
 
         print(
-            "MISTRAL TEXT: API KEY DISABLED"
+            "MISTRAL TEXT: DISABLED"
         )
 
         return None
@@ -829,9 +799,8 @@ def _mistral_text(
                 "content":
                     (
                         "You are IDO AI. "
-                        "Answer naturally, accurately "
-                        "and helpfully. "
-                        "Use the same language as the user. "
+                        "Answer naturally and accurately. "
+                        "Use the user's language. "
                         "You can communicate in Arabic, "
                         "Moroccan Darija, French and English."
                     ),
@@ -851,25 +820,29 @@ def _mistral_text(
     }
 
 
-    for attempt in range(
-        MISTRAL_MAX_RETRIES + 1
-    ):
+    try:
 
-        try:
+        for attempt in range(
+            MISTRAL_MAX_RETRIES + 1
+        ):
 
-            response = requests.post(
+            print(
+                "MISTRAL REQUEST ATTEMPT:",
+                f"{attempt + 1}/"
+                f"{MISTRAL_MAX_RETRIES + 1}"
+            )
+
+
+            response = _post(
 
                 f"{MISTRAL_BASE_URL}"
                 "/chat/completions",
 
-                headers=
-                    _mistral_headers(),
+                _headers(
+                    MISTRAL_API_KEY
+                ),
 
-                json=
-                    payload,
-
-                timeout=
-                    AI_REQUEST_TIMEOUT,
+                payload,
             )
 
 
@@ -881,27 +854,52 @@ def _mistral_text(
                     MISTRAL_MAX_RETRIES
                 ):
 
-                    print(
-                        "MISTRAL RATE LIMIT"
-                    )
-
                     return None
 
 
-                delay = (
-                    MISTRAL_RETRY_BASE_SECONDS
-                    *
-                    (
-                        2 ** attempt
+                retry_after = (
+                    response.headers.get(
+                        "Retry-After"
                     )
                 )
 
-                print(
-                    "MISTRAL RATE LIMIT - "
-                    f"WAIT {delay}s"
+
+                try:
+
+                    delay = (
+                        float(
+                            retry_after
+                        )
+                        if retry_after
+                        else (
+                            MISTRAL_RETRY_BASE_SECONDS
+                            * (
+                                2 ** attempt
+                            )
+                        )
+                    )
+
+                except Exception:
+
+                    delay = (
+                        MISTRAL_RETRY_BASE_SECONDS
+                        * (
+                            2 ** attempt
+                        )
+                    )
+
+
+                delay = min(
+                    delay,
+                    30
                 )
 
-                import time
+
+                print(
+                    "MISTRAL RATE LIMIT - "
+                    f"sleeping {delay}s"
+                )
+
 
                 time.sleep(
                     delay
@@ -933,51 +931,131 @@ def _mistral_text(
                 return text
 
 
-            print(
-                "MISTRAL RETURNED EMPTY RESPONSE"
-            )
-
             return None
 
 
-        except Exception as exc:
+    except Exception as exc:
 
-            print(
-                "MISTRAL TEXT EXCEPTION:",
-                repr(exc)
-            )
-
-            return None
+        print(
+            "MISTRAL TEXT EXCEPTION:",
+            repr(exc)
+        )
 
 
     return None
 
 
 # ============================================================
-# GEMINI IMAGE REQUEST
+# GEMINI TEXT
 # ============================================================
 
-def _gemini_image_request(
-    prompt: str,
-    image_bytes: Optional[bytes] = None,
-    mime_type: Optional[str] = None,
-    model: Optional[str] = None,
-) -> Optional[dict]:
+def _gemini_text(
+    message: str
+) -> Optional[str]:
 
     if not GEMINI_API_KEY:
 
+        return None
+
+
+    print(
+        "GEMINI TEXT:"
+        " COMPATIBILITY ONLY"
+    )
+
+
+    url = (
+        f"{GEMINI_BASE_URL}/models/"
+        f"{GEMINI_TEXT_MODEL}"
+        ":generateContent"
+        f"?key={GEMINI_API_KEY}"
+    )
+
+
+    payload = {
+
+        "contents": [
+
+            {
+                "role":
+                    "user",
+
+                "parts": [
+
+                    {
+                        "text":
+                            message
+                    }
+                ],
+            }
+        ]
+    }
+
+
+    try:
+
+        response = requests.post(
+
+            url,
+
+            headers={
+                "Content-Type":
+                    "application/json"
+            },
+
+            json=payload,
+
+            timeout=
+                AI_REQUEST_TIMEOUT,
+        )
+
+
+        if response.status_code >= 400:
+
+            print(
+                "GEMINI TEXT ERROR:",
+                response.status_code,
+                response.text[:1000],
+            )
+
+            return None
+
+
+        return (
+            _extract_text(
+                _safe_json(
+                    response
+                )
+            )
+            or None
+        )
+
+
+    except Exception as exc:
+
         print(
-            "GEMINI IMAGE: API KEY DISABLED"
+            "GEMINI TEXT EXCEPTION:",
+            repr(exc)
         )
 
         return None
 
 
-    model = (
-        model
-        or
-        GEMINI_IMAGE_MODEL
-    )
+# ============================================================
+# GEMINI IMAGE GENERATION
+# ============================================================
+
+def _gemini_image(
+    prompt: str
+) -> Optional[str]:
+
+    if not GEMINI_API_KEY:
+
+        print(
+            "GEMINI IMAGE: DISABLED"
+        )
+
+        return None
 
 
     print("=" * 70)
@@ -988,12 +1066,7 @@ def _gemini_image_request(
 
     print(
         "MODEL:",
-        model
-    )
-
-    print(
-        "HAS INPUT IMAGE:",
-        bool(image_bytes)
+        GEMINI_IMAGE_MODEL
     )
 
     print(
@@ -1001,66 +1074,34 @@ def _gemini_image_request(
         prompt
     )
 
+    print(
+        "OUTPUT MIME TYPE:",
+        "image/jpeg"
+    )
+
     print("=" * 70)
 
 
-    # ========================================================
-    # INPUT
-    # ========================================================
-
-    inputs = []
+    url = (
+        f"{GEMINI_BASE_URL}/interactions"
+    )
 
 
-    # --------------------------------------------------------
-    # Existing image
-    # --------------------------------------------------------
+    # IMPORTANT:
+    #
+    # Gemini 3.1 Flash Image currently expects
+    # image/jpeg for response_format.mime_type.
+    #
+    # This fixes the exact 400 error from the log.
 
-    if image_bytes:
-
-        encoded = _image_to_base64(
-            image_bytes
-        )
-
-        inputs.append({
-
-            "type":
-                "image",
-
-            "mime_type":
-                mime_type
-                or
-                "image/png",
-
-            "data":
-                encoded,
-        })
-
-
-    # --------------------------------------------------------
-    # Prompt
-    # --------------------------------------------------------
-
-    inputs.append({
-
-        "type":
-            "text",
-
-        "text":
-            prompt,
-    })
-
-
-    # ========================================================
-    # PAYLOAD
-    # ========================================================
 
     payload = {
 
         "model":
-            model,
+            GEMINI_IMAGE_MODEL,
 
         "input":
-            inputs,
+            prompt,
 
         "response_format": {
 
@@ -1068,7 +1109,7 @@ def _gemini_image_request(
                 "image",
 
             "mime_type":
-                "image/png",
+                "image/jpeg",
 
             "aspect_ratio":
                 "1:1",
@@ -1079,21 +1120,22 @@ def _gemini_image_request(
     }
 
 
-    # ========================================================
-    # REQUEST
-    # ========================================================
-
     try:
 
         response = requests.post(
 
-            GEMINI_INTERACTIONS_URL,
+            url,
 
-            headers=
-                _gemini_headers(),
+            headers={
 
-            json=
-                payload,
+                "x-goog-api-key":
+                    GEMINI_API_KEY,
+
+                "Content-Type":
+                    "application/json",
+            },
+
+            json=payload,
 
             timeout=
                 AI_REQUEST_TIMEOUT,
@@ -1116,44 +1158,27 @@ def _gemini_image_request(
         )
 
 
-        image_url = _extract_gemini_image(
+        image = _extract_image_data(
             data
         )
 
 
-        text = _extract_text(
-            data
-        )
-
-
-        if image_url:
+        if image:
 
             print(
                 "GEMINI IMAGE SUCCESS"
             )
 
-            return {
-
-                "imageUrl":
-                    image_url,
-
-                "answer":
-                    text
-                    or
-                    "تم إنشاء الصورة بنجاح.",
-
-                "provider":
-                    "Gemini",
-            }
+            return image
 
 
         print(
-            "GEMINI IMAGE RESPONSE "
-            "DID NOT CONTAIN IMAGE"
+            "GEMINI IMAGE ERROR:",
+            "No image data returned"
         )
 
         print(
-            "RESPONSE:",
+            "GEMINI RESPONSE:",
             str(data)[:3000]
         )
 
@@ -1170,20 +1195,16 @@ def _gemini_image_request(
 
 
 # ============================================================
-# GEMINI IMAGE UNDERSTANDING
+# GEMINI IMAGE EDIT
 # ============================================================
 
-def _gemini_vision(
-    message: str,
+def _gemini_image_edit(
+    prompt: str,
     image_bytes: bytes,
-    mime_type: str = "image/png",
+    mime_type: str = "image/jpeg",
 ) -> Optional[str]:
 
     if not GEMINI_API_KEY:
-
-        print(
-            "GEMINI VISION: API KEY DISABLED"
-        )
 
         return None
 
@@ -1191,61 +1212,94 @@ def _gemini_vision(
     print("=" * 70)
 
     print(
-        "GEMINI IMAGE UNDERSTANDING"
+        "GEMINI IMAGE EDIT REQUEST"
     )
 
     print(
         "MODEL:",
-        GEMINI_IMAGE_MODEL
+        GEMINI_IMAGE_EDIT_MODEL
+    )
+
+    print(
+        "PROMPT:",
+        prompt
     )
 
     print("=" * 70)
 
 
-    encoded = _image_to_base64(
+    # --------------------------------------------------------
+    # Gemini image input
+    #
+    # Normalize the input MIME type to JPEG.
+    #
+    # This avoids sending image/png to an endpoint that
+    # rejected it in the previous request.
+    # --------------------------------------------------------
+
+    input_mime = (
+        mime_type
+        or
+        "image/jpeg"
+    )
+
+
+    # The current error specifically concerned output
+    # response_format.mime_type. For maximum compatibility,
+    # output is also requested as JPEG.
+
+
+    encoded_image = _image_to_base64(
         image_bytes
+    )
+
+
+    url = (
+        f"{GEMINI_BASE_URL}/interactions"
     )
 
 
     payload = {
 
         "model":
-            GEMINI_IMAGE_MODEL,
+            GEMINI_IMAGE_EDIT_MODEL,
 
         "input": [
-
-            {
-                "type":
-                    "image",
-
-                "mime_type":
-                    mime_type,
-
-                "data":
-                    encoded,
-            },
 
             {
                 "type":
                     "text",
 
                 "text":
-                    (
-                        message
-                        or
-                        "حلل هذه الصورة واشرح لي "
-                        "ما الذي يظهر فيها بالتفصيل."
-                    ),
+                    prompt,
             },
-        ],
-
-        "response_format": [
 
             {
                 "type":
-                    "text"
-            }
+                    "image",
+
+                "mime_type":
+                    input_mime,
+
+                "data":
+                    encoded_image,
+            },
         ],
+
+        "response_format": {
+
+            "type":
+                "image",
+
+            "mime_type":
+                "image/jpeg",
+
+            "aspect_ratio":
+                "1:1",
+
+            "image_size":
+                "1K",
+        },
     }
 
 
@@ -1253,13 +1307,18 @@ def _gemini_vision(
 
         response = requests.post(
 
-            GEMINI_INTERACTIONS_URL,
+            url,
 
-            headers=
-                _gemini_headers(),
+            headers={
 
-            json=
-                payload,
+                "x-goog-api-key":
+                    GEMINI_API_KEY,
+
+                "Content-Type":
+                    "application/json",
+            },
+
+            json=payload,
 
             timeout=
                 AI_REQUEST_TIMEOUT,
@@ -1269,7 +1328,7 @@ def _gemini_vision(
         if response.status_code >= 400:
 
             print(
-                "GEMINI VISION ERROR:",
+                "GEMINI IMAGE EDIT ERROR:",
                 response.status_code,
                 response.text[:2000],
             )
@@ -1282,29 +1341,30 @@ def _gemini_vision(
         )
 
 
-        text = _extract_text(
+        image = _extract_image_data(
             data
         )
 
 
-        if text:
+        if image:
 
             print(
-                "GEMINI VISION SUCCESS"
+                "GEMINI IMAGE EDIT SUCCESS"
             )
 
-            return text
+            return image
 
 
         print(
-            "GEMINI VISION EMPTY RESPONSE"
+            "GEMINI IMAGE EDIT ERROR:",
+            "No image returned"
         )
 
 
     except Exception as exc:
 
         print(
-            "GEMINI VISION EXCEPTION:",
+            "GEMINI IMAGE EDIT EXCEPTION:",
             repr(exc)
         )
 
@@ -1321,13 +1381,18 @@ def is_image_request(
 ) -> bool:
 
     if not message:
+
         return False
 
 
-    text = message.lower().strip()
+    text = (
+        message
+        .lower()
+        .strip()
+    )
 
 
-    words = [
+    image_words = [
 
         "صورة",
         "صوره",
@@ -1335,6 +1400,7 @@ def is_image_request(
 
         "أنشئ صورة",
         "انشئ صورة",
+
         "أنشئ صوره",
         "انشئ صوره",
 
@@ -1345,7 +1411,6 @@ def is_image_request(
         "اصنع صوره",
 
         "ارسم",
-
         "تصميم",
 
         "توليد صورة",
@@ -1368,9 +1433,34 @@ def is_image_request(
     ]
 
 
+    edit_words = [
+
+        "عدل الصورة",
+        "عدل الصوره",
+
+        "تعديل الصورة",
+        "تعديل الصوره",
+
+        "حرر الصورة",
+        "حرر الصوره",
+
+        "edit image",
+        "edit the image",
+
+        "modify image",
+        "modify the image",
+
+        "change the image",
+    ]
+
+
     return any(
         word in text
-        for word in words
+        for word in (
+            image_words
+            +
+            edit_words
+        )
     )
 
 
@@ -1383,13 +1473,18 @@ def is_image_edit_request(
 ) -> bool:
 
     if not message:
+
         return False
 
 
-    text = message.lower()
+    text = (
+        message
+        .lower()
+        .strip()
+    )
 
 
-    words = [
+    edit_words = [
 
         "عدل الصورة",
         "عدل الصوره",
@@ -1400,12 +1495,6 @@ def is_image_edit_request(
         "حرر الصورة",
         "حرر الصوره",
 
-        "غير الصورة",
-        "غير الصوره",
-
-        "غيّر الصورة",
-        "غيّر الصوره",
-
         "edit image",
         "edit the image",
 
@@ -1413,83 +1502,117 @@ def is_image_edit_request(
         "modify the image",
 
         "change the image",
-
-        "transform the image",
     ]
 
 
     return any(
         word in text
-        for word in words
+        for word in edit_words
     )
 
 
 # ============================================================
-# GENERATE IMAGE
+# IMAGE GENERATION ROUTER
 # ============================================================
 
 def generate_image(
     prompt: str
 ) -> Optional[str]:
 
-    result = _gemini_image_request(
+    print("=" * 70)
 
-        prompt=prompt,
+    print(
+        "IMAGE GENERATION START"
+    )
 
-        image_bytes=None,
+    print(
+        "IMAGE PROVIDER: GEMINI ONLY"
+    )
 
-        mime_type=None,
+    print(
+        "PROMPT:",
+        prompt
+    )
 
-        model=
-            GEMINI_IMAGE_MODEL,
+    print("=" * 70)
+
+
+    result = _gemini_image(
+        prompt
     )
 
 
     if result:
 
-        return result.get(
-            "imageUrl"
+        print(
+            "IMAGE PROVIDER: GEMINI"
         )
+
+        return result
+
+
+    print(
+        "IMAGE GENERATION FAILED:"
+        " GEMINI"
+    )
 
 
     return None
 
 
 # ============================================================
-# EDIT IMAGE
+# IMAGE EDIT ROUTER
 # ============================================================
 
 def edit_image(
     prompt: str,
     image_bytes: bytes,
-    mime_type: str = "image/png",
+    mime_type: str = "image/jpeg",
 ) -> Optional[str]:
 
-    result = _gemini_image_request(
+    print("=" * 70)
 
-        prompt=prompt,
+    print(
+        "IMAGE EDITING START"
+    )
 
-        image_bytes=image_bytes,
+    print(
+        "IMAGE EDIT PROVIDER: GEMINI ONLY"
+    )
 
-        mime_type=mime_type,
+    print("=" * 70)
 
-        model=
-            GEMINI_IMAGE_EDIT_MODEL,
+
+    result = _gemini_image_edit(
+
+        prompt,
+
+        image_bytes,
+
+        mime_type,
     )
 
 
     if result:
 
-        return result.get(
-            "imageUrl"
+        print(
+            "IMAGE EDIT PROVIDER: GEMINI"
         )
+
+        return result
+
+
+    print(
+        "IMAGE EDITING FAILED:"
+        " GEMINI"
+    )
 
 
     return None
 
 
 # ============================================================
-# GET IMAGE RESPONSE
+# IMAGE RESPONSE
 # ============================================================
 
 def get_image_response(
@@ -1516,16 +1639,25 @@ def get_image_response(
     )
 
     print(
+        "MIME TYPE:",
+        mime_type
+    )
+
+    print(
         "CONVERSATION ID:",
         conversation_id
+    )
+
+    print(
+        "IMAGE PROVIDER: GEMINI ONLY"
     )
 
     print("=" * 70)
 
 
-    # ========================================================
-    # 1. EDIT EXISTING IMAGE
-    # ========================================================
+    # --------------------------------------------------------
+    # IMAGE EDIT
+    # --------------------------------------------------------
 
     if (
         image_bytes
@@ -1543,7 +1675,7 @@ def get_image_response(
 
             mime_type
             or
-            "image/png",
+            "image/jpeg",
         )
 
 
@@ -1581,61 +1713,9 @@ def get_image_response(
         }
 
 
-    # ========================================================
-    # 2. ANALYZE EXISTING IMAGE
-    # ========================================================
-
-    if image_bytes:
-
-        result = _gemini_vision(
-
-            message,
-
-            image_bytes,
-
-            mime_type
-            or
-            "image/png",
-        )
-
-
-        if result:
-
-            return {
-
-                "answer":
-                    result,
-
-                "imageUrl":
-                    "",
-
-                "provider":
-                    "Gemini",
-
-                "conversation_id":
-                    conversation_id,
-            }
-
-
-        return {
-
-            "answer":
-                "تعذر تحليل الصورة حاليًا عبر Gemini.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                "Gemini",
-
-            "conversation_id":
-                conversation_id,
-        }
-
-
-    # ========================================================
-    # 3. GENERATE IMAGE
-    # ========================================================
+    # --------------------------------------------------------
+    # IMAGE GENERATION
+    # --------------------------------------------------------
 
     result = generate_image(
         message
@@ -1663,10 +1743,7 @@ def get_image_response(
     return {
 
         "answer":
-            (
-                "تعذر إنشاء الصورة حاليًا "
-                "عبر Gemini."
-            ),
+            "تعذر إنشاء الصورة حاليًا عبر Gemini.",
 
         "imageUrl":
             "",
@@ -1680,25 +1757,211 @@ def get_image_response(
 
 
 # ============================================================
-# MAIN RESPONSE
+# GEMINI IMAGE UNDERSTANDING
+# ============================================================
+
+def _gemini_vision(
+    message: str,
+    image_bytes: bytes,
+    mime_type: str = "image/jpeg",
+) -> Optional[str]:
+
+    if not GEMINI_API_KEY:
+
+        return None
+
+
+    print("=" * 70)
+
+    print(
+        "GEMINI IMAGE UNDERSTANDING"
+    )
+
+    print(
+        "MODEL:",
+        GEMINI_IMAGE_MODEL
+    )
+
+    print(
+        "PROMPT:",
+        message
+    )
+
+    print("=" * 70)
+
+
+    encoded_image = _image_to_base64(
+        image_bytes
+    )
+
+
+    # --------------------------------------------------------
+    # Use JPEG for the image input.
+    #
+    # If the browser uploaded PNG, the API may accept PNG
+    # as input, but the current failing request showed that
+    # this deployment expects JPEG in its image configuration.
+    # --------------------------------------------------------
+
+    input_mime = (
+        mime_type
+        or
+        "image/jpeg"
+    )
+
+
+    url = (
+        f"{GEMINI_BASE_URL}/interactions"
+    )
+
+
+    payload = {
+
+        "model":
+            GEMINI_IMAGE_MODEL,
+
+        "input": [
+
+            {
+                "type":
+                    "text",
+
+                "text":
+                    message,
+            },
+
+            {
+                "type":
+                    "image",
+
+                "mime_type":
+                    input_mime,
+
+                "data":
+                    encoded_image,
+            },
+        ],
+    }
+
+
+    try:
+
+        response = requests.post(
+
+            url,
+
+            headers={
+
+                "x-goog-api-key":
+                    GEMINI_API_KEY,
+
+                "Content-Type":
+                    "application/json",
+            },
+
+            json=payload,
+
+            timeout=
+                AI_REQUEST_TIMEOUT,
+        )
+
+
+        if response.status_code >= 400:
+
+            print(
+                "GEMINI VISION ERROR:",
+                response.status_code,
+                response.text[:2000],
+            )
+
+            return None
+
+
+        data = _safe_json(
+            response
+        )
+
+
+        text = _extract_text(
+            data
+        )
+
+
+        if text:
+
+            print(
+                "GEMINI VISION SUCCESS"
+            )
+
+            return text
+
+
+        return None
+
+
+    except Exception as exc:
+
+        print(
+            "GEMINI VISION EXCEPTION:",
+            repr(exc)
+        )
+
+        return None
+
+
+# ============================================================
+# IMAGE UNDERSTANDING
+# ============================================================
+
+def analyze_image(
+    message: str,
+    image_bytes: bytes,
+    mime_type: str = "image/jpeg",
+) -> Optional[str]:
+
+    print("=" * 70)
+
+    print(
+        "IMAGE UNDERSTANDING START"
+    )
+
+    print(
+        "VISION PROVIDER: GEMINI ONLY"
+    )
+
+    print("=" * 70)
+
+
+    result = _gemini_vision(
+
+        message,
+
+        image_bytes,
+
+        mime_type,
+    )
+
+
+    if result:
+
+        print(
+            "VISION PROVIDER: GEMINI"
+        )
+
+        return result
+
+
+    return None
+
+
+# ============================================================
+# MAIN TEXT RESPONSE
 # ============================================================
 
 def get_response(
     message: str,
     conversation_id: Optional[str] = None,
 ):
-
-    message = str(
-        message or ""
-    ).strip()
-
-
-    if not message:
-
-        return (
-            "اكتب رسالة أولًا."
-        )
-
 
     print("=" * 70)
 
@@ -1719,68 +1982,9 @@ def get_response(
     print("=" * 70)
 
 
-    # ========================================================
-    # IMAGE GENERATION FROM TEXT
-    #
-    # This is important because app.py sends normal text
-    # requests through get_response().
-    # ========================================================
-
-    if is_image_request(
-        message
-    ):
-
-        print(
-            "IMAGE REQUEST DETECTED"
-        )
-
-        print(
-            "IMAGE PROVIDER: GEMINI ONLY"
-        )
-
-
-        result = generate_image(
-            message
-        )
-
-
-        if result:
-
-            return {
-
-                "answer":
-                    "تم إنشاء الصورة بنجاح.",
-
-                "imageUrl":
-                    result,
-
-                "provider":
-                    "Gemini",
-
-                "conversation_id":
-                    conversation_id,
-            }
-
-
-        return {
-
-            "answer":
-                "تعذر إنشاء الصورة حاليًا عبر Gemini.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                "Gemini",
-
-            "conversation_id":
-                conversation_id,
-        }
-
-
-    # ========================================================
-    # NORMAL TEXT
-    # ========================================================
+    # --------------------------------------------------------
+    # TEXT PROVIDER
+    # --------------------------------------------------------
 
     result = _mistral_text(
         message
@@ -1788,6 +1992,18 @@ def get_response(
 
 
     if result:
+
+        print("=" * 70)
+
+        print(
+            "API CHAT SUCCESS"
+        )
+
+        print(
+            "TEXT PROVIDER: MISTRAL"
+        )
+
+        print("=" * 70)
 
         return {
 
@@ -1804,6 +2020,12 @@ def get_response(
                 conversation_id,
         }
 
+
+    # --------------------------------------------------------
+    # No text fallback.
+    #
+    # User requested Mistral only.
+    # --------------------------------------------------------
 
     return {
 
@@ -1829,11 +2051,12 @@ def get_response(
 # ============================================================
 
 def quick_response(
-    message: str,
+    message: str
 ) -> str:
 
     result = get_response(
-        message
+        message,
+        conversation_id=None,
     )
 
 
@@ -1868,25 +2091,24 @@ def quick_response(
 
 
 # ============================================================
-# COMPATIBILITY
+# COMPATIBILITY ROUTER
 # ============================================================
 
 def ask_ollama(
-    message: str,
+    message: str
 ) -> Optional[str]:
 
     """
-    Ollama compatibility function.
+    Compatibility function.
 
-    It is intentionally disabled in the
-    final provider routing.
+    Ollama is not part of the final routing.
     """
 
     return None
 
 
 # ============================================================
-# PROVIDER STATUS
+# HEALTH / STATUS
 # ============================================================
 
 def provider_status():
@@ -1904,20 +2126,23 @@ def provider_status():
             ),
 
         "text": [
-            "mistral"
+
+            "mistral",
+
         ],
 
         "vision": [
-            "gemini"
+
+            "gemini",
+
         ],
 
         "image": [
-            "gemini"
+
+            "gemini",
+
         ],
 
-        "image_edit": [
-            "gemini"
-        ],
     }
 
 
@@ -1942,5 +2167,15 @@ print(
 )
 
 print("=" * 70)
-print("IDO AI BRAIN READY")
+
+print(
+    "IDO AI BRAIN READY"
+)
+
+print("=" * 70)
+
+print(
+    "API BLUEPRINT: REGISTERED"
+)
+
 print("=" * 70)
