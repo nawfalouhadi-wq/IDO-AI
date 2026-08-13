@@ -104,16 +104,15 @@ OPENROUTER_TEXT_MODEL = os.getenv(
 
 GEMINI_TEXT_MODEL = os.getenv(
     "GEMINI_TEXT_MODEL",
-    "gemini-2.5-flash"
+    "gemini-3.5-flash"
 ).strip()
 
 
 # ============================================================
-# MISTRAL IMAGE MODELS
+# MISTRAL MODELS
 # ============================================================
 
-# Vision model:
-# Used only for understanding uploaded images.
+# Image understanding / Vision
 
 MISTRAL_VISION_MODEL = os.getenv(
     "MISTRAL_VISION_MODEL",
@@ -121,12 +120,11 @@ MISTRAL_VISION_MODEL = os.getenv(
 ).strip()
 
 
-# Image generation model:
-# Mistral's image_generation tool is attached to this model.
+# Image generation
 
 MISTRAL_IMAGE_MODEL = os.getenv(
     "MISTRAL_IMAGE_MODEL",
-    "mistral-small-latest"
+    "mistral-medium-latest"
 ).strip()
 
 
@@ -160,7 +158,7 @@ MISTRAL_FILES_URL = (
 
 
 # ============================================================
-# TIMEOUT
+# REQUEST TIMEOUT
 # ============================================================
 
 REQUEST_TIMEOUT = int(
@@ -194,6 +192,7 @@ print(
     "MISTRAL CLIENT:",
     "READY" if MISTRAL_API_KEY else "MISSING"
 )
+
 
 print("=" * 70)
 
@@ -260,11 +259,11 @@ RULES:
 7. Image generation, image editing and image understanding
    are handled by the application's Mistral image system.
 
-8. Do not claim that an image was created unless an actual
-   image result was returned by the image system.
+8. Do not claim an image was generated unless the image
+   system actually returned an image.
 
-9. Do not mention internal provider routing unless explicitly
-   asked by the user.
+9. Do not mention internal provider routing unless
+   explicitly asked.
 
 10. Be concise for simple questions.
 
@@ -289,9 +288,12 @@ GREETING_ONLY_PATTERNS = [
 ]
 
 
-def is_greeting_only(message):
+def is_greeting_only(
+    message
+):
 
     if not message:
+
         return False
 
     text = str(
@@ -320,18 +322,20 @@ IMAGE_KEYWORDS_AR = [
     "أنشئ صورة",
     "انشئ صورة",
 
-    "اصنع صورة",
-    "اعمل صورة",
-    "اعمل لي صورة",
-
     "أنشئ لي صورة",
     "انشئ لي صورة",
 
+    "اصنع صورة",
     "اصنع لي صورة",
-    "اصنع لي صوره",
+
+    "اعمل صورة",
+    "اعمل لي صورة",
 
     "ولّد صورة",
     "ولد صورة",
+
+    "ولّد لي صورة",
+    "ولد لي صورة",
 
     "توليد صورة",
     "إنشاء صورة",
@@ -350,6 +354,12 @@ IMAGE_KEYWORDS_AR = [
 
     "صورة",
     "صور",
+
+    "أنشئ رسمة",
+    "انشئ رسمة",
+
+    "اصنع رسمة",
+    "اعمل رسمة",
 
     "عدّل الصورة",
     "عدل الصورة",
@@ -377,6 +387,9 @@ IMAGE_KEYWORDS_AR = [
 
     "احذف من الصورة",
     "احذف شيء من الصورة",
+
+    "استبدل في الصورة",
+    "استبدل الصورة",
 ]
 
 
@@ -395,6 +408,16 @@ IMAGE_KEYWORDS_EN = [
     "draw image",
 
     "draw a picture",
+    "draw picture",
+
+    "generate a picture",
+    "create a picture",
+
+    "generate a photo",
+    "create a photo",
+
+    "make a picture",
+    "make a photo",
 
     "edit the image",
     "edit image",
@@ -409,16 +432,12 @@ IMAGE_KEYWORDS_EN = [
     "change the image",
     "change this image",
 
-    "image generation",
-
-    "generate a picture",
-    "create a picture",
-
-    "generate a photo",
-    "create a photo",
-
     "remove from the image",
     "add to the image",
+
+    "replace in the image",
+
+    "image generation",
 ]
 
 
@@ -427,8 +446,14 @@ IMAGE_KEYWORDS_FR = [
     "génère une image",
     "genere une image",
 
+    "générer une image",
+    "generer une image",
+
     "crée une image",
     "cree une image",
+
+    "créer une image",
+    "creer une image",
 
     "faire une image",
 
@@ -446,9 +471,12 @@ IMAGE_KEYWORDS_FR = [
 ]
 
 
-def is_image_request(message):
+def is_image_request(
+    message
+):
 
     if not message:
+
         return False
 
     text = str(
@@ -477,12 +505,15 @@ def is_image_request(message):
 
 
 # ============================================================
-# IMAGE EDIT REQUEST DETECTION
+# IMAGE EDIT DETECTION
 # ============================================================
 
-def is_image_edit_request(message):
+def is_image_edit_request(
+    message
+):
 
     if not message:
+
         return False
 
     text = str(
@@ -493,10 +524,12 @@ def is_image_edit_request(message):
 
         "عدل",
         "عدّل",
+
         "تعديل",
 
         "حرر",
         "حرّر",
+
         "تحرير",
 
         "غيّر",
@@ -508,6 +541,14 @@ def is_image_edit_request(message):
         "احذف",
 
         "استبدل",
+
+        "استبدلها",
+
+        "غيّرها",
+
+        "عدلها",
+
+        "عدّلها",
 
         "edit",
         "modify",
@@ -521,6 +562,7 @@ def is_image_edit_request(message):
         "changer",
         "supprimer",
         "ajouter",
+        "remplacer",
     ]
 
     for keyword in edit_keywords:
@@ -536,7 +578,9 @@ def is_image_edit_request(message):
 # CLEAN IMAGE PROMPT
 # ============================================================
 
-def clean_image_prompt(message):
+def clean_image_prompt(
+    message
+):
 
     text = str(
         message or ""
@@ -550,29 +594,56 @@ def clean_image_prompt(message):
 
     prefixes = [
 
+        "أنشئ لي صورة",
+        "انشئ لي صورة",
+
+        "أنشئ صورة",
+        "انشئ صورة",
+
         "أنشئ لي",
         "انشئ لي",
-
-        "اصنع لي",
-        "اعمل لي",
-
-        "ولد لي",
-        "ولّد لي",
 
         "أنشئ",
         "انشئ",
 
+        "اصنع لي صورة",
+        "اصنع لي",
+
+        "اصنع صورة",
         "اصنع",
+
+        "اعمل لي صورة",
+        "اعمل لي",
+
+        "اعمل صورة",
         "اعمل",
+
+        "ولّد لي صورة",
+        "ولد لي صورة",
+
+        "ولّد صورة",
+        "ولد صورة",
+
+        "ولّد لي",
+        "ولد لي",
 
         "ولّد",
         "ولد",
 
+        "ارسم لي صورة",
+        "ارسم صورة",
+
         "ارسم لي",
         "ارسم",
 
+        "صمم صورة",
+        "صمّم صورة",
+
         "صمم",
         "صمّم",
+
+        "توليد صورة",
+        "إنشاء صورة",
 
         "generate an image",
         "generate image",
@@ -585,6 +656,12 @@ def clean_image_prompt(message):
 
         "draw an image",
         "draw image",
+
+        "generate a picture",
+        "create a picture",
+
+        "generate a photo",
+        "create a photo",
 
         "generate",
         "create",
@@ -602,6 +679,30 @@ def clean_image_prompt(message):
 
             cleaned = cleaned[
                 len(prefix):
+            ].strip()
+
+            break
+
+    # --------------------------------------------------------
+    # Remove common greeting prefix from image prompts.
+    # --------------------------------------------------------
+
+    greeting_prefixes = [
+
+        "السلام عليكم",
+        "السلام عليكم ورحمة الله وبركاته",
+        "سلام عليكم",
+        "السلام عليكم ورحمه الله",
+    ]
+
+    for greeting in greeting_prefixes:
+
+        if cleaned.startswith(
+            greeting
+        ):
+
+            cleaned = cleaned[
+                len(greeting):
             ].strip()
 
             break
@@ -659,10 +760,12 @@ def safe_get(
 
 
 # ============================================================
-# TEXT EXTRACTION
+# CONTENT TEXT EXTRACTION
 # ============================================================
 
-def extract_content_text(content):
+def extract_content_text(
+    content
+):
 
     if isinstance(
         content,
@@ -723,10 +826,12 @@ def extract_content_text(content):
 
 
 # ============================================================
-# GENERIC OPENAI-COMPATIBLE TEXT RESPONSE
+# OPENAI-COMPATIBLE TEXT EXTRACTOR
 # ============================================================
 
-def extract_text_response(data):
+def extract_text_response(
+    data
+):
 
     if not isinstance(
         data,
@@ -756,7 +861,7 @@ def extract_text_response(data):
         return ""
 
     # --------------------------------------------------------
-    # Normal response
+    # Standard message
     # --------------------------------------------------------
 
     message = first.get(
@@ -781,11 +886,9 @@ def extract_text_response(data):
             return answer
 
     # --------------------------------------------------------
-    # Tool response
+    # Mistral tool-message response
     #
-    # Mistral may return:
-    #
-    # choice.messages = [...]
+    # choices[0].messages
     # --------------------------------------------------------
 
     messages = first.get(
@@ -835,15 +938,17 @@ def extract_text_response(data):
 # MISTRAL IMAGE REFERENCE EXTRACTION
 # ============================================================
 
-def extract_mistral_image_reference(data):
+def extract_mistral_image_reference(
+    data
+):
     """
-    Handles the documented Mistral image-generation output.
-
-    Supported forms include:
-
+    Supports:
+        direct image URLs
         [Image: https://...]
-
-    and tool_file/file_id structures.
+        image_url objects
+        tool_file
+        file_id
+        nested choices/messages/content
     """
 
     if not isinstance(
@@ -854,7 +959,9 @@ def extract_mistral_image_reference(data):
         return None
 
 
-    def walk(value):
+    def walk(
+        value
+    ):
 
         # ====================================================
         # DICTIONARY
@@ -866,7 +973,7 @@ def extract_mistral_image_reference(data):
         ):
 
             # ------------------------------------------------
-            # tool_file
+            # Explicit tool_file
             # ------------------------------------------------
 
             if value.get(
@@ -910,7 +1017,7 @@ def extract_mistral_image_reference(data):
 
 
             # ------------------------------------------------
-            # image_url
+            # image_url as string
             # ------------------------------------------------
 
             image_url = value.get(
@@ -946,6 +1053,10 @@ def extract_mistral_image_reference(data):
                     }
 
 
+            # ------------------------------------------------
+            # image_url as object
+            # ------------------------------------------------
+
             if isinstance(
                 image_url,
                 dict
@@ -968,7 +1079,7 @@ def extract_mistral_image_reference(data):
 
 
             # ------------------------------------------------
-            # Direct URL
+            # Direct URL fields
             # ------------------------------------------------
 
             for key in (
@@ -1010,7 +1121,7 @@ def extract_mistral_image_reference(data):
 
 
             # ------------------------------------------------
-            # Text
+            # Text containing an image URL
             #
             # Example:
             # [Image: https://files.mistral.ai/...]
@@ -1051,7 +1162,7 @@ def extract_mistral_image_reference(data):
 
 
             # ------------------------------------------------
-            # Recursive fields
+            # Recursive known fields
             # ------------------------------------------------
 
             for key in (
@@ -1059,7 +1170,8 @@ def extract_mistral_image_reference(data):
                 "messages",
                 "choices",
                 "outputs",
-                "output"
+                "output",
+                "response"
             ):
 
                 child = value.get(
@@ -1111,7 +1223,6 @@ def extract_mistral_image_reference(data):
 
                     return result
 
-
         return None
 
 
@@ -1158,7 +1269,9 @@ def greeting_response():
 # GROQ TEXT
 # ============================================================
 
-def groq_text(message):
+def groq_text(
+    message
+):
 
     if not GROQ_API_KEY:
 
@@ -1202,6 +1315,7 @@ def groq_text(message):
         GROQ_URL,
 
         headers={
+
             "Authorization":
                 f"Bearer {GROQ_API_KEY}",
 
@@ -1248,7 +1362,9 @@ def groq_text(message):
 # OPENROUTER TEXT
 # ============================================================
 
-def openrouter_text(message):
+def openrouter_text(
+    message
+):
 
     if not OPENROUTER_API_KEY:
 
@@ -1350,7 +1466,9 @@ def openrouter_text(message):
 # GEMINI TEXT
 # ============================================================
 
-def gemini_text(message):
+def gemini_text(
+    message
+):
 
     if not GEMINI_API_KEY:
 
@@ -1452,7 +1570,18 @@ def gemini_text(message):
             "Gemini returned no candidates."
         )
 
-    content = candidates[0].get(
+    first = candidates[0]
+
+    if not isinstance(
+        first,
+        dict
+    ):
+
+        raise RuntimeError(
+            "Gemini returned an invalid candidate."
+        )
+
+    content = first.get(
         "content",
         {}
     )
@@ -1508,9 +1637,7 @@ def mistral_vision(
     """
     Mistral-only image understanding.
 
-    IMPORTANT:
-    Current Mistral image input format uses image_url as
-    a direct string value containing the URL/data URL.
+    Uses Mistral Vision through Chat Completions.
     """
 
     if not MISTRAL_API_KEY:
@@ -1541,8 +1668,13 @@ def mistral_vision(
     )
 
     question = (
-        str(message).strip()
+
+        str(
+            message
+        ).strip()
+
         if message
+
         else
         "حلل هذه الصورة واشرح لي بالتفصيل ما الذي يظهر فيها."
     )
@@ -1572,8 +1704,6 @@ def mistral_vision(
                         "type":
                             "image_url",
 
-                        # IMPORTANT:
-                        # Direct string.
                         "image_url":
                             image_data_url
                     }
@@ -1655,14 +1785,6 @@ def mistral_vision(
 
     except Exception as e:
 
-        print(
-            "MISTRAL VISION RAW RESPONSE:"
-        )
-
-        print(
-            response.text[:5000]
-        )
-
         raise RuntimeError(
             "Mistral Vision returned invalid JSON: "
             f"{e}"
@@ -1694,7 +1816,7 @@ def mistral_vision(
 
 
 # ============================================================
-# MISTRAL SIGNED FILE URL
+# MISTRAL FILE SIGNED URL
 # ============================================================
 
 def mistral_file_signed_url(
@@ -1702,10 +1824,7 @@ def mistral_file_signed_url(
     expiry_hours=24
 ):
     """
-    Converts a Mistral file_id into a temporary signed URL.
-
-    Official endpoint:
-        GET /v1/files/{file_id}/url
+    Convert a Mistral file_id into a temporary signed URL.
     """
 
     if not file_id:
@@ -1715,7 +1834,9 @@ def mistral_file_signed_url(
     safe_expiry = max(
         1,
         min(
-            int(expiry_hours),
+            int(
+                expiry_hours
+            ),
             168
         )
     )
@@ -1740,14 +1861,14 @@ def mistral_file_signed_url(
     )
 
     print(
-        "MISTRAL SIGNED URL STATUS:",
+        "MISTRAL FILE URL STATUS:",
         response.status_code
     )
 
     if response.status_code >= 400:
 
         print(
-            "MISTRAL SIGNED URL ERROR:"
+            "MISTRAL FILE URL ERROR:"
         )
 
         print(
@@ -1796,11 +1917,19 @@ def mistral_generate_image(
     """
     Mistral-only image generation.
 
-    Uses:
-        /v1/chat/completions
+    IMPORTANT:
+        tool_choice = "required"
 
-    with:
+    This forces Mistral to call the available image
+    generation tool instead of answering with text.
+
+    Mistral documents:
         tools=[{"type": "image_generation"}]
+
+    and:
+        tool_choice="required"
+
+    as the mechanism for forcing tool use.
     """
 
     if not MISTRAL_API_KEY:
@@ -1813,12 +1942,37 @@ def mistral_generate_image(
         prompt
     )
 
+    if not clean_prompt:
+
+        clean_prompt = (
+            "Create a high-quality professional image."
+        )
+
     payload = {
 
         "model":
             MISTRAL_IMAGE_MODEL,
 
         "messages": [
+
+            {
+                "role":
+                    "system",
+
+                "content":
+                    (
+                        "You are Aido AI's image "
+                        "generation system. "
+                        "For this request you MUST use "
+                        "the image_generation tool. "
+                        "Do not answer with a normal text "
+                        "response. "
+                        "Do not ask the user for more "
+                        "details if the image request is "
+                        "already understandable. "
+                        "Generate the requested image."
+                    )
+            },
 
             {
                 "role":
@@ -1835,7 +1989,17 @@ def mistral_generate_image(
                 "type":
                     "image_generation"
             }
-        ]
+        ],
+
+        # ====================================================
+        # CRITICAL FIX
+        # ====================================================
+
+        "tool_choice":
+            "required",
+
+        "temperature":
+            0.3
     }
 
     print("=" * 70)
@@ -1847,6 +2011,16 @@ def mistral_generate_image(
     print(
         "MODEL:",
         MISTRAL_IMAGE_MODEL
+    )
+
+    print(
+        "TOOL:",
+        "image_generation"
+    )
+
+    print(
+        "TOOL CHOICE:",
+        "required"
     )
 
     print(
@@ -1908,26 +2082,49 @@ def mistral_generate_image(
         )
 
     # ========================================================
-    # FIND IMAGE
+    # COMPLETE RAW RESPONSE LOG
     # ========================================================
 
-    reference = extract_mistral_image_reference(
-        data
+    print(
+        "MISTRAL IMAGE JSON:"
+    )
+
+    print(
+        str(data)[:12000]
+    )
+
+    # ========================================================
+    # FIND IMAGE REFERENCE
+    # ========================================================
+
+    reference = (
+        extract_mistral_image_reference(
+            data
+        )
     )
 
     if not reference:
 
-        print(
-            "MISTRAL IMAGE JSON:"
+        # ----------------------------------------------------
+        # Check whether the model still returned text only.
+        # ----------------------------------------------------
+
+        text_answer = extract_text_response(
+            data
         )
 
-        print(
-            str(data)[:10000]
-        )
+        if text_answer:
+
+            raise RuntimeError(
+                "Mistral returned text instead of a generated "
+                "image even though tool_choice='required'. "
+                "Mistral response: "
+                f"{text_answer[:2500]}"
+            )
 
         raise RuntimeError(
-            "Mistral completed the request but "
-            "no generated image was found."
+            "Mistral completed the request but no "
+            "generated image reference was found."
         )
 
     reference_type = reference.get(
@@ -1944,9 +2141,9 @@ def mistral_generate_image(
             "Mistral returned an empty image reference."
         )
 
-    # --------------------------------------------------------
-    # Direct URL
-    # --------------------------------------------------------
+    # ========================================================
+    # DIRECT IMAGE URL
+    # ========================================================
 
     if reference_type == "url":
 
@@ -1954,20 +2151,22 @@ def mistral_generate_image(
             reference_value
         )
 
-    # --------------------------------------------------------
-    # file_id
-    # --------------------------------------------------------
+    # ========================================================
+    # MISTRAL FILE ID
+    # ========================================================
 
     elif reference_type == "file_id":
 
         print(
-            "MISTRAL RETURNED FILE ID:",
+            "MISTRAL IMAGE FILE ID:",
             reference_value
         )
 
-        image_url = mistral_file_signed_url(
-            reference_value,
-            expiry_hours=24
+        image_url = (
+            mistral_file_signed_url(
+                reference_value,
+                expiry_hours=24
+            )
         )
 
     else:
@@ -1980,8 +2179,11 @@ def mistral_generate_image(
     if not image_url:
 
         raise RuntimeError(
-            "Could not obtain a usable image URL."
+            "Mistral generated the image but "
+            "no usable image URL was obtained."
         )
+
+    print("=" * 70)
 
     print(
         "MISTRAL IMAGE SUCCESS"
@@ -1991,6 +2193,8 @@ def mistral_generate_image(
         "IMAGE URL:",
         image_url
     )
+
+    print("=" * 70)
 
     return {
 
@@ -2020,11 +2224,17 @@ def mistral_edit_image(
     """
     Mistral-only image transformation.
 
-    The supplied image is analyzed by Mistral Vision first.
-    Then the requested transformation is generated by the
-    Mistral image_generation tool.
+    Workflow:
 
-    This avoids sending the source image to another provider.
+        uploaded image
+              ↓
+        Mistral Vision
+              ↓
+        detailed visual description
+              ↓
+        Mistral image_generation
+              ↓
+        generated result
     """
 
     if not image_bytes:
@@ -2047,17 +2257,18 @@ def mistral_edit_image(
     print("=" * 70)
 
     # ========================================================
-    # STEP 1 - ANALYZE ORIGINAL IMAGE
+    # STEP 1 - UNDERSTAND SOURCE IMAGE
     # ========================================================
 
     source_description = mistral_vision(
 
         (
-            "Describe the supplied image accurately for a "
-            "visual transformation. Include the main subject, "
-            "composition, background, important objects, "
-            "colors, lighting, clothing, environment and "
-            "style. Do not invent details that are not visible."
+            "Describe the supplied image accurately for "
+            "a visual transformation request. Include the "
+            "main subject, composition, background, "
+            "important objects, colors, lighting, clothing, "
+            "environment and style. Do not invent details "
+            "that are not visible."
         ),
 
         image_bytes,
@@ -2074,22 +2285,22 @@ def mistral_edit_image(
     )
 
     # ========================================================
-    # STEP 2 - BUILD TRANSFORMATION PROMPT
+    # STEP 2 - BUILD IMAGE TRANSFORMATION PROMPT
     # ========================================================
 
     transformed_prompt = f"""
-Create the final image based on the following original
-image description and the user's requested modification.
+Create a final image based on this original image
+description and the requested modification.
 
-ORIGINAL IMAGE:
+ORIGINAL IMAGE DESCRIPTION:
 {source_description}
 
-USER REQUEST:
+USER'S REQUEST:
 {prompt}
 
-Preserve the subject, composition and important visual
-characteristics from the original image unless the user
-explicitly asks to change them.
+Preserve the original subject, composition, important
+visual details and environment unless the user explicitly
+asks to change them.
 
 Apply the user's requested modification accurately.
 
@@ -2097,7 +2308,7 @@ Return the final visual result.
 """.strip()
 
     # ========================================================
-    # STEP 3 - GENERATE MODIFIED RESULT
+    # STEP 3 - GENERATE MODIFIED IMAGE
     # ========================================================
 
     result = mistral_generate_image(
@@ -2117,7 +2328,7 @@ Return the final visual result.
 #
 # There is intentionally NO alternative image provider.
 #
-# Mistral = ONLY image provider.
+# Mistral is the ONLY image provider.
 #
 # ============================================================
 
@@ -2139,17 +2350,23 @@ def generate_image_with_fallbacks(
     )
 
     print(
-        "IMAGE PROVIDER: MISTRAL ONLY"
+        "HAS INPUT IMAGE:",
+        bool(image_bytes)
+    )
+
+    print(
+        "MIME TYPE:",
+        mime_type
+    )
+
+    print(
+        "IMAGE PROVIDER:",
+        "MISTRAL ONLY"
     )
 
     print(
         "PROMPT:",
         prompt
-    )
-
-    print(
-        "HAS INPUT IMAGE:",
-        bool(image_bytes)
     )
 
     print(
@@ -2254,6 +2471,11 @@ def get_image_response(
     )
 
     print(
+        "IMAGE PROVIDER:",
+        "MISTRAL ONLY"
+    )
+
+    print(
         "HAS INPUT IMAGE:",
         bool(image_bytes)
     )
@@ -2268,11 +2490,8 @@ def get_image_response(
         conversation_id
     )
 
-    print(
-        "IMAGE PROVIDER: MISTRAL ONLY"
-    )
-
     print("=" * 70)
+
 
     # ========================================================
     # UPLOADED IMAGE
@@ -2281,7 +2500,7 @@ def get_image_response(
     if image_bytes:
 
         # ----------------------------------------------------
-        # Explicit edit request
+        # Explicit modification
         # ----------------------------------------------------
 
         if is_image_edit_request(
@@ -2289,7 +2508,7 @@ def get_image_response(
         ):
 
             print(
-                "MISTRAL IMAGE EDIT REQUEST"
+                "IMAGE EDIT REQUEST"
             )
 
             try:
@@ -2351,11 +2570,11 @@ def get_image_response(
 
 
         # ----------------------------------------------------
-        # Image analysis
+        # Image understanding
         # ----------------------------------------------------
 
         print(
-            "MISTRAL VISION ANALYSIS"
+            "IMAGE ANALYSIS REQUEST"
         )
 
         try:
@@ -2414,20 +2633,23 @@ def get_image_response(
     # TEXT -> IMAGE
     # ========================================================
 
-    result = generate_image_with_fallbacks(
+    result = (
+        generate_image_with_fallbacks(
 
-        message,
+            message,
 
-        None,
+            None,
 
-        None,
+            None,
 
-        conversation_id
+            conversation_id
+        )
     )
 
-    # --------------------------------------------------------
-    # IMAGE_URL format
-    # --------------------------------------------------------
+
+    # ========================================================
+    # IMAGE_URL RESULT
+    # ========================================================
 
     if (
         isinstance(
@@ -2441,7 +2663,7 @@ def get_image_response(
     ):
 
         image_url = result[
-            len("IMAGE_URL:")
+            len("IMAGE_URL:"):
         ].strip()
 
         return {
@@ -2460,9 +2682,9 @@ def get_image_response(
         }
 
 
-    # --------------------------------------------------------
-    # Error / text result
-    # --------------------------------------------------------
+    # ========================================================
+    # ERROR / TEXT RESULT
+    # ========================================================
 
     return {
 
@@ -2489,13 +2711,17 @@ def get_response(
     conversation_id=None
 ):
     """
-    Main text entry point.
+    Main application entry point.
 
     TEXT:
-        Groq -> OpenRouter -> Gemini
+        Groq
+          ↓
+        OpenRouter
+          ↓
+        Gemini
 
     IMAGE:
-        Mistral only
+        Mistral ONLY
     """
 
     message = str(
@@ -2519,6 +2745,7 @@ def get_response(
                 conversation_id
         }
 
+
     print("=" * 70)
 
     print(
@@ -2537,8 +2764,9 @@ def get_response(
 
     print("=" * 70)
 
+
     # ========================================================
-    # GREETING
+    # GREETING ONLY
     # ========================================================
 
     if is_greeting_only(
@@ -2658,7 +2886,9 @@ def get_response(
         except Exception as e:
 
             error_text = (
-                f"{provider_name}: {e}"
+
+                f"{provider_name}: "
+                f"{e}"
             )
 
             errors.append(
@@ -2685,6 +2915,7 @@ def get_response(
             "TEXT ERROR:",
             error
         )
+
 
     return {
 
@@ -2737,7 +2968,7 @@ def ask(
 
 
 # ============================================================
-# COMPATIBILITY
+# COMPATIBILITY INFORMATION
 # ============================================================
 
 print(
