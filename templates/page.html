@@ -1242,7 +1242,7 @@
 
         /* =========================================================
            MOBILE
-        ========================================================= */
+        ========================================================== */
 
         @media (max-width: 750px) {
             :root {
@@ -1428,9 +1428,10 @@
                 line-height: 1.6;
             }
 
-            .message-image {
-                max-width: 220px;
-                max-height: 220px;
+            .message-image,
+            .generated-image {
+                max-width: 100%;
+                max-height: 420px;
             }
 
             .message-actions {
@@ -4325,8 +4326,9 @@
            يدعم الآن:
            - answer
            - imageUrl
+           - provider
            - conversationId
-        ========================================================= */
+        ========================================================== */
 
         async function extractServerAnswer(
             response
@@ -4400,7 +4402,7 @@
                 activeController.signal;
 
             /* =====================================================
-               معرف المحادثة الحالية
+               CURRENT CONVERSATION ID
             ===================================================== */
 
             const conversationId =
@@ -4473,7 +4475,7 @@
             }
 
             /* =====================================================
-               TEXT REQUEST
+               TEXT / IMAGE-GENERATION REQUEST
             ===================================================== */
 
             const response =
@@ -4510,6 +4512,10 @@
             const data =
                 await response.json();
 
+            /* =====================================================
+               CONVERSATION ID
+            ===================================================== */
+
             const returnedConversationId =
                 data &&
                 data.conversation_id
@@ -4528,11 +4534,46 @@
                 saveCurrentConversation();
             }
 
+            /* =====================================================
+               ANSWER
+            ===================================================== */
+
             const answer =
                 data.answer ||
                 data.response ||
                 data.message ||
                 "";
+
+            /* =====================================================
+               IMPORTANT IMAGE FIX
+               
+               api.py returns:
+               
+               {
+                   answer: "...",
+                   imageUrl: "...",
+                   provider: "Mistral"
+               }
+
+               We MUST NOT throw imageUrl away.
+            ===================================================== */
+
+            const imageUrl =
+                data.imageUrl ||
+                data.image_url ||
+                "";
+
+            const provider =
+                data.provider ||
+                "";
+
+            /* =====================================================
+               BACKWARD COMPATIBILITY
+
+               Older brain.py versions may return:
+
+                   IMAGE_URL:https://...
+            ===================================================== */
 
             if (
                 typeof answer === "string" &&
@@ -4551,13 +4592,30 @@
                             )
                             .trim(),
 
+                    provider:
+                        provider,
+
                     conversationId:
                         returnedConversationId
                 };
             }
 
+            /* =====================================================
+               NORMAL RESPONSE
+
+               IMPORTANT:
+               imageUrl is returned here too.
+            ===================================================== */
+
             return {
-                answer: answer,
+                answer:
+                    answer,
+
+                imageUrl:
+                    imageUrl,
+
+                provider:
+                    provider,
 
                 conversationId:
                     returnedConversationId
@@ -4703,16 +4761,28 @@
                             ).trim();
                     }
 
+                    /* =================================================
+                       RESPONSE VALIDATION
+                    ================================================= */
+
                     if (!answer) {
                         answer =
                             imageFile
                                 ? "تم إرسال الصورة، ولكن لم يتم الحصول على نتيجة من الخادم."
-                                : "أنا Aido AI ولم أجد إجابة حاليًا.";
+                                : generatedImage
+                                    ? "تم إنشاء الصورة بنجاح."
+                                    : "أنا Aido AI ولم أجد إجابة حاليًا.";
                     }
 
                     lastAnswer = answer;
 
                     setTyping(false);
+
+                    /* =================================================
+                       IMPORTANT:
+                       generatedImage is passed to addMessage()
+                       so the image is actually displayed.
+                    ================================================= */
 
                     addMessage(
                         answer,
