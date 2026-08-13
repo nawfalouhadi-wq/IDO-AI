@@ -2,26 +2,39 @@
 # IDO AI - BRAIN.PY
 # ============================================================
 #
-# PROVIDERS USED:
+# ============================================================
+# FINAL PROVIDER ROUTING
+# ============================================================
 #
 # TEXT:
 #     GROQ
 #       ↓
 #     OPENROUTER
-#
-# VISION:
-#     GROQ VISION
 #       ↓
-#     OPENROUTER VISION
+#     GEMINI
 #
-# IMAGE GENERATION / EDITING:
-#     OPENROUTER
+# IMAGES:
+#     MISTRAL ONLY
+#
+#     ├── IMAGE ANALYSIS
+#     ├── IMAGE GENERATION
+#     └── IMAGE EDITING
+#
+# ============================================================
 #
 # IMPORTANT:
-#     No direct Gemini API
-#     No Mistral
-#     No xAI
-#     No Pollinations
+#
+# GROQ:
+#     TEXT ONLY
+#
+# OPENROUTER:
+#     TEXT ONLY
+#
+# GEMINI:
+#     TEXT ONLY
+#
+# MISTRAL:
+#     IMAGES ONLY
 #
 # ============================================================
 
@@ -61,13 +74,21 @@ OPENROUTER_API_KEY = os.getenv(
 ).strip()
 
 
-# ============================================================
-# MODELS
-# ============================================================
+GEMINI_API_KEY = os.getenv(
+    "GEMINI_API_KEY",
+    ""
+).strip()
 
-# ------------------------------------------------------------
-# GROQ TEXT
-# ------------------------------------------------------------
+
+MISTRAL_API_KEY = os.getenv(
+    "MISTRAL_API_KEY",
+    ""
+).strip()
+
+
+# ============================================================
+# TEXT MODELS
+# ============================================================
 
 GROQ_TEXT_MODEL = os.getenv(
     "GROQ_TEXT_MODEL",
@@ -75,35 +96,37 @@ GROQ_TEXT_MODEL = os.getenv(
 ).strip()
 
 
-# ------------------------------------------------------------
-# GROQ VISION
-# ------------------------------------------------------------
-
-GROQ_VISION_MODEL = os.getenv(
-    "GROQ_VISION_MODEL",
-    "meta-llama/llama-4-scout-17b-16e-instruct"
-).strip()
-
-
-# ------------------------------------------------------------
-# OPENROUTER TEXT
-# ------------------------------------------------------------
-
 OPENROUTER_TEXT_MODEL = os.getenv(
     "OPENROUTER_TEXT_MODEL",
     "openai/gpt-oss-20b"
 ).strip()
 
 
-# ------------------------------------------------------------
-# OPENROUTER IMAGE
-#
-# Current image model available through OpenRouter.
-# ------------------------------------------------------------
+GEMINI_TEXT_MODEL = os.getenv(
+    "GEMINI_TEXT_MODEL",
+    "gemini-2.5-flash"
+).strip()
 
-OPENROUTER_IMAGE_MODEL = os.getenv(
-    "OPENROUTER_IMAGE_MODEL",
-    "google/gemini-3.1-flash-image"
+
+# ============================================================
+# MISTRAL MODELS
+# ============================================================
+
+# Vision:
+# Used for uploaded image understanding.
+
+MISTRAL_VISION_MODEL = os.getenv(
+    "MISTRAL_VISION_MODEL",
+    "mistral-small-latest"
+).strip()
+
+
+# Image generation:
+# The image_generation tool is attached to this model.
+
+MISTRAL_IMAGE_MODEL = os.getenv(
+    "MISTRAL_IMAGE_MODEL",
+    "mistral-small-latest"
 ).strip()
 
 
@@ -121,14 +144,29 @@ OPENROUTER_URL = (
 )
 
 
+GEMINI_URL = (
+    "https://generativelanguage.googleapis.com/v1beta"
+)
+
+
+MISTRAL_URL = (
+    "https://api.mistral.ai/v1/chat/completions"
+)
+
+
+MISTRAL_FILES_URL = (
+    "https://api.mistral.ai/v1/files"
+)
+
+
 # ============================================================
-# TIMEOUT
+# REQUEST TIMEOUT
 # ============================================================
 
 REQUEST_TIMEOUT = int(
     os.getenv(
         "AI_REQUEST_TIMEOUT",
-        "120"
+        "180"
     )
 )
 
@@ -142,10 +180,19 @@ print(
     "READY" if GROQ_API_KEY else "MISSING"
 )
 
-
 print(
     "OPENROUTER CLIENT:",
     "READY" if OPENROUTER_API_KEY else "MISSING"
+)
+
+print(
+    "GEMINI CLIENT:",
+    "READY" if GEMINI_API_KEY else "MISSING"
+)
+
+print(
+    "MISTRAL CLIENT:",
+    "READY" if MISTRAL_API_KEY else "MISSING"
 )
 
 
@@ -157,18 +204,23 @@ print(
 )
 
 print(
-    "GROQ VISION MODEL:",
-    GROQ_VISION_MODEL
-)
-
-print(
     "OPENROUTER TEXT MODEL:",
     OPENROUTER_TEXT_MODEL
 )
 
 print(
-    "OPENROUTER IMAGE MODEL:",
-    OPENROUTER_IMAGE_MODEL
+    "GEMINI TEXT MODEL:",
+    GEMINI_TEXT_MODEL
+)
+
+print(
+    "MISTRAL VISION MODEL:",
+    MISTRAL_VISION_MODEL
+)
+
+print(
+    "MISTRAL IMAGE MODEL:",
+    MISTRAL_IMAGE_MODEL
 )
 
 print("=" * 70)
@@ -189,32 +241,36 @@ RULES:
 
 2. Understand Arabic, English and French.
 
-3. If the user says:
+3. Answer in the language used by the user whenever
+   possible.
+
+4. If the user says:
    "السلام عليكم"
+
    and also asks a question,
    answer the question normally.
 
-4. If the user only says:
+5. If the user only says:
    "السلام عليكم"
 
    respond:
 
    "وعليكم السلام ورحمة الله وبركاته، كيف يمكنني مساعدتك؟"
 
-5. Never pretend to generate an image as text.
+6. Never pretend that an image was generated.
 
-6. Image generation is handled by the application image system.
+7. Image generation, image editing and image understanding
+   are handled by the application's Mistral image system.
 
-7. If the user asks to generate or edit an image,
-   the application will route the request to the image generator.
-
-8. Do not mention internal provider routing unless the user asks.
+8. Do not mention internal provider routing unless
+   explicitly asked.
 
 9. Be concise for simple questions.
 
-10. Be detailed when the user asks for explanations.
+10. Be detailed when the user requests an explanation.
 
-11. Answer in the language used by the user whenever possible.
+11. Help with programming, mathematics, translation,
+    general questions, explanations and normal text tasks.
 """
 
 
@@ -234,14 +290,16 @@ GREETING_ONLY_PATTERNS = [
 
 def is_greeting_only(message):
     """
-    Returns True only when the entire message
+    True only when the complete message
     is a greeting.
     """
 
     if not message:
         return False
 
-    text = str(message).strip()
+    text = str(
+        message
+    ).strip()
 
     for pattern in GREETING_ONLY_PATTERNS:
 
@@ -250,6 +308,7 @@ def is_greeting_only(message):
             text,
             flags=re.IGNORECASE
         ):
+
             return True
 
     return False
@@ -263,13 +322,16 @@ IMAGE_KEYWORDS_AR = [
 
     "أنشئ صورة",
     "انشئ صورة",
+
     "اصنع صورة",
     "اعمل صورة",
     "اعمل لي صورة",
 
     "أنشئ لي صورة",
     "انشئ لي صورة",
+
     "اصنع لي صورة",
+    "اصنع لي صوره",
 
     "ولّد صورة",
     "ولد صورة",
@@ -277,10 +339,16 @@ IMAGE_KEYWORDS_AR = [
     "توليد صورة",
     "إنشاء صورة",
 
+    "توليد صوره",
+    "إنشاء صوره",
+
     "ارسم",
     "ارسم لي",
+    "ارسم صورة",
+    "ارسم لي صورة",
 
     "صمم صورة",
+    "صمّم صورة",
     "تصميم صورة",
 
     "صورة",
@@ -289,10 +357,29 @@ IMAGE_KEYWORDS_AR = [
     "عدّل الصورة",
     "عدل الصورة",
 
+    "عدّل هذه الصورة",
+    "عدل هذه الصورة",
+
     "تعديل الصورة",
     "تحرير الصورة",
 
     "حرر الصورة",
+    "حرّر الصورة",
+
+    "غيّر الصورة",
+    "غير الصورة",
+
+    "غيّر هذه الصورة",
+    "غير هذه الصورة",
+
+    "أضف إلى الصورة",
+    "اضف الى الصورة",
+
+    "أضف للصورة",
+    "اضف للصورة",
+
+    "احذف من الصورة",
+    "احذف شيء من الصورة",
 ]
 
 
@@ -310,11 +397,20 @@ IMAGE_KEYWORDS_EN = [
     "draw an image",
     "draw image",
 
+    "draw a picture",
+
     "edit the image",
     "edit image",
 
+    "edit this image",
+
     "modify the image",
     "modify image",
+
+    "modify this image",
+
+    "change the image",
+    "change this image",
 
     "image generation",
 
@@ -323,6 +419,9 @@ IMAGE_KEYWORDS_EN = [
 
     "generate a photo",
     "create a photo",
+
+    "remove from the image",
+    "add to the image",
 ]
 
 
@@ -337,38 +436,98 @@ IMAGE_KEYWORDS_FR = [
     "faire une image",
 
     "dessine une image",
+    "dessine-moi une image",
 
     "modifier l'image",
     "modifie l'image",
+
+    "modifier cette image",
+    "modifie cette image",
+
+    "changer l'image",
+    "change l'image",
 ]
 
 
 def is_image_request(message):
     """
-    Detect image generation or editing requests.
+    Detect image generation/edit requests.
     """
 
     if not message:
         return False
 
-    text = str(message).strip().lower()
+    text = str(
+        message
+    ).strip().lower()
 
-    # Arabic
     for keyword in IMAGE_KEYWORDS_AR:
 
         if keyword.lower() in text:
+
             return True
 
-    # English
     for keyword in IMAGE_KEYWORDS_EN:
 
         if keyword.lower() in text:
+
             return True
 
-    # French
     for keyword in IMAGE_KEYWORDS_FR:
 
         if keyword.lower() in text:
+
+            return True
+
+    return False
+
+
+# ============================================================
+# IMAGE EDIT DETECTION
+# ============================================================
+
+def is_image_edit_request(message):
+    """
+    Detects whether the user explicitly asks to modify
+    an already uploaded image.
+    """
+
+    if not message:
+        return False
+
+    text = str(
+        message
+    ).strip().lower()
+
+    edit_keywords = [
+
+        "عدل",
+        "عدّل",
+        "تعديل",
+        "حرر",
+        "حرّر",
+        "تحرير",
+        "غيّر",
+        "غير",
+        "أضف",
+        "اضف",
+        "احذف",
+
+        "edit",
+        "modify",
+        "change",
+        "remove",
+        "add",
+
+        "modifier",
+        "modifie",
+        "changer",
+    ]
+
+    for keyword in edit_keywords:
+
+        if keyword.lower() in text:
+
             return True
 
     return False
@@ -379,10 +538,6 @@ def is_image_request(message):
 # ============================================================
 
 def clean_image_prompt(message):
-    """
-    Removes common conversational prefixes
-    while preserving the actual image request.
-    """
 
     text = str(
         message or ""
@@ -413,6 +568,24 @@ def clean_image_prompt(message):
 
         "ولّد",
         "ولد",
+
+        "ارسم لي",
+        "ارسم",
+
+        "صمم",
+        "صمّم",
+
+        "generate an image",
+        "generate image",
+
+        "create an image",
+        "create image",
+
+        "make an image",
+        "make image",
+
+        "draw an image",
+        "draw image",
 
         "generate",
         "create",
@@ -449,7 +622,8 @@ def safe_post(
     url,
     headers=None,
     json_data=None,
-    timeout=REQUEST_TIMEOUT
+    timeout=REQUEST_TIMEOUT,
+    params=None
 ):
 
     response = requests.post(
@@ -460,6 +634,8 @@ def safe_post(
 
         json=json_data,
 
+        params=params,
+
         timeout=timeout
     )
 
@@ -467,7 +643,32 @@ def safe_post(
 
 
 # ============================================================
-# EXTRACT OPENAI-COMPATIBLE TEXT
+# SAFE GET
+# ============================================================
+
+def safe_get(
+    url,
+    headers=None,
+    timeout=REQUEST_TIMEOUT,
+    params=None
+):
+
+    response = requests.get(
+
+        url,
+
+        headers=headers or {},
+
+        params=params,
+
+        timeout=timeout
+    )
+
+    return response
+
+
+# ============================================================
+# GENERIC OPENAI-COMPATIBLE TEXT EXTRACTOR
 # ============================================================
 
 def extract_text_response(data):
@@ -476,25 +677,108 @@ def extract_text_response(data):
         data,
         dict
     ):
+
         return ""
 
     choices = data.get(
         "choices"
     )
 
-    if not choices:
+    if not isinstance(
+        choices,
+        list
+    ) or not choices:
+
         return ""
 
     first = choices[0]
 
+    if not isinstance(
+        first,
+        dict
+    ):
+
+        return ""
+
+    # --------------------------------------------------------
+    # Standard:
+    #
+    # choices[0].message.content
+    # --------------------------------------------------------
+
     message = first.get(
-        "message",
-        {}
+        "message"
     )
 
-    content = message.get(
-        "content"
+    if isinstance(
+        message,
+        dict
+    ):
+
+        content = message.get(
+            "content"
+        )
+
+        text = extract_content_text(
+            content
+        )
+
+        if text:
+
+            return text
+
+    # --------------------------------------------------------
+    # Some tool-based responses:
+    #
+    # choices[0].messages
+    # --------------------------------------------------------
+
+    messages = first.get(
+        "messages"
     )
+
+    if isinstance(
+        messages,
+        list
+    ):
+
+        parts = []
+
+        for item in messages:
+
+            if not isinstance(
+                item,
+                dict
+            ):
+
+                continue
+
+            content = item.get(
+                "content"
+            )
+
+            text = extract_content_text(
+                content
+            )
+
+            if text:
+
+                parts.append(
+                    text
+                )
+
+        return "\n".join(
+            parts
+        ).strip()
+
+    return ""
+
+
+# ============================================================
+# CONTENT TEXT EXTRACTOR
+# ============================================================
+
+def extract_content_text(content):
 
     if isinstance(
         content,
@@ -503,20 +787,25 @@ def extract_text_response(data):
 
         return content.strip()
 
-    if isinstance(
+    if not isinstance(
         content,
         list
     ):
 
-        parts = []
+        return ""
 
-        for item in content:
+    parts = []
 
-            if not isinstance(
-                item,
-                dict
-            ):
-                continue
+    for item in content:
+
+        if not isinstance(
+            item,
+            dict
+        ):
+
+            continue
+
+        if item.get("type") == "text":
 
             text = item.get(
                 "text"
@@ -528,15 +817,312 @@ def extract_text_response(data):
                     str(text)
                 )
 
-        return "\n".join(
-            parts
-        ).strip()
+        elif "text" in item:
 
-    return ""
+            text = item.get(
+                "text"
+            )
+
+            if text:
+
+                parts.append(
+                    str(text)
+                )
+
+    return "\n".join(
+        parts
+    ).strip()
 
 
 # ============================================================
-# GREETING RESPONSE
+# EXTRACT FIRST IMAGE REFERENCE
+# ============================================================
+
+def extract_image_reference(data):
+    """
+    Extracts an image from different possible Mistral
+    response formats.
+
+    Supports:
+        image_url
+        file_id
+        tool_file
+        nested content/messages
+        direct URL
+    """
+
+    if not isinstance(
+        data,
+        (dict, list)
+    ):
+
+        return None
+
+
+    def walk(value):
+
+        if isinstance(
+            value,
+            dict
+        ):
+
+            # ------------------------------------------------
+            # file_id
+            # ------------------------------------------------
+
+            file_id = value.get(
+                "file_id"
+            )
+
+            if file_id:
+
+                return {
+
+                    "type":
+                        "file_id",
+
+                    "value":
+                        str(file_id),
+                }
+
+
+            # ------------------------------------------------
+            # image_url object
+            # ------------------------------------------------
+
+            image_url = value.get(
+                "image_url"
+            )
+
+            if isinstance(
+                image_url,
+                dict
+            ):
+
+                url = image_url.get(
+                    "url"
+                )
+
+                if url:
+
+                    return {
+
+                        "type":
+                            "url",
+
+                        "value":
+                            str(url),
+                    }
+
+            elif isinstance(
+                image_url,
+                str
+            ):
+
+                if (
+                    image_url.startswith(
+                        "http://"
+                    )
+                    or
+                    image_url.startswith(
+                        "https://"
+                    )
+                    or
+                    image_url.startswith(
+                        "data:image/"
+                    )
+                ):
+
+                    return {
+
+                        "type":
+                            "url",
+
+                        "value":
+                            image_url,
+                    }
+
+
+            # ------------------------------------------------
+            # direct URL
+            # ------------------------------------------------
+
+            for key in (
+                "url",
+                "image",
+            ):
+
+                value_item = value.get(
+                    key
+                )
+
+                if isinstance(
+                    value_item,
+                    str
+                ):
+
+                    if (
+                        value_item.startswith(
+                            "http://"
+                        )
+                        or
+                        value_item.startswith(
+                            "https://"
+                        )
+                        or
+                        value_item.startswith(
+                            "data:image/"
+                        )
+                    ):
+
+                        return {
+
+                            "type":
+                                "url",
+
+                            "value":
+                                value_item,
+                        }
+
+
+            # ------------------------------------------------
+            # content
+            # ------------------------------------------------
+
+            content = value.get(
+                "content"
+            )
+
+            if content is not None:
+
+                result = walk(
+                    content
+                )
+
+                if result:
+
+                    return result
+
+
+            # ------------------------------------------------
+            # messages
+            # ------------------------------------------------
+
+            messages = value.get(
+                "messages"
+            )
+
+            if messages is not None:
+
+                result = walk(
+                    messages
+                )
+
+                if result:
+
+                    return result
+
+
+            # ------------------------------------------------
+            # choices
+            # ------------------------------------------------
+
+            choices = value.get(
+                "choices"
+            )
+
+            if choices is not None:
+
+                result = walk(
+                    choices
+                )
+
+                if result:
+
+                    return result
+
+
+            # ------------------------------------------------
+            # outputs
+            # ------------------------------------------------
+
+            outputs = value.get(
+                "outputs"
+            )
+
+            if outputs is not None:
+
+                result = walk(
+                    outputs
+                )
+
+                if result:
+
+                    return result
+
+
+            # ------------------------------------------------
+            # Search every other nested value.
+            # ------------------------------------------------
+
+            for child in value.values():
+
+                result = walk(
+                    child
+                )
+
+                if result:
+
+                    return result
+
+
+        elif isinstance(
+            value,
+            list
+        ):
+
+            for item in value:
+
+                result = walk(
+                    item
+                )
+
+                if result:
+
+                    return result
+
+        return None
+
+
+    return walk(
+        data
+    )
+
+
+# ============================================================
+# MISTRAL HEADERS
+# ============================================================
+
+def mistral_headers():
+
+    if not MISTRAL_API_KEY:
+
+        raise RuntimeError(
+            "MISTRAL_API_KEY is missing."
+        )
+
+    return {
+
+        "Authorization":
+            f"Bearer {MISTRAL_API_KEY}",
+
+        "Content-Type":
+            "application/json",
+    }
+
+
+# ============================================================
+# GREETING
 # ============================================================
 
 def greeting_response():
@@ -589,7 +1175,7 @@ def groq_text(message):
 
                 "content":
                     message,
-            }
+            },
         ],
 
         "temperature":
@@ -613,10 +1199,19 @@ def groq_text(message):
         raise RuntimeError(
             "Groq HTTP "
             f"{response.status_code}: "
-            f"{response.text[:700]}"
+            f"{response.text[:1200]}"
         )
 
-    data = response.json()
+    try:
+
+        data = response.json()
+
+    except Exception as e:
+
+        raise RuntimeError(
+            "Groq returned invalid JSON: "
+            f"{e}"
+        )
 
     answer = extract_text_response(
         data
@@ -682,7 +1277,7 @@ def openrouter_text(message):
 
                 "content":
                     message,
-            }
+            },
         ],
 
         "temperature":
@@ -706,10 +1301,19 @@ def openrouter_text(message):
         raise RuntimeError(
             "OpenRouter HTTP "
             f"{response.status_code}: "
-            f"{response.text[:700]}"
+            f"{response.text[:1200]}"
         )
 
-    data = response.json()
+    try:
+
+        data = response.json()
+
+    except Exception as e:
+
+        raise RuntimeError(
+            "OpenRouter returned invalid JSON: "
+            f"{e}"
+        )
 
     answer = extract_text_response(
         data
@@ -725,540 +1329,94 @@ def openrouter_text(message):
 
 
 # ============================================================
-# GROQ VISION
+# GEMINI TEXT
 # ============================================================
 
-def groq_vision(
-    message,
-    image_bytes,
-    mime_type
-):
+def gemini_text(message):
 
-    if not GROQ_API_KEY:
+    if not GEMINI_API_KEY:
 
         raise RuntimeError(
-            "GROQ_API_KEY is missing."
+            "GEMINI_API_KEY is missing."
         )
 
-    encoded = base64.b64encode(
-        image_bytes
-    ).decode("utf-8")
-
-    image_url = (
-        f"data:{mime_type};base64,{encoded}"
+    url = (
+        f"{GEMINI_URL}/models/"
+        f"{GEMINI_TEXT_MODEL}:generateContent"
     )
+
+    params = {
+
+        "key":
+            GEMINI_API_KEY
+    }
 
     headers = {
 
-        "Authorization":
-            f"Bearer {GROQ_API_KEY}",
-
         "Content-Type":
-            "application/json",
+            "application/json"
     }
 
     payload = {
 
-        "model":
-            GROQ_VISION_MODEL,
+        "system_instruction": {
 
-        "messages": [
+            "parts": [
+
+                {
+                    "text":
+                        SYSTEM_PROMPT
+                }
+            ]
+        },
+
+        "contents": [
 
             {
-                "role":
-                    "system",
 
-                "content":
-                    SYSTEM_PROMPT,
-            },
-
-            {
                 "role":
                     "user",
 
-                "content": [
+                "parts": [
 
                     {
-                        "type":
-                            "text",
-
                         "text":
-                            message,
-                    },
-
-                    {
-                        "type":
-                            "image_url",
-
-                        "image_url": {
-
-                            "url":
-                                image_url
-                        }
+                            str(message)
                     }
-                ],
+                ]
             }
         ],
 
-        "temperature":
-            0.4,
+        "generationConfig": {
 
-        "max_tokens":
-            4096,
+            "temperature":
+                0.7,
+
+            "maxOutputTokens":
+                4096
+        }
     }
 
-    response = safe_post(
+    response = requests.post(
 
-        GROQ_URL,
+        url,
+
+        params=params,
 
         headers=headers,
 
-        json_data=payload
-    )
-
-    if response.status_code >= 400:
-
-        raise RuntimeError(
-            "Groq Vision HTTP "
-            f"{response.status_code}: "
-            f"{response.text[:700]}"
-        )
-
-    answer = extract_text_response(
-        response.json()
-    )
-
-    if not answer:
-
-        raise RuntimeError(
-            "Groq Vision returned empty response."
-        )
-
-    return answer
-
-
-# ============================================================
-# OPENROUTER VISION
-# ============================================================
-
-def openrouter_vision(
-    message,
-    image_bytes,
-    mime_type
-):
-
-    if not OPENROUTER_API_KEY:
-
-        raise RuntimeError(
-            "OPENROUTER_API_KEY is missing."
-        )
-
-    encoded = base64.b64encode(
-        image_bytes
-    ).decode("utf-8")
-
-    image_url = (
-        f"data:{mime_type};base64,{encoded}"
-    )
-
-    headers = {
-
-        "Authorization":
-            f"Bearer {OPENROUTER_API_KEY}",
-
-        "Content-Type":
-            "application/json",
-
-        "HTTP-Referer":
-            os.getenv(
-                "OPENROUTER_SITE_URL",
-                "https://ido-ai-production.up.railway.app"
-            ),
-
-        "X-Title":
-            "IDO AI",
-    }
-
-    payload = {
-
-        "model":
-            OPENROUTER_TEXT_MODEL,
-
-        "messages": [
-
-            {
-                "role":
-                    "system",
-
-                "content":
-                    SYSTEM_PROMPT,
-            },
-
-            {
-                "role":
-                    "user",
-
-                "content": [
-
-                    {
-                        "type":
-                            "text",
-
-                        "text":
-                            message,
-                    },
-
-                    {
-                        "type":
-                            "image_url",
-
-                        "image_url": {
-
-                            "url":
-                                image_url
-                        }
-                    }
-                ],
-            }
-        ],
-
-        "max_tokens":
-            4096,
-    }
-
-    response = safe_post(
-
-        OPENROUTER_URL,
-
-        headers=headers,
-
-        json_data=payload
-    )
-
-    if response.status_code >= 400:
-
-        raise RuntimeError(
-            "OpenRouter Vision HTTP "
-            f"{response.status_code}: "
-            f"{response.text[:700]}"
-        )
-
-    answer = extract_text_response(
-        response.json()
-    )
-
-    if not answer:
-
-        raise RuntimeError(
-            "OpenRouter Vision returned empty response."
-        )
-
-    return answer
-
-
-# ============================================================
-# EXTRACT IMAGE FROM OPENROUTER RESPONSE
-# ============================================================
-
-def extract_openrouter_image(data):
-
-    if not isinstance(
-        data,
-        dict
-    ):
-        return None
-
-    choices = data.get(
-        "choices",
-        []
-    )
-
-    if not choices:
-        return None
-
-    message = choices[0].get(
-        "message",
-        {}
-    )
-
-    # --------------------------------------------------------
-    # Current OpenRouter image response:
-    #
-    # message.images
-    # --------------------------------------------------------
-
-    images = message.get(
-        "images"
-    )
-
-    if isinstance(
-        images,
-        list
-    ):
-
-        for image in images:
-
-            if not isinstance(
-                image,
-                dict
-            ):
-                continue
-
-            image_url = image.get(
-                "image_url"
-            )
-
-            if isinstance(
-                image_url,
-                dict
-            ):
-
-                url = image_url.get(
-                    "url"
-                )
-
-                if url:
-
-                    return url
-
-    # --------------------------------------------------------
-    # Some responses can expose image objects
-    # inside content.
-    # --------------------------------------------------------
-
-    content = message.get(
-        "content"
-    )
-
-    if isinstance(
-        content,
-        list
-    ):
-
-        for item in content:
-
-            if not isinstance(
-                item,
-                dict
-            ):
-                continue
-
-            image_url = item.get(
-                "image_url"
-            )
-
-            if isinstance(
-                image_url,
-                dict
-            ):
-
-                url = image_url.get(
-                    "url"
-                )
-
-                if url:
-
-                    return url
-
-            image = item.get(
-                "image"
-            )
-
-            if isinstance(
-                image,
-                dict
-            ):
-
-                image_url = image.get(
-                    "image_url"
-                )
-
-                if isinstance(
-                    image_url,
-                    dict
-                ):
-
-                    url = image_url.get(
-                        "url"
-                    )
-
-                    if url:
-
-                        return url
-
-    return None
-
-
-# ============================================================
-# OPENROUTER IMAGE GENERATION / EDITING
-# ============================================================
-
-def openrouter_generate_image(
-    prompt,
-    image_bytes=None,
-    mime_type=None
-):
-
-    if not OPENROUTER_API_KEY:
-
-        raise RuntimeError(
-            "OPENROUTER_API_KEY is missing."
-        )
-
-    if not OPENROUTER_IMAGE_MODEL:
-
-        raise RuntimeError(
-            "OPENROUTER_IMAGE_MODEL is missing."
-        )
-
-    headers = {
-
-        "Authorization":
-            f"Bearer {OPENROUTER_API_KEY}",
-
-        "Content-Type":
-            "application/json",
-
-        "HTTP-Referer":
-            os.getenv(
-                "OPENROUTER_SITE_URL",
-                "https://ido-ai-production.up.railway.app"
-            ),
-
-        "X-Title":
-            "IDO AI",
-    }
-
-    # --------------------------------------------------------
-    # TEXT ONLY
-    # --------------------------------------------------------
-
-    if not image_bytes:
-
-        user_content = prompt
-
-    # --------------------------------------------------------
-    # IMAGE EDITING
-    # --------------------------------------------------------
-
-    else:
-
-        encoded = base64.b64encode(
-            image_bytes
-        ).decode("utf-8")
-
-        image_url = (
-            f"data:{mime_type or 'image/jpeg'}"
-            f";base64,{encoded}"
-        )
-
-        user_content = [
-
-            {
-                "type":
-                    "text",
-
-                "text":
-                    (
-                        "Edit the supplied image according "
-                        "to this instruction. Return the "
-                        "edited image.\n\n"
-                        f"INSTRUCTION:\n{prompt}"
-                    ),
-            },
-
-            {
-                "type":
-                    "image_url",
-
-                "image_url": {
-
-                    "url":
-                        image_url
-                },
-            }
-        ]
-
-    payload = {
-
-        "model":
-            OPENROUTER_IMAGE_MODEL,
-
-        "messages": [
-
-            {
-                "role":
-                    "user",
-
-                "content":
-                    user_content,
-            }
-        ],
-
-        # ----------------------------------------------------
-        # VERY IMPORTANT:
-        #
-        # OpenRouter image models use image + text modalities.
-        # ----------------------------------------------------
-
-        "modalities": [
-            "image",
-            "text"
-        ],
-
-        "temperature":
-            0.7,
-    }
-
-    print("=" * 70)
-
-    print(
-        "OPENROUTER IMAGE REQUEST"
-    )
-
-    print(
-        "IMAGE MODEL:",
-        OPENROUTER_IMAGE_MODEL
-    )
-
-    print(
-        "HAS INPUT IMAGE:",
-        bool(image_bytes)
-    )
-
-    print(
-        "PROMPT:",
-        prompt
-    )
-
-    print("=" * 70)
-
-    response = safe_post(
-
-        OPENROUTER_URL,
-
-        headers=headers,
-
-        json_data=payload,
+        json=payload,
 
         timeout=REQUEST_TIMEOUT
     )
 
-    # --------------------------------------------------------
-    # HTTP ERROR
-    # --------------------------------------------------------
-
     if response.status_code >= 400:
 
         raise RuntimeError(
-            "OpenRouter Image HTTP "
+            "Gemini HTTP "
             f"{response.status_code}: "
             f"{response.text[:1500]}"
         )
-
-    # --------------------------------------------------------
-    # JSON
-    # --------------------------------------------------------
 
     try:
 
@@ -1267,59 +1425,604 @@ def openrouter_generate_image(
     except Exception as e:
 
         raise RuntimeError(
-            "OpenRouter returned invalid JSON: "
+            "Gemini returned invalid JSON: "
             f"{e}"
         )
 
-    # --------------------------------------------------------
-    # IMAGE
-    # --------------------------------------------------------
+    candidates = data.get(
+        "candidates"
+    )
 
-    image_url = extract_openrouter_image(
+    if not isinstance(
+        candidates,
+        list
+    ) or not candidates:
+
+        raise RuntimeError(
+            "Gemini returned no candidates."
+        )
+
+    first = candidates[0]
+
+    content = first.get(
+        "content",
+        {}
+    )
+
+    parts = content.get(
+        "parts",
+        []
+    )
+
+    answer_parts = []
+
+    for part in parts:
+
+        if not isinstance(
+            part,
+            dict
+        ):
+
+            continue
+
+        text = part.get(
+            "text"
+        )
+
+        if text:
+
+            answer_parts.append(
+                str(text)
+            )
+
+    answer = "\n".join(
+        answer_parts
+    ).strip()
+
+    if not answer:
+
+        raise RuntimeError(
+            "Gemini returned an empty response."
+        )
+
+    return answer
+
+
+# ============================================================
+# MISTRAL VISION
+# ============================================================
+
+def mistral_vision(
+    message,
+    image_bytes,
+    mime_type
+):
+    """
+    Mistral-only image understanding.
+    """
+
+    if not image_bytes:
+
+        raise RuntimeError(
+            "No image data was supplied."
+        )
+
+    encoded = base64.b64encode(
+        image_bytes
+    ).decode(
+        "utf-8"
+    )
+
+    safe_mime = (
+        mime_type
+        or "image/jpeg"
+    )
+
+    image_data_url = (
+        f"data:{safe_mime};base64,{encoded}"
+    )
+
+    question = (
+        message
+        or
+        "حلل هذه الصورة واشرح لي ما الذي يظهر فيها."
+    )
+
+    payload = {
+
+        "model":
+            MISTRAL_VISION_MODEL,
+
+        "messages": [
+
+            {
+                "role":
+                    "user",
+
+                "content": [
+
+                    {
+                        "type":
+                            "text",
+
+                        "text":
+                            question,
+                    },
+
+                    {
+                        "type":
+                            "image_url",
+
+                        "image_url":
+                            {
+                                "url":
+                                    image_data_url
+                            },
+                    },
+                ],
+            },
+        ],
+
+        "temperature":
+            0.3,
+
+        "max_tokens":
+            4096,
+    }
+
+    print("=" * 70)
+
+    print(
+        "MISTRAL VISION REQUEST"
+    )
+
+    print(
+        "MODEL:",
+        MISTRAL_VISION_MODEL
+    )
+
+    print(
+        "MIME:",
+        safe_mime
+    )
+
+    print(
+        "IMAGE SIZE:",
+        len(image_bytes)
+    )
+
+    print("=" * 70)
+
+    response = safe_post(
+
+        MISTRAL_URL,
+
+        headers=mistral_headers(),
+
+        json_data=payload,
+
+        timeout=REQUEST_TIMEOUT
+    )
+
+    if response.status_code >= 400:
+
+        raise RuntimeError(
+            "Mistral Vision HTTP "
+            f"{response.status_code}: "
+            f"{response.text[:1800]}"
+        )
+
+    try:
+
+        data = response.json()
+
+    except Exception as e:
+
+        raise RuntimeError(
+            "Mistral Vision returned invalid JSON: "
+            f"{e}"
+        )
+
+    answer = extract_text_response(
         data
     )
 
-    if image_url:
+    if not answer:
 
-        print(
-            "OPENROUTER IMAGE SUCCESS"
+        raise RuntimeError(
+            "Mistral Vision returned an empty response."
         )
 
-        return {
-
-            "image_url":
-                image_url,
-
-            "text":
-                "تم إنشاء الصورة بنجاح.",
-
-            "provider":
-                "OpenRouter",
-
-            "model":
-                OPENROUTER_IMAGE_MODEL,
-        }
-
-    # --------------------------------------------------------
-    # Debug response when no image was found
-    # --------------------------------------------------------
-
     print(
-        "OPENROUTER IMAGE RESPONSE:"
+        "MISTRAL VISION SUCCESS"
     )
 
-    print(
-        str(data)[:5000]
+    return answer
+
+
+# ============================================================
+# DOWNLOAD / SIGN MISTRAL FILE
+# ============================================================
+
+def mistral_file_signed_url(
+    file_id,
+    expiry_hours=24
+):
+    """
+    Convert a Mistral file_id into a temporary signed URL.
+
+    Mistral exposes:
+        GET /v1/files/{file_id}/url
+    """
+
+    if not file_id:
+
+        return None
+
+    url = (
+        f"{MISTRAL_FILES_URL}/"
+        f"{file_id}/url"
     )
 
-    raise RuntimeError(
-        "OpenRouter completed the request "
-        "but returned no image data."
+    response = safe_get(
+
+        url,
+
+        headers=mistral_headers(),
+
+        params={
+            "expiry":
+                expiry_hours
+        },
+
+        timeout=REQUEST_TIMEOUT
+    )
+
+    if response.status_code >= 400:
+
+        raise RuntimeError(
+            "Mistral File URL HTTP "
+            f"{response.status_code}: "
+            f"{response.text[:1500]}"
+        )
+
+    try:
+
+        data = response.json()
+
+    except Exception as e:
+
+        raise RuntimeError(
+            "Mistral File URL returned invalid JSON: "
+            f"{e}"
+        )
+
+    signed_url = data.get(
+        "url"
+    )
+
+    if not signed_url:
+
+        raise RuntimeError(
+            "Mistral did not return a signed file URL."
+        )
+
+    return str(
+        signed_url
     )
 
 
 # ============================================================
-# IMAGE GENERATION FALLBACK
+# EXTRACT IMAGE URL
+# ============================================================
+
+def mistral_image_url_from_response(
+    data
+):
+    """
+    Returns a displayable image URL.
+
+    If Mistral returns file_id, convert it to a signed URL.
+    If Mistral directly returns a URL, use it.
+    """
+
+    reference = extract_image_reference(
+        data
+    )
+
+    if not reference:
+
+        return None
+
+    reference_type = reference.get(
+        "type"
+    )
+
+    reference_value = reference.get(
+        "value"
+    )
+
+    if not reference_value:
+
+        return None
+
+    # --------------------------------------------------------
+    # Direct URL
+    # --------------------------------------------------------
+
+    if reference_type == "url":
+
+        return str(
+            reference_value
+        )
+
+    # --------------------------------------------------------
+    # Mistral file ID
+    # --------------------------------------------------------
+
+    if reference_type == "file_id":
+
+        return mistral_file_signed_url(
+            reference_value
+        )
+
+    return None
+
+
+# ============================================================
+# MISTRAL IMAGE GENERATION
+# ============================================================
+
+def mistral_generate_image(
+    prompt
+):
+    """
+    Generate an image using Mistral's image_generation tool.
+
+    Mistral's built-in image_generation tool is supported
+    by the Chat Completions API.
+    """
+
+    if not MISTRAL_API_KEY:
+
+        raise RuntimeError(
+            "MISTRAL_API_KEY is missing."
+        )
+
+    clean_prompt = clean_image_prompt(
+        prompt
+    )
+
+    payload = {
+
+        "model":
+            MISTRAL_IMAGE_MODEL,
+
+        "messages": [
+
+            {
+                "role":
+                    "user",
+
+                "content":
+                    clean_prompt
+            }
+        ],
+
+        "tools": [
+
+            {
+                "type":
+                    "image_generation"
+            }
+        ]
+    }
+
+    print("=" * 70)
+
+    print(
+        "MISTRAL IMAGE GENERATION"
+    )
+
+    print(
+        "MODEL:",
+        MISTRAL_IMAGE_MODEL
+    )
+
+    print(
+        "PROMPT:",
+        clean_prompt
+    )
+
+    print("=" * 70)
+
+    response = safe_post(
+
+        MISTRAL_URL,
+
+        headers=mistral_headers(),
+
+        json_data=payload,
+
+        timeout=REQUEST_TIMEOUT
+    )
+
+    if response.status_code >= 400:
+
+        raise RuntimeError(
+            "Mistral Image HTTP "
+            f"{response.status_code}: "
+            f"{response.text[:2500]}"
+        )
+
+    try:
+
+        data = response.json()
+
+    except Exception as e:
+
+        raise RuntimeError(
+            "Mistral Image returned invalid JSON: "
+            f"{e}"
+        )
+
+    image_url = mistral_image_url_from_response(
+        data
+    )
+
+    if not image_url:
+
+        print(
+            "MISTRAL IMAGE RAW RESPONSE:"
+        )
+
+        print(
+            str(data)[:7000]
+        )
+
+        raise RuntimeError(
+            "Mistral completed the image request "
+            "but no image URL or file_id was found."
+        )
+
+    print(
+        "MISTRAL IMAGE SUCCESS"
+    )
+
+    return {
+
+        "image_url":
+            image_url,
+
+        "text":
+            "تم إنشاء الصورة بنجاح.",
+
+        "provider":
+            "Mistral",
+
+        "model":
+            MISTRAL_IMAGE_MODEL
+    }
+
+
+# ============================================================
+# MISTRAL IMAGE EDITING
+# ============================================================
+
+def mistral_edit_image(
+    prompt,
+    image_bytes,
+    mime_type
+):
+    """
+    Mistral-only image editing workflow.
+
+    The source image is first understood by Mistral Vision.
+    Then a new visual generation request is sent to the
+    Mistral image-generation tool.
+
+    This keeps every image operation inside Mistral.
+
+    Note:
+    The public Chat Completions image_generation examples
+    document text-to-image generation. For an uploaded image,
+    we therefore preserve the original image's description
+    through Mistral Vision before generating the requested
+    result, rather than pretending the tool accepts an
+    arbitrary source-image edit payload when the API contract
+    does not document that directly.
+    """
+
+    if not image_bytes:
+
+        raise RuntimeError(
+            "No source image was supplied."
+        )
+
+    print("=" * 70)
+
+    print(
+        "MISTRAL IMAGE EDIT REQUEST"
+    )
+
+    print("=" * 70)
+
+    # --------------------------------------------------------
+    # Step 1:
+    # Understand original image
+    # --------------------------------------------------------
+
+    visual_description = mistral_vision(
+
+        (
+            "Describe this image precisely for an image "
+            "transformation request. Include the subject, "
+            "composition, colors, lighting, background, "
+            "important objects, clothing and visual style. "
+            "Do not invent details that are not visible."
+        ),
+
+        image_bytes,
+
+        mime_type
+    )
+
+    print(
+        "SOURCE IMAGE DESCRIPTION:"
+    )
+
+    print(
+        visual_description[:5000]
+    )
+
+    # --------------------------------------------------------
+    # Step 2:
+    # Build final generation prompt
+    # --------------------------------------------------------
+
+    final_prompt = f"""
+Transform the following original image according to the
+user's requested modification.
+
+ORIGINAL IMAGE DESCRIPTION:
+{visual_description}
+
+USER'S EDIT INSTRUCTION:
+{prompt}
+
+Preserve the original composition, subject identity,
+important visual details, colors and environment whenever
+the user did not ask to change them.
+
+Apply the requested modification accurately.
+
+Return only the final visual result.
+""".strip()
+
+    # --------------------------------------------------------
+    # Step 3:
+    # Generate with Mistral
+    # --------------------------------------------------------
+
+    result = mistral_generate_image(
+        final_prompt
+    )
+
+    result["text"] = (
+        "تم تعديل الصورة بنجاح."
+    )
+
+    return result
+
+
+# ============================================================
+# GENERATE IMAGE WITH FALLBACKS
+# ============================================================
+#
+# There is intentionally NO alternative image provider.
+#
+# Mistral is the only image provider.
+#
 # ============================================================
 
 def generate_image_with_fallbacks(
@@ -1340,6 +2043,10 @@ def generate_image_with_fallbacks(
     )
 
     print(
+        "PROVIDER: MISTRAL ONLY"
+    )
+
+    print(
         "PROMPT:",
         prompt
     )
@@ -1349,24 +2056,31 @@ def generate_image_with_fallbacks(
         bool(image_bytes)
     )
 
-    print("=" * 70)
+    print(
+        "CONVERSATION ID:",
+        conversation_id
+    )
 
-    # --------------------------------------------------------
-    # ONLY IMAGE PROVIDER:
-    #
-    # OPENROUTER
-    # --------------------------------------------------------
+    print("=" * 70)
 
     try:
 
-        result = openrouter_generate_image(
+        if image_bytes:
 
-            prompt,
+            result = mistral_edit_image(
 
-            image_bytes,
+                prompt,
 
-            mime_type
-        )
+                image_bytes,
+
+                mime_type
+            )
+
+        else:
+
+            result = mistral_generate_image(
+                prompt
+            )
 
         image_url = result.get(
             "image_url"
@@ -1375,17 +2089,12 @@ def generate_image_with_fallbacks(
         if not image_url:
 
             raise RuntimeError(
-                "OpenRouter returned no image URL."
+                "Mistral returned no image URL."
             )
 
         # ----------------------------------------------------
-        # IMPORTANT:
-        #
-        # app.py currently expects:
-        #
-        # IMAGE_URL:<url>
-        #
-        # Therefore return exactly that format.
+        # This exact format remains compatible with older
+        # app.py versions.
         # ----------------------------------------------------
 
         return (
@@ -1398,7 +2107,7 @@ def generate_image_with_fallbacks(
         print("=" * 70)
 
         print(
-            "OPENROUTER IMAGE FAILED:"
+            "MISTRAL IMAGE FAILED:"
         )
 
         print(
@@ -1408,8 +2117,8 @@ def generate_image_with_fallbacks(
         print("=" * 70)
 
         return (
-            "تعذر إنشاء الصورة حاليًا. "
-            "حدث خطأ في خدمة توليد الصور."
+            "تعذر إنشاء أو تعديل الصورة حاليًا. "
+            "حدث خطأ في خدمة الصور Mistral."
         )
 
 
@@ -1423,6 +2132,12 @@ def get_image_response(
     mime_type=None,
     conversation_id=None
 ):
+    """
+    Main image entry point used by app.py.
+
+    Image provider:
+        Mistral ONLY
+    """
 
     message = str(
         message or ""
@@ -1454,141 +2169,128 @@ def get_image_response(
         conversation_id
     )
 
+    print(
+        "IMAGE PROVIDER: MISTRAL ONLY"
+    )
+
     print("=" * 70)
 
+
     # ========================================================
-    # IMAGE UPLOADED
+    # USER UPLOADED IMAGE
     # ========================================================
 
     if image_bytes:
 
         # ----------------------------------------------------
-        # Explicit image edit/generation request
+        # Explicit image modification request
         # ----------------------------------------------------
 
-        if is_image_request(
+        if is_image_edit_request(
             message
         ):
 
             print(
-                "IMAGE EDIT REQUEST"
+                "MISTRAL IMAGE EDIT"
             )
 
-            return generate_image_with_fallbacks(
+            result = mistral_edit_image(
 
                 message,
 
                 image_bytes,
 
-                mime_type,
-
-                conversation_id
+                mime_type
             )
 
+            return {
+
+                "answer":
+                    result.get(
+                        "text",
+                        "تم تعديل الصورة بنجاح."
+                    ),
+
+                "imageUrl":
+                    result.get(
+                        "image_url",
+                        ""
+                    ),
+
+                "provider":
+                    "Mistral",
+
+                "conversation_id":
+                    conversation_id
+            }
+
+
         # ----------------------------------------------------
-        # IMAGE UNDERSTANDING
-        #
-        # Groq Vision
-        #      ↓
-        # OpenRouter Vision
+        # Image analysis
         # ----------------------------------------------------
 
-        vision_providers = [
+        print(
+            "MISTRAL IMAGE ANALYSIS"
+        )
 
-            (
-                "Groq Vision",
+        try:
 
-                lambda:
-                    groq_vision(
+            answer = mistral_vision(
 
-                        message,
+                message,
 
-                        image_bytes,
+                image_bytes,
 
-                        mime_type
-                    )
-            ),
+                mime_type
+            )
 
-            (
-                "OpenRouter Vision",
+            return {
 
-                lambda:
-                    openrouter_vision(
+                "answer":
+                    answer,
 
-                        message,
+                "imageUrl":
+                    "",
 
-                        image_bytes,
+                "provider":
+                    "Mistral Vision",
 
-                        mime_type
-                    )
-            ),
-        ]
+                "conversation_id":
+                    conversation_id
+            }
 
-        for (
-            provider_name,
-            provider_function
-        ) in vision_providers:
+        except Exception as e:
 
-            try:
+            print(
+                "MISTRAL VISION FAILED:",
+                repr(e)
+            )
 
-                print(
-                    "TRYING VISION PROVIDER:",
-                    provider_name
-                )
+            return {
 
-                answer = provider_function()
+                "answer":
+                    "تعذر تحليل الصورة حاليًا باستخدام Mistral.",
 
-                if answer:
+                "imageUrl":
+                    "",
 
-                    print(
-                        "VISION PROVIDER SUCCESS:",
-                        provider_name
-                    )
+                "provider":
+                    "Mistral Vision",
 
-                    return {
+                "conversation_id":
+                    conversation_id
+            }
 
-                        "answer":
-                            answer,
-
-                        "imageUrl":
-                            "",
-
-                        "provider":
-                            provider_name,
-
-                        "conversation_id":
-                            conversation_id,
-                    }
-
-            except Exception as e:
-
-                print(
-                    "VISION PROVIDER FAILED:",
-                    provider_name,
-
-                    repr(e)
-                )
-
-        return {
-
-            "answer":
-                "تعذر تحليل الصورة حاليًا.",
-
-            "imageUrl":
-                "",
-
-            "provider":
-                None,
-
-            "conversation_id":
-                conversation_id,
-        }
 
     # ========================================================
-    # TEXT -> IMAGE
+    # NO INPUT IMAGE
+    # ========================================================
+    #
+    # Text -> Image
+    #
     # ========================================================
 
-    return generate_image_with_fallbacks(
+    result = generate_image_with_fallbacks(
 
         message,
 
@@ -1600,6 +2302,49 @@ def get_image_response(
     )
 
 
+    if isinstance(
+        result,
+        str
+    ) and result.startswith(
+        "IMAGE_URL:"
+    ):
+
+        image_url = result[
+            len("IMAGE_URL:")
+        ].strip()
+
+        return {
+
+            "answer":
+                "تم إنشاء الصورة بنجاح.",
+
+            "imageUrl":
+                image_url,
+
+            "provider":
+                "Mistral",
+
+            "conversation_id":
+                conversation_id
+        }
+
+
+    return {
+
+        "answer":
+            str(result),
+
+        "imageUrl":
+            "",
+
+        "provider":
+            "Mistral",
+
+        "conversation_id":
+            conversation_id
+    }
+
+
 # ============================================================
 # GET RESPONSE
 # ============================================================
@@ -1608,6 +2353,16 @@ def get_response(
     message,
     conversation_id=None
 ):
+    """
+    Main TEXT entry point.
+
+    TEXT:
+        Groq -> OpenRouter -> Gemini
+
+    IMAGE REQUESTS:
+        Routed to get_image_response()
+        -> Mistral ONLY
+    """
 
     message = str(
         message or ""
@@ -1627,8 +2382,9 @@ def get_response(
                 None,
 
             "conversation_id":
-                conversation_id,
+                conversation_id
         }
+
 
     print("=" * 70)
 
@@ -1647,6 +2403,7 @@ def get_response(
     )
 
     print("=" * 70)
+
 
     # ========================================================
     # GREETING
@@ -1668,8 +2425,9 @@ def get_response(
                 "Aido AI",
 
             "conversation_id":
-                conversation_id,
+                conversation_id
         }
+
 
     # ========================================================
     # IMAGE REQUEST
@@ -1683,7 +2441,7 @@ def get_response(
             "IMAGE REQUEST DETECTED"
         )
 
-        result = get_image_response(
+        return get_image_response(
 
             message,
 
@@ -1694,52 +2452,6 @@ def get_response(
             conversation_id
         )
 
-        # ----------------------------------------------------
-        # app.py expects IMAGE_URL:
-        # ----------------------------------------------------
-
-        if isinstance(
-            result,
-            str
-        ):
-
-            if result.startswith(
-                "IMAGE_URL:"
-            ):
-
-                return {
-
-                    "answer":
-                        "تم إنشاء الصورة بنجاح.",
-
-                    "imageUrl":
-                        result[
-                            len("IMAGE_URL:"):
-                        ].strip(),
-
-                    "provider":
-                        "OpenRouter",
-
-                    "conversation_id":
-                        conversation_id,
-                }
-
-            return {
-
-                "answer":
-                    result,
-
-                "imageUrl":
-                    "",
-
-                "provider":
-                    "OpenRouter",
-
-                "conversation_id":
-                    conversation_id,
-            }
-
-        return result
 
     # ========================================================
     # TEXT PROVIDERS
@@ -1747,6 +2459,8 @@ def get_response(
     # GROQ
     #   ↓
     # OPENROUTER
+    #   ↓
+    # GEMINI
     # ========================================================
 
     providers = [
@@ -1760,9 +2474,15 @@ def get_response(
             "OpenRouter",
             openrouter_text
         ),
+
+        (
+            "Gemini",
+            gemini_text
+        ),
     ]
 
     errors = []
+
 
     for (
         provider_name,
@@ -1799,8 +2519,9 @@ def get_response(
                         provider_name,
 
                     "conversation_id":
-                        conversation_id,
+                        conversation_id
                 }
+
 
         except Exception as e:
 
@@ -1819,8 +2540,9 @@ def get_response(
                 error_text
             )
 
+
     # ========================================================
-    # EVERYTHING FAILED
+    # ALL TEXT PROVIDERS FAILED
     # ========================================================
 
     print(
@@ -1833,6 +2555,7 @@ def get_response(
             "TEXT ERROR:",
             error
         )
+
 
     return {
 
@@ -1849,7 +2572,7 @@ def get_response(
             None,
 
         "conversation_id":
-            conversation_id,
+            conversation_id
     }
 
 
@@ -1860,13 +2583,8 @@ def get_response(
 def quick_response(
     message
 ):
-
     """
-    Compatibility function.
-
-    Older app.py/API.py versions may call:
-
-        quick_response(message)
+    Compatibility function for older app.py/API.py versions.
     """
 
     return get_response(
@@ -1887,7 +2605,8 @@ def ask(
 
         message,
 
-        conversation_id=conversation_id
+        conversation_id=
+            conversation_id
     )
 
 
@@ -1914,7 +2633,13 @@ print(
 print("=" * 70)
 
 print(
-    "PRIMARY TEXT AI:"
+    "FINAL PROVIDER ROUTING"
+)
+
+print("-" * 70)
+
+print(
+    "TEXT:"
 )
 
 print(
@@ -1922,52 +2647,92 @@ print(
 )
 
 print(
-    "TEXT ROUTE:"
+    "      ↓"
 )
 
 print(
-    "    GROQ -> OPENROUTER"
+    "    OPENROUTER"
 )
 
 print(
-    "VISION ROUTE:"
+    "      ↓"
 )
 
 print(
-    "    GROQ VISION -> OPENROUTER VISION"
+    "    GEMINI"
 )
+
+print("-" * 70)
+
+print(
+    "IMAGE ANALYSIS:"
+)
+
+print(
+    "    MISTRAL ONLY"
+)
+
+print("-" * 70)
 
 print(
     "IMAGE GENERATION:"
 )
 
 print(
-    "    OPENROUTER IMAGE"
+    "    MISTRAL ONLY"
+)
+
+print("-" * 70)
+
+print(
+    "IMAGE EDITING:"
 )
 
 print(
-    "OPENROUTER IMAGE MODEL:"
+    "    MISTRAL ONLY"
+)
+
+print("-" * 70)
+
+print(
+    "GROQ:"
 )
 
 print(
-    f"    {OPENROUTER_IMAGE_MODEL}"
+    "    TEXT ONLY"
+)
+
+print("-" * 70)
+
+print(
+    "OPENROUTER:"
 )
 
 print(
-    "DIRECT GEMINI API:"
+    "    TEXT ONLY"
+)
+
+print("-" * 70)
+
+print(
+    "GEMINI:"
 )
 
 print(
-    "    DISABLED"
+    "    TEXT ONLY"
 )
+
+print("-" * 70)
 
 print(
     "MISTRAL:"
 )
 
 print(
-    "    DISABLED"
+    "    IMAGES ONLY"
 )
+
+print("-" * 70)
 
 print(
     "xAI:"
@@ -1976,6 +2741,8 @@ print(
 print(
     "    DISABLED"
 )
+
+print("-" * 70)
 
 print(
     "POLLINATIONS:"
