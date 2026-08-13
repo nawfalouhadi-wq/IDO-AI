@@ -5,7 +5,7 @@ from memory import create_conversation
 
 
 # =========================================================
-# إنشاء API Blueprint
+# API BLUEPRINT
 # =========================================================
 
 api = Blueprint(
@@ -15,7 +15,7 @@ api = Blueprint(
 
 
 # =========================================================
-# إنشاء / استرجاع Conversation ID
+# CONVERSATION ID
 # =========================================================
 
 def resolve_conversation_id(
@@ -33,7 +33,6 @@ def resolve_conversation_id(
         ).strip()
 
         if conversation_id:
-
             return conversation_id
 
 
@@ -47,15 +46,19 @@ def resolve_conversation_id(
             "محادثة جديدة"
         )
 
-
         if isinstance(
             conversation,
             dict
         ):
 
-            return conversation.get(
-                "id"
+            conversation_id = (
+                conversation.get("id")
             )
+
+            if conversation_id:
+                return str(
+                    conversation_id
+                )
 
 
         if conversation:
@@ -77,7 +80,7 @@ def resolve_conversation_id(
 
 
 # =========================================================
-# Chat API
+# CHAT API
 # =========================================================
 
 @api.route(
@@ -109,7 +112,13 @@ def chat_api():
                 "تعذر قراءة الطلب.",
 
             "error":
-                str(e)
+                str(e),
+
+            "imageUrl":
+                "",
+
+            "provider":
+                None
 
         }), 400
 
@@ -118,15 +127,24 @@ def chat_api():
     # التحقق من البيانات
     # =====================================================
 
-    if not data:
+    if not isinstance(
+        data,
+        dict
+    ):
 
         return jsonify({
 
             "answer":
-                "لم يتم إرسال بيانات.",
+                "لم يتم إرسال بيانات صحيحة.",
 
             "error":
-                "No data received"
+                "Invalid JSON data",
+
+            "imageUrl":
+                "",
+
+            "provider":
+                None
 
         }), 400
 
@@ -142,7 +160,6 @@ def chat_api():
 
 
     if message is None:
-
         message = ""
 
 
@@ -156,19 +173,23 @@ def chat_api():
         return jsonify({
 
             "answer":
-                "اكتب رسالة أولًا."
+                "اكتب رسالة أولًا.",
 
-        })
+            "imageUrl":
+                "",
+
+            "provider":
+                None
+
+        }), 400
 
 
     # =====================================================
     # Conversation ID
     # =====================================================
 
-    conversation_id = (
-        data.get(
-            "conversation_id"
-        )
+    conversation_id = data.get(
+        "conversation_id"
     )
 
 
@@ -180,7 +201,7 @@ def chat_api():
 
 
     # =====================================================
-    # تسجيل الطلب
+    # LOG
     # =====================================================
 
     print("=" * 60)
@@ -203,15 +224,10 @@ def chat_api():
 
 
     # =====================================================
-    # إرسال الرسالة إلى Brain
+    # إرسال الطلب إلى Brain
     # =====================================================
 
     try:
-
-        # -------------------------------------------------
-        # نحاول أولًا النسخة الجديدة التي تدعم
-        # conversation_id
-        # -------------------------------------------------
 
         try:
 
@@ -220,17 +236,12 @@ def chat_api():
                 conversation_id=conversation_id
             )
 
-
-        except TypeError as e:
+        except TypeError:
 
             print(
-                "GET_RESPONSE COMPATIBILITY:",
-                repr(e)
+                "GET_RESPONSE COMPATIBILITY:"
+                " conversation_id unsupported"
             )
-
-            # -------------------------------------------------
-            # توافق مع brain.py قديم
-            # -------------------------------------------------
 
             answer = get_response(
                 message
@@ -238,7 +249,15 @@ def chat_api():
 
 
         # =================================================
-        # معالجة نتيجة Brain
+        # Brain أعاد Dictionary
+        #
+        # مثال:
+        #
+        # {
+        #     "answer": "...",
+        #     "imageUrl": "...",
+        #     "provider": "Gemini"
+        # }
         # =================================================
 
         if isinstance(
@@ -249,8 +268,12 @@ def chat_api():
             response_data = {
 
                 "answer":
-                    answer.get(
-                        "answer",
+                    str(
+                        answer.get(
+                            "answer",
+                            "تم تنفيذ الطلب."
+                        )
+                        or
                         "تم تنفيذ الطلب."
                     ),
 
@@ -258,8 +281,12 @@ def chat_api():
                     conversation_id,
 
                 "imageUrl":
-                    answer.get(
-                        "imageUrl",
+                    str(
+                        answer.get(
+                            "imageUrl",
+                            ""
+                        )
+                        or
                         ""
                     ),
 
@@ -267,8 +294,13 @@ def chat_api():
                     answer.get(
                         "provider"
                     )
+
             }
 
+
+        # =================================================
+        # Brain أعاد نصًا عاديًا
+        # =================================================
 
         else:
 
@@ -288,12 +320,13 @@ def chat_api():
                     "",
 
                 "provider":
-                    None
+                    "Groq"
+
             }
 
 
         # =================================================
-        # تسجيل النجاح
+        # LOG SUCCESS
         # =================================================
 
         print(
@@ -309,8 +342,12 @@ def chat_api():
 
         print(
             "IMAGE URL:",
-            response_data.get(
-                "imageUrl"
+            (
+                "YES"
+                if response_data.get(
+                    "imageUrl"
+                )
+                else "NO"
             )
         )
 
@@ -321,12 +358,11 @@ def chat_api():
             )
         )
 
-
         print("=" * 60)
 
 
         # =================================================
-        # إرسال JSON
+        # JSON RESPONSE
         # =================================================
 
         return jsonify(
@@ -335,7 +371,7 @@ def chat_api():
 
 
     # =====================================================
-    # خطأ Brain
+    # BRAIN ERROR
     # =====================================================
 
     except Exception as e:
@@ -357,7 +393,7 @@ def chat_api():
 
             "answer":
                 "حدث خطأ أثناء معالجة "
-                "الرسالة في Aido AI.",
+                "الرسالة في Ido AI.",
 
             "error":
                 str(e),
