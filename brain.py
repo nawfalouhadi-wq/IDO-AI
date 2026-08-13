@@ -2,25 +2,31 @@
 # Ido AI - Unified AI Brain
 # ============================================================
 #
-# PRIMARY AI:
-#     GROQ
+# PRIMARY TEXT AI:
+#     Groq
 #
-# TEXT:
-#     GROQ -> MISTRAL -> OPENROUTER -> GEMINI -> XAI -> POLLINATIONS
+# TEXT FALLBACKS:
+#     Mistral
+#     OpenRouter
+#     xAI
+#     Pollinations
 #
-# IMAGE UNDERSTANDING:
-#     GROQ VISION -> GEMINI VISION
+# IMAGE ANALYSIS:
+#     Groq Vision
+#     -> Mistral Vision
+#     -> OpenRouter Vision
 #
 # IMAGE GENERATION:
-#     GROQ understands the request
-#             |
-#             v
-#     GEMINI 3.1 FLASH IMAGE
+#     Gemini
+#     -> Pollinations
+#     -> OpenRouter
 #
 # IMPORTANT:
-#     Groq is the PRIMARY AI for understanding and text.
-#     Groq is NOT asked to generate an image through Chat API.
-#     Gemini is used as the image-generation engine.
+#     Image requests NEVER go through the normal text route.
+#
+# Compatible with:
+#     app.py
+#     api.py
 #
 # ============================================================
 
@@ -30,19 +36,6 @@ import time
 import requests
 
 from dotenv import load_dotenv
-
-
-# ============================================================
-# GEMINI SDK
-# ============================================================
-
-try:
-    from google import genai
-    from google.genai import types
-
-except Exception:
-    genai = None
-    types = None
 
 
 # ============================================================
@@ -59,14 +52,12 @@ CONNECT_TIMEOUT = float(
     )
 )
 
-
 READ_TIMEOUT = float(
     os.getenv(
         "REQUEST_READ_TIMEOUT",
-        "30"
+        "60"
     )
 )
-
 
 REQUEST_TIMEOUT = (
     CONNECT_TIMEOUT,
@@ -86,11 +77,10 @@ _provider_disabled_until = {}
 
 
 # ============================================================
-# PROVIDER CONTROL
+# SAFE PROVIDER CONTROL
 # ============================================================
 
 def provider_available(name):
-
     until = _provider_disabled_until.get(
         name,
         0
@@ -103,7 +93,6 @@ def disable_provider(
     name,
     reason="temporary failure"
 ):
-
     _provider_disabled_until[name] = (
         time.time()
         + CIRCUIT_BREAK_SECONDS
@@ -120,13 +109,11 @@ def provider_failure(
     name,
     status_code=None
 ):
-
     if status_code in (
         401,
         403,
         429
     ):
-
         disable_provider(
             name,
             f"HTTP {status_code}"
@@ -143,13 +130,9 @@ def clean_answer(value):
         return None
 
     try:
-
-        value = str(
-            value
-        ).strip()
+        value = str(value).strip()
 
     except Exception:
-
         return None
 
     return value or None
@@ -161,7 +144,6 @@ def request_json(
 ):
 
     try:
-
         return response.json()
 
     except Exception as exc:
@@ -180,98 +162,42 @@ def request_json(
 
 
 # ============================================================
-# GEMINI
-# ============================================================
-
-GEMINI_API_KEY = os.getenv(
-    "GEMINI_API_KEY"
-)
-
-
-# Gemini native image model.
-#
-# Current Google image model:
-# Gemini 3.1 Flash Image
-#
-GEMINI_IMAGE_MODEL = os.getenv(
-    "GEMINI_IMAGE_MODEL",
-    "gemini-3.1-flash-image"
-)
-
-
-GEMINI_TEXT_MODEL = os.getenv(
-    "GEMINI_MODEL",
-    "gemini-3.5-flash"
-)
-
-
-GEMINI_ENABLED = (
-    bool(GEMINI_API_KEY)
-    and genai is not None
-)
-
-
-gemini_client = None
-
-
-if GEMINI_ENABLED:
-
-    try:
-
-        gemini_client = genai.Client(
-            api_key=GEMINI_API_KEY
-        )
-
-        print(
-            "GEMINI CLIENT: READY"
-        )
-
-        print(
-            "GEMINI TEXT MODEL:",
-            GEMINI_TEXT_MODEL
-        )
-
-        print(
-            "GEMINI IMAGE MODEL:",
-            GEMINI_IMAGE_MODEL
-        )
-
-    except Exception as exc:
-
-        print(
-            "GEMINI CLIENT ERROR:",
-            exc
-        )
-
-        gemini_client = None
-
-else:
-
-    print(
-        "GEMINI: SKIPPED "
-        "(missing API key or SDK)"
-    )
-
-
-# ============================================================
-# GROQ
+# API KEYS
 # ============================================================
 
 GROQ_API_KEY = os.getenv(
     "GROQ_API_KEY"
 )
 
-
-GROQ_URL = (
-    "https://api.groq.com/openai/v1/chat/completions"
+MISTRAL_API_KEY = os.getenv(
+    "MISTRAL_API_KEY"
 )
 
+OPENROUTER_API_KEY = os.getenv(
+    "OPENROUTER_API_KEY"
+)
+
+XAI_API_KEY = os.getenv(
+    "XAI_API_KEY"
+)
+
+POLLINATIONS_API_KEY = os.getenv(
+    "POLLINATIONS_API_KEY"
+)
+
+GEMINI_API_KEY = os.getenv(
+    "GEMINI_API_KEY"
+)
+
+
+# ============================================================
+# MODELS
+# ============================================================
 
 GROQ_MODEL = os.getenv(
     "GROQ_MODEL",
     "openai/gpt-oss-20b"
 )
-
 
 GROQ_VISION_MODEL = os.getenv(
     "GROQ_VISION_MODEL",
@@ -279,300 +205,326 @@ GROQ_VISION_MODEL = os.getenv(
 )
 
 
+MISTRAL_MODEL = os.getenv(
+    "MISTRAL_MODEL",
+    "mistral-small-latest"
+)
+
+MISTRAL_VISION_MODEL = os.getenv(
+    "MISTRAL_VISION_MODEL",
+    "pixtral-12b-2409"
+)
+
+
+OPENROUTER_TEXT_MODEL = os.getenv(
+    "OPENROUTER_TEXT_MODEL",
+    "openai/gpt-oss-20b"
+)
+
+OPENROUTER_VISION_MODEL = os.getenv(
+    "OPENROUTER_VISION_MODEL",
+    "google/gemini-2.5-flash"
+)
+
+OPENROUTER_IMAGE_MODEL = os.getenv(
+    "OPENROUTER_IMAGE_MODEL",
+    "openai/gpt-image-1"
+)
+
+
+XAI_MODEL = os.getenv(
+    "XAI_MODEL",
+    "grok-4.5"
+)
+
+
+POLLINATIONS_TEXT_MODEL = os.getenv(
+    "POLLINATIONS_TEXT_MODEL",
+    "openai"
+)
+
+POLLINATIONS_IMAGE_MODEL = os.getenv(
+    "POLLINATIONS_IMAGE_MODEL",
+    "flux"
+)
+
+
+GEMINI_IMAGE_MODEL = os.getenv(
+    "GEMINI_IMAGE_MODEL",
+    "gemini-2.5-flash-image"
+)
+
+
+# ============================================================
+# ENDPOINTS
+# ============================================================
+
+GROQ_URL = (
+    "https://api.groq.com/openai/v1/chat/completions"
+)
+
+
+MISTRAL_URL = (
+    "https://api.mistral.ai/v1/chat/completions"
+)
+
+
+OPENROUTER_CHAT_URL = (
+    "https://openrouter.ai/api/v1/chat/completions"
+)
+
+
+OPENROUTER_IMAGE_URL = (
+    "https://openrouter.ai/api/v1/images"
+)
+
+
+XAI_URL = (
+    "https://api.x.ai/v1/chat/completions"
+)
+
+
+POLLINATIONS_CHAT_URL = (
+    "https://gen.pollinations.ai/v1/chat/completions"
+)
+
+
+POLLINATIONS_IMAGE_URL = (
+    "https://gen.pollinations.ai/image/"
+)
+
+
+# ============================================================
+# STARTUP STATUS
+# ============================================================
+
+print("=" * 60)
+print("IDO AI BRAIN.PY LOADED")
+print("=" * 60)
+
 if GROQ_API_KEY:
-
-    print(
-        "GROQ CLIENT: READY"
-    )
-
-    print(
-        "GROQ TEXT MODEL:",
-        GROQ_MODEL
-    )
-
-    print(
-        "GROQ VISION MODEL:",
-        GROQ_VISION_MODEL
-    )
-
+    print("GROQ CLIENT: READY")
+    print("GROQ TEXT MODEL:", GROQ_MODEL)
+    print("GROQ VISION MODEL:", GROQ_VISION_MODEL)
 else:
+    print("GROQ_API_KEY: NOT FOUND")
 
-    print(
-        "GROQ_API_KEY: NOT FOUND"
-    )
+
+if MISTRAL_API_KEY:
+    print("MISTRAL CLIENT: READY")
+else:
+    print("MISTRAL_API_KEY: NOT FOUND")
+
+
+if OPENROUTER_API_KEY:
+    print("OPENROUTER CLIENT: READY")
+else:
+    print("OPENROUTER_API_KEY: NOT FOUND")
+
+
+if XAI_API_KEY:
+    print("XAI CLIENT: READY")
+else:
+    print("XAI_API_KEY: NOT FOUND")
+
+
+if POLLINATIONS_API_KEY:
+    print("POLLINATIONS CLIENT: READY")
+else:
+    print("POLLINATIONS_API_KEY: NOT FOUND")
+
+
+if GEMINI_API_KEY:
+    print("GEMINI CLIENT: READY")
+    print("GEMINI IMAGE MODEL:", GEMINI_IMAGE_MODEL)
+else:
+    print("GEMINI_API_KEY: NOT FOUND")
+
+
+print("=" * 60)
 
 
 # ============================================================
-# GROQ SYSTEM PROMPT
+# GEMINI IMAGE GENERATION
 # ============================================================
 
-GROQ_SYSTEM_PROMPT = """
-أنت Groq، العقل الأساسي في Ido AI.
+def generate_image_gemini(prompt):
 
-أنت المسؤول الأول عن فهم طلب المستخدم والإجابة عليه.
+    if not GEMINI_API_KEY:
+        print(
+            "GEMINI IMAGE: API KEY NOT FOUND"
+        )
+        return None
 
-القواعد:
+    if not provider_available(
+        "GEMINI_IMAGE"
+    ):
+        return None
 
-1. أجب عن الأسئلة النصية بشكل طبيعي.
-2. إذا بدأت الرسالة بتحية مثل:
-   السلام عليكم
-   مرحبا
-   أهلا
-   سلام
-   ثم احتوت على طلب حقيقي، لا تكتفِ بالتحية.
-   افهم الطلب الموجود بعد التحية ونفذه.
-3. إذا طلب المستخدم إنشاء صورة، لا تقل:
-   لا أستطيع إنشاء الصور.
-4. في طلبات الصور، لا تقدم وصفًا طويلًا بدل الصورة.
-5. طلب الصورة سيتم تحويله إلى مولد الصور بعد أن تفهمه.
-6. عندما تكون الرسالة طلب صورة، أعد وصفًا واضحًا ومناسبًا كموجه Image Prompt.
-7. لا تقل للمستخدم إنك لا تستطيع إنشاء الصور.
-8. كن مختصرًا وطبيعيًا.
-"""
+    try:
 
+        print("=" * 45)
+        print("GEMINI IMAGE GENERATION STARTED")
+        print(
+            "GEMINI IMAGE MODEL:",
+            GEMINI_IMAGE_MODEL
+        )
 
-# ============================================================
-# REMOVE GREETING FROM IMAGE REQUEST
-# ============================================================
+        url = (
+            "https://generativelanguage.googleapis.com/"
+            "v1beta/models/"
+            f"{GEMINI_IMAGE_MODEL}:generateContent"
+        )
 
-GREETING_PREFIXES = [
+        response = requests.post(
 
-    "السلام عليكم",
-    "السلام عليكم ورحمة الله وبركاته",
-    "سلام عليكم",
+            url,
 
-    "مرحبا",
-    "مرحبًا",
+            params={
+                "key": GEMINI_API_KEY
+            },
 
-    "اهلا",
-    "أهلا",
-    "أهلاً",
+            headers={
+                "Content-Type":
+                    "application/json"
+            },
 
-    "سلام",
+            json={
+                "contents": [
+                    {
+                        "parts": [
+                            {
+                                "text":
+                                    prompt
+                            }
+                        ]
+                    }
+                ],
 
-    "hello",
-    "hi",
-    "hey"
-]
+                "generationConfig": {
+                    "responseModalities": [
+                        "TEXT",
+                        "IMAGE"
+                    ]
+                }
+            },
 
+            timeout=REQUEST_TIMEOUT
+        )
 
-def remove_greeting(
-    message
-):
+        print(
+            "GEMINI IMAGE STATUS:",
+            response.status_code
+        )
 
-    if not message:
-        return ""
+        if response.status_code != 200:
 
-    text = str(
-        message
-    ).strip()
+            print(
+                "GEMINI IMAGE RESPONSE:",
+                response.text[:2000]
+            )
 
-    lower = text.lower()
+            provider_failure(
+                "GEMINI_IMAGE",
+                response.status_code
+            )
 
-    changed = True
+            return None
 
-    while changed:
+        data = request_json(
+            response,
+            "Gemini Image"
+        )
 
-        changed = False
+        if not data:
+            return None
 
-        for greeting in GREETING_PREFIXES:
+        candidates = data.get(
+            "candidates",
+            []
+        )
 
-            prefix = greeting.lower()
+        if not candidates:
+            return None
 
-            if lower.startswith(prefix):
+        content = candidates[0].get(
+            "content",
+            {}
+        )
 
-                text = text[
-                    len(greeting):
-                ].strip()
+        parts = content.get(
+            "parts",
+            []
+        )
 
-                # Remove punctuation after greeting.
+        for part in parts:
 
-                text = text.lstrip(
-                    "،,.:;!؟? "
+            inline_data = part.get(
+                "inlineData"
+            )
+
+            if not inline_data:
+                continue
+
+            mime_type = inline_data.get(
+                "mimeType",
+                "image/png"
+            )
+
+            image_base64 = inline_data.get(
+                "data"
+            )
+
+            if image_base64:
+
+                image_url = (
+                    f"data:{mime_type};base64,"
+                    f"{image_base64}"
                 )
 
-                lower = text.lower()
+                print(
+                    "GEMINI IMAGE: SUCCESS"
+                )
 
-                changed = True
+                return image_url
 
-                break
-
-    return text.strip()
-
-
-# ============================================================
-# IMAGE REQUEST DETECTION
-# ============================================================
-
-IMAGE_WORDS = [
-
-    # Arabic
-
-    "أنشئ صورة",
-    "انشئ صورة",
-
-    "أنشئ لي صورة",
-    "انشئ لي صورة",
-
-    "اصنع صورة",
-    "اصنع لي صورة",
-
-    "إنشاء صورة",
-    "انشاء صورة",
-
-    "ولد صورة",
-    "ولّد صورة",
-
-    "ارسم صورة",
-    "ارسم لي",
-
-    "صمم صورة",
-    "صمم لي صورة",
-
-    "اعمل صورة",
-    "اعمل لي صورة",
-
-    "صور لي",
-    "صورة لي",
-
-    # English
-
-    "generate an image",
-    "generate image",
-
-    "create an image",
-    "create image",
-
-    "make an image",
-    "make image",
-
-    "draw an image",
-    "draw image",
-
-    "create a picture",
-    "generate a picture",
-
-    "make a picture"
-]
-
-
-def is_image_generation_request(
-    message
-):
-
-    if not message:
-        return False
-
-    text = str(
-        message
-    ).strip().lower()
-
-    # Remove greetings before detection.
-
-    text_without_greeting = (
-        remove_greeting(
-            text
-        )
-    )
-
-    return any(
-        word.lower()
-        in text_without_greeting
-        for word in IMAGE_WORDS
-    )
-
-
-# ============================================================
-# EXTRACT IMAGE PROMPT
-# ============================================================
-
-IMAGE_PREFIXES = [
-
-    "أنشئ لي صورة",
-    "أنشئ صورة",
-
-    "انشئ لي صورة",
-    "انشئ صورة",
-
-    "اصنع لي صورة",
-    "اصنع صورة",
-
-    "إنشاء صورة",
-    "انشاء صورة",
-
-    "ولد صورة",
-    "ولّد صورة",
-
-    "ارسم لي",
-    "ارسم صورة",
-
-    "صمم لي صورة",
-    "صمم صورة",
-
-    "اعمل لي صورة",
-    "اعمل صورة",
-
-    "صور لي",
-    "صورة لي",
-
-    "generate an image of",
-    "generate image of",
-
-    "create an image of",
-    "create image of",
-
-    "make an image of",
-    "make image of",
-
-    "draw an image of",
-
-    "create a picture of",
-    "generate a picture of",
-
-    "make a picture of"
-]
-
-
-def get_image_prompt(
-    message
-):
-
-    if not message:
-        return ""
-
-    text = remove_greeting(
-        message
-    )
-
-    if not text:
-        return ""
-
-    lower = text.lower()
-
-    for prefix in IMAGE_PREFIXES:
-
-        prefix_lower = (
-            prefix.lower()
+        print(
+            "GEMINI IMAGE: NO IMAGE RETURNED"
         )
 
-        if lower.startswith(
-            prefix_lower
-        ):
+        return None
 
-            return text[
-                len(prefix):
-            ].strip()
+    except requests.exceptions.Timeout:
 
-    return text
+        print(
+            "GEMINI IMAGE: TIMEOUT"
+        )
+
+        return None
+
+    except requests.exceptions.ConnectionError:
+
+        print(
+            "GEMINI IMAGE: CONNECTION ERROR"
+        )
+
+        return None
+
+    except Exception as exc:
+
+        print(
+            "GEMINI IMAGE ERROR:",
+            exc
+        )
+
+        return None
 
 
 # ============================================================
 # GROQ TEXT
 # ============================================================
 
-def ask_groq(
-    message
-):
+def ask_groq(message):
 
     if not GROQ_API_KEY:
         return None
@@ -604,20 +556,10 @@ def ask_groq(
             },
 
             json={
-
                 "model":
                     GROQ_MODEL,
 
                 "messages": [
-
-                    {
-                        "role":
-                            "system",
-
-                        "content":
-                            GROQ_SYSTEM_PROMPT
-                    },
-
                     {
                         "role":
                             "user",
@@ -625,7 +567,6 @@ def ask_groq(
                         "content":
                             message
                     }
-
                 ],
 
                 "temperature":
@@ -638,12 +579,10 @@ def ask_groq(
             timeout=REQUEST_TIMEOUT
         )
 
-
         print(
             "Groq Status:",
             response.status_code
         )
-
 
         if response.status_code != 200:
 
@@ -659,26 +598,21 @@ def ask_groq(
 
             return None
 
-
         data = request_json(
             response,
             "Groq"
         )
 
-
         if not data:
             return None
-
 
         choices = data.get(
             "choices",
             []
         )
 
-
         if not choices:
             return None
-
 
         content = (
             choices[0]
@@ -691,11 +625,9 @@ def ask_groq(
             )
         )
 
-
         answer = clean_answer(
             content
         )
-
 
         if answer:
 
@@ -705,27 +637,23 @@ def ask_groq(
 
             return answer
 
-
         return None
-
 
     except requests.exceptions.Timeout:
 
         print(
-            "Groq ERROR: timeout."
+            "Groq ERROR: timeout"
         )
 
         return None
-
 
     except requests.exceptions.ConnectionError:
 
         print(
-            "Groq ERROR: connection failed."
+            "Groq ERROR: connection failed"
         )
 
         return None
-
 
     except Exception as exc:
 
@@ -738,355 +666,704 @@ def ask_groq(
 
 
 # ============================================================
-# GEMINI TEXT
+# MISTRAL TEXT
 # ============================================================
 
-def ask_gemini(
-    message
-):
+def ask_mistral(message):
 
-    if not GEMINI_ENABLED:
-        return None
-
-    if gemini_client is None:
+    if not MISTRAL_API_KEY:
         return None
 
     if not message:
         return None
 
     if not provider_available(
-        "GEMINI"
+        "MISTRAL"
     ):
         return None
 
     try:
 
         print(
-            "Trying Gemini TEXT..."
+            "Trying Mistral..."
         )
 
-        response = (
-            gemini_client.models.generate_content(
-                model=GEMINI_TEXT_MODEL,
-                contents=message
-            )
+        response = requests.post(
+
+            MISTRAL_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {MISTRAL_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+                "model":
+                    MISTRAL_MODEL,
+
+                "messages": [
+                    {
+                        "role":
+                            "user",
+
+                        "content":
+                            message
+                    }
+                ],
+
+                "temperature":
+                    0.7,
+
+                "max_tokens":
+                    2048
+            },
+
+            timeout=REQUEST_TIMEOUT
         )
 
-        answer = clean_answer(
-            getattr(
-                response,
-                "text",
-                None
-            )
+        print(
+            "Mistral Status:",
+            response.status_code
         )
 
-        if answer:
+        if response.status_code != 200:
 
             print(
-                "Gemini TEXT response received."
+                "Mistral Response:",
+                response.text[:1500]
             )
 
-            return answer
-
-        return None
-
-
-    except Exception as exc:
-
-        text = str(
-            exc
-        )
-
-        print(
-            "Gemini TEXT ERROR:",
-            text
-        )
-
-
-        if (
-            "429" in text
-            or
-            "RESOURCE_EXHAUSTED"
-            in text
-        ):
-
-            disable_provider(
-                "GEMINI",
-                "quota exceeded"
-            )
-
-
-        return None
-
-
-# ============================================================
-# GEMINI IMAGE GENERATION
-# ============================================================
-
-def generate_image_gemini(
-    prompt
-):
-
-    if not GEMINI_ENABLED:
-
-        print(
-            "GEMINI IMAGE: "
-            "CLIENT NOT AVAILABLE"
-        )
-
-        return None
-
-
-    if gemini_client is None:
-
-        return None
-
-
-    if not prompt:
-
-        return None
-
-
-    if not provider_available(
-        "GEMINI_IMAGE"
-    ):
-
-        print(
-            "GEMINI IMAGE: "
-            "TEMPORARILY DISABLED"
-        )
-
-        return None
-
-
-    try:
-
-        print(
-            "=" * 60
-        )
-
-        print(
-            "GEMINI IMAGE GENERATION STARTED"
-        )
-
-        print(
-            "MODEL:",
-            GEMINI_IMAGE_MODEL
-        )
-
-        print(
-            "PROMPT:",
-            prompt
-        )
-
-        print(
-            "=" * 60
-        )
-
-
-        response = (
-            gemini_client.models.generate_content(
-
-                model=
-                    GEMINI_IMAGE_MODEL,
-
-                contents=
-                    prompt,
-
-                config=
-                    types.GenerateContentConfig(
-
-                        response_modalities=[
-                            "IMAGE"
-                        ]
-
-                    )
-            )
-        )
-
-
-        # ----------------------------------------------------
-        # Find generated image
-        # ----------------------------------------------------
-
-        if not getattr(
-            response,
-            "candidates",
-            None
-        ):
-
-            print(
-                "GEMINI IMAGE: "
-                "NO CANDIDATES"
+            provider_failure(
+                "MISTRAL",
+                response.status_code
             )
 
             return None
 
-
-        for candidate in response.candidates:
-
-            content = getattr(
-                candidate,
-                "content",
-                None
-            )
-
-
-            if not content:
-                continue
-
-
-            parts = getattr(
-                content,
-                "parts",
-                []
-            )
-
-
-            for part in parts:
-
-                inline_data = getattr(
-                    part,
-                    "inline_data",
-                    None
-                )
-
-
-                if not inline_data:
-                    continue
-
-
-                image_data = getattr(
-                    inline_data,
-                    "data",
-                    None
-                )
-
-
-                mime_type = getattr(
-                    inline_data,
-                    "mime_type",
-                    None
-                )
-
-
-                if not image_data:
-
-                    continue
-
-
-                if not mime_type:
-
-                    mime_type = (
-                        "image/png"
-                    )
-
-
-                # Google SDK can return bytes
-                # directly.
-
-                if isinstance(
-                    image_data,
-                    bytes
-                ):
-
-                    encoded = (
-                        base64.b64encode(
-                            image_data
-                        ).decode(
-                            "utf-8"
-                        )
-                    )
-
-                else:
-
-                    encoded = str(
-                        image_data
-                    )
-
-
-                image_url = (
-                    f"data:{mime_type};base64,"
-                    f"{encoded}"
-                )
-
-
-                print(
-                    "GEMINI IMAGE: SUCCESS"
-                )
-
-
-                return image_url
-
-
-        print(
-            "GEMINI IMAGE: "
-            "NO IMAGE DATA FOUND"
+        data = request_json(
+            response,
+            "Mistral"
         )
 
+        if not data:
+            return None
 
-        # Helpful debug.
+        choices = data.get(
+            "choices",
+            []
+        )
 
-        try:
+        if not choices:
+            return None
 
-            print(
-                "GEMINI RESPONSE:",
-                response
+        content = (
+            choices[0]
+            .get(
+                "message",
+                {}
             )
+            .get(
+                "content"
+            )
+        )
 
-        except Exception:
-            pass
-
-
-        return None
-
+        return clean_answer(
+            content
+        )
 
     except Exception as exc:
 
-        text = str(
+        print(
+            "Mistral ERROR:",
             exc
         )
-
-
-        print(
-            "GEMINI IMAGE ERROR:",
-            text
-        )
-
-
-        if (
-            "429" in text
-            or
-            "RESOURCE_EXHAUSTED"
-            in text
-        ):
-
-            disable_provider(
-                "GEMINI_IMAGE",
-                "quota exceeded"
-            )
-
 
         return None
 
 
 # ============================================================
-# PRIMARY IMAGE ROUTER
+# OPENROUTER TEXT
 # ============================================================
 
-def generate_image(
-    prompt
-):
+def openrouter_headers():
+
+    return {
+        "Authorization":
+            f"Bearer {OPENROUTER_API_KEY}",
+
+        "Content-Type":
+            "application/json",
+
+        "X-Title":
+            "Ido AI"
+    }
+
+
+def ask_openrouter(message):
+
+    if not OPENROUTER_API_KEY:
+        return None
+
+    if not message:
+        return None
+
+    if not provider_available(
+        "OPENROUTER"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying OpenRouter..."
+        )
+
+        response = requests.post(
+
+            OPENROUTER_CHAT_URL,
+
+            headers=openrouter_headers(),
+
+            json={
+                "model":
+                    OPENROUTER_TEXT_MODEL,
+
+                "messages": [
+                    {
+                        "role":
+                            "user",
+
+                        "content":
+                            message
+                    }
+                ]
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "OpenRouter Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "OpenRouter Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "OPENROUTER",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "OpenRouter"
+        )
+
+        if not data:
+            return None
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if not choices:
+            return None
+
+        content = (
+            choices[0]
+            .get(
+                "message",
+                {}
+            )
+            .get(
+                "content"
+            )
+        )
+
+        return clean_answer(
+            content
+        )
+
+    except Exception as exc:
+
+        print(
+            "OpenRouter ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# XAI TEXT
+# ============================================================
+
+def ask_xai(message):
+
+    if not XAI_API_KEY:
+        return None
+
+    if not message:
+        return None
+
+    if not provider_available(
+        "XAI"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying xAI..."
+        )
+
+        response = requests.post(
+
+            XAI_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {XAI_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+                "model":
+                    XAI_MODEL,
+
+                "messages": [
+                    {
+                        "role":
+                            "user",
+
+                        "content":
+                            message
+                    }
+                ],
+
+                "temperature":
+                    0.7
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "xAI Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "xAI Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "XAI",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "xAI"
+        )
+
+        if not data:
+            return None
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if not choices:
+            return None
+
+        content = (
+            choices[0]
+            .get(
+                "message",
+                {}
+            )
+            .get(
+                "content"
+            )
+        )
+
+        return clean_answer(
+            content
+        )
+
+    except Exception as exc:
+
+        print(
+            "xAI ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# POLLINATIONS TEXT
+# ============================================================
+
+def ask_pollinations(message):
+
+    if not POLLINATIONS_API_KEY:
+        return None
+
+    if not message:
+        return None
+
+    if not provider_available(
+        "POLLINATIONS"
+    ):
+        return None
+
+    try:
+
+        print(
+            "Trying Pollinations..."
+        )
+
+        response = requests.post(
+
+            POLLINATIONS_CHAT_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {POLLINATIONS_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+                "model":
+                    POLLINATIONS_TEXT_MODEL,
+
+                "messages": [
+                    {
+                        "role":
+                            "user",
+
+                        "content":
+                            message
+                    }
+                ]
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Pollinations Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Pollinations Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "POLLINATIONS",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "Pollinations"
+        )
+
+        if not data:
+            return None
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if not choices:
+            return None
+
+        content = (
+            choices[0]
+            .get(
+                "message",
+                {}
+            )
+            .get(
+                "content"
+            )
+        )
+
+        return clean_answer(
+            content
+        )
+
+    except Exception as exc:
+
+        print(
+            "Pollinations ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# POLLINATIONS IMAGE
+# ============================================================
+
+def generate_image_pollinations(prompt):
+
+    if not POLLINATIONS_API_KEY:
+        return None
+
+    if not provider_available(
+        "POLLINATIONS_IMAGE"
+    ):
+        return None
+
+    try:
+
+        print("=" * 45)
+        print(
+            "POLLINATIONS IMAGE GENERATION STARTED"
+        )
+
+        response = requests.get(
+
+            POLLINATIONS_IMAGE_URL
+            + requests.utils.quote(
+                prompt,
+                safe=""
+            ),
+
+            headers={
+                "Authorization":
+                    f"Bearer {POLLINATIONS_API_KEY}"
+            },
+
+            params={
+                "model":
+                    POLLINATIONS_IMAGE_MODEL,
+
+                "width":
+                    1024,
+
+                "height":
+                    1024,
+
+                "n":
+                    1
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Pollinations IMAGE STATUS:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Pollinations IMAGE RESPONSE:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "POLLINATIONS_IMAGE",
+                response.status_code
+            )
+
+            return None
+
+        content_type = (
+            response.headers.get(
+                "Content-Type",
+                "image/png"
+            )
+        )
+
+        encoded = base64.b64encode(
+            response.content
+        ).decode(
+            "utf-8"
+        )
+
+        image_url = (
+            f"data:{content_type};base64,"
+            f"{encoded}"
+        )
+
+        print(
+            "POLLINATIONS IMAGE: SUCCESS"
+        )
+
+        return image_url
+
+    except Exception as exc:
+
+        print(
+            "Pollinations IMAGE ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# OPENROUTER IMAGE
+# ============================================================
+
+def generate_image_openrouter(prompt):
+
+    if not OPENROUTER_API_KEY:
+        return None
+
+    if not provider_available(
+        "OPENROUTER_IMAGE"
+    ):
+        return None
+
+    try:
+
+        print("=" * 45)
+        print(
+            "OPENROUTER IMAGE GENERATION STARTED"
+        )
+
+        response = requests.post(
+
+            OPENROUTER_IMAGE_URL,
+
+            headers=openrouter_headers(),
+
+            json={
+                "model":
+                    OPENROUTER_IMAGE_MODEL,
+
+                "prompt":
+                    prompt,
+
+                "n":
+                    1
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "OpenRouter IMAGE STATUS:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "OpenRouter IMAGE RESPONSE:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "OPENROUTER_IMAGE",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "OpenRouter IMAGE"
+        )
+
+        if not data:
+            return None
+
+        items = data.get(
+            "data",
+            []
+        )
+
+        if not items:
+            return None
+
+        item = items[0]
+
+        b64 = item.get(
+            "b64_json"
+        )
+
+        if b64:
+
+            media_type = item.get(
+                "media_type",
+                "image/png"
+            )
+
+            return (
+                f"data:{media_type};base64,"
+                f"{b64}"
+            )
+
+        image_url = item.get(
+            "url"
+        )
+
+        if image_url:
+            return image_url
+
+        return None
+
+    except Exception as exc:
+
+        print(
+            "OpenRouter IMAGE ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# IMAGE GENERATION ROUTER
+# ============================================================
+
+def generate_image(prompt):
 
     prompt = clean_answer(
         prompt
     )
 
-
     if not prompt:
 
         return {
-
             "answer":
                 "اكتب وصف الصورة التي تريد إنشاءها.",
 
@@ -1097,57 +1374,22 @@ def generate_image(
                 None
         }
 
-
-    print(
-        "=" * 60
-    )
-
-    print(
-        "IMAGE REQUEST DETECTED"
-    )
-
-    print(
-        "PRIMARY UNDERSTANDING AI: GROQ"
-    )
-
-    print(
-        "IMAGE ENGINE: GEMINI"
-    )
-
-    print(
-        "IMAGE PROMPT:",
-        prompt
-    )
-
-    print(
-        "=" * 60
-    )
-
+    print("=" * 60)
+    print("IMAGE GENERATION REQUEST")
+    print("PROMPT:", prompt)
+    print("=" * 60)
 
     # --------------------------------------------------------
-    # IMPORTANT:
-    #
-    # Groq does NOT get asked to generate the actual image.
-    #
-    # Groq's role is understanding.
-    #
-    # Gemini is the actual image engine.
-    # --------------------------------------------------------
-
-
-    # --------------------------------------------------------
-    # GEMINI IMAGE
+    # 1. GEMINI
     # --------------------------------------------------------
 
     image = generate_image_gemini(
         prompt
     )
 
-
     if image:
 
         return {
-
             "answer":
                 "تم إنشاء الصورة بنجاح بواسطة Gemini.",
 
@@ -1158,22 +1400,69 @@ def generate_image(
                 "Gemini"
         }
 
+    print(
+        "Gemini image failed."
+    )
 
     # --------------------------------------------------------
-    # FAILED
+    # 2. POLLINATIONS
+    # --------------------------------------------------------
+
+    image = generate_image_pollinations(
+        prompt
+    )
+
+    if image:
+
+        return {
+            "answer":
+                "تم إنشاء الصورة بنجاح بواسطة Pollinations.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "Pollinations"
+        }
+
+    print(
+        "Pollinations image failed."
+    )
+
+    # --------------------------------------------------------
+    # 3. OPENROUTER
+    # --------------------------------------------------------
+
+    image = generate_image_openrouter(
+        prompt
+    )
+
+    if image:
+
+        return {
+            "answer":
+                "تم إنشاء الصورة بنجاح بواسطة OpenRouter.",
+
+            "imageUrl":
+                image,
+
+            "provider":
+                "OpenRouter"
+        }
+
+    # --------------------------------------------------------
+    # FINAL FAILURE
     # --------------------------------------------------------
 
     print(
-        "GEMINI IMAGE FAILED."
+        "ALL IMAGE PROVIDERS FAILED."
     )
 
-
     return {
-
         "answer":
             "تعذر إنشاء الصورة حاليًا. "
-            "تحقق من GEMINI_API_KEY "
-            "وحصة Gemini.",
+            "تحقق من إعدادات مولدات الصور "
+            "ومفاتيح API.",
 
         "imageUrl":
             "",
@@ -1184,21 +1473,189 @@ def generate_image(
 
 
 # ============================================================
-# QUICK RESPONSES
+# IMAGE REQUEST DETECTION
 # ============================================================
 
+IMAGE_WORDS = [
+
+    "أنشئ صورة",
+    "انشئ صورة",
+    "أنشئ لي صورة",
+    "انشئ لي صورة",
+
+    "اصنع صورة",
+    "اصنع لي صورة",
+
+    "إنشاء صورة",
+    "انشاء صورة",
+
+    "ولد صورة",
+    "ولّد صورة",
+
+    "ارسم صورة",
+    "ارسم لي",
+
+    "صمم صورة",
+    "صمم لي صورة",
+
+    "اعمل صورة",
+    "اعمل لي صورة",
+
+    "صورة لي",
+
+    "generate an image",
+    "generate image",
+
+    "create an image",
+    "create image",
+
+    "make an image",
+    "make image",
+
+    "draw an image",
+    "draw image",
+
+    "generate a picture",
+    "create a picture",
+    "make a picture"
+]
+
+
+def is_image_generation_request(
+    message
+):
+
+    if not message:
+        return False
+
+    text = str(
+        message
+    ).strip().lower()
+
+    return any(
+        word.lower() in text
+        for word in IMAGE_WORDS
+    )
+
+
+# ============================================================
+# EXTRACT IMAGE PROMPT
+# ============================================================
+
+def get_image_prompt(
+    message
+):
+
+    if not message:
+        return ""
+
+    text = str(
+        message
+    ).strip()
+
+    prefixes = [
+
+        "أنشئ لي صورة",
+        "أنشئ صورة",
+
+        "انشئ لي صورة",
+        "انشئ صورة",
+
+        "اصنع لي صورة",
+        "اصنع صورة",
+
+        "إنشاء صورة",
+        "انشاء صورة",
+
+        "ولد صورة",
+        "ولّد صورة",
+
+        "ارسم لي",
+        "ارسم صورة",
+
+        "صمم لي صورة",
+        "صمم صورة",
+
+        "اعمل لي صورة",
+        "اعمل صورة",
+
+        "generate an image of",
+        "generate image of",
+
+        "create an image of",
+        "create image of",
+
+        "make an image of",
+        "make image of",
+
+        "draw an image of",
+
+        "generate a picture of",
+        "create a picture of",
+        "make a picture of"
+    ]
+
+    lower = text.lower()
+
+    for prefix in prefixes:
+
+        if lower.startswith(
+            prefix.lower()
+        ):
+
+            return text[
+                len(prefix):
+            ].strip()
+
+    return text
+
+
+# ============================================================
+# GREETING DETECTION
+# ============================================================
+
+GREETING_WORDS = [
+
+    "السلام عليكم",
+    "السلام عليكم ورحمة الله وبركاته",
+
+    "سلام عليكم",
+
+    "مرحبا",
+    "مرحبًا",
+
+    "اهلا",
+    "أهلا",
+
+    "أهلًا",
+    "اهلاً",
+
+    "السلام"
+]
+
+
+def contains_greeting(
+    message
+):
+
+    if not message:
+        return False
+
+    text = str(
+        message
+    ).strip().lower()
+
+    return any(
+        greeting.lower() in text
+        for greeting in GREETING_WORDS
+    )
+
+
+# ============================================================
+# QUICK RESPONSES
 #
 # IMPORTANT:
-#
-# We intentionally DO NOT use substring matching here.
-#
-# The old system caused:
-#
-# "السلام عليكم، أنشئ لي صورة..."
-#
-# to match "سلام" and return a saved greeting.
-#
-# That behavior is removed.
+# Do NOT use these for messages containing a real question.
 # ============================================================
 
 QUICK_RESPONSES = {
@@ -1212,44 +1669,10 @@ QUICK_RESPONSES = {
         "أنا Ido AI، كيف يمكنني مساعدتك؟",
 
     "مرحبا":
-        "السلام عليكم ورحمة الله وبركاته. "
-        "مرحبًا بك، كيف يمكنني مساعدتك؟",
+        "أهلًا وسهلًا بك. كيف يمكنني مساعدتك؟",
 
-    "سلام":
-        "وعليكم السلام ورحمة الله وبركاته. "
-        "كيف يمكنني مساعدتك؟",
-
-    "اسمك":
-        "أنا Ido AI.",
-
-    "ما اسمك":
-        "أنا Ido AI.",
-
-    "كيف حالك":
-        "أنا بخير، شكرًا لسؤالك. "
-        "كيف يمكنني مساعدتك؟",
-
-    "من صنعك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
-
-    "من طورك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
-
-    "من بناك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
-
-    "من برمجك":
-        "تم تطويري وبنائي بواسطة "
-        "Noufal Ouhadi، وأنا Ido AI.",
-
-    "ما هي عاصمة المغرب":
-        "عاصمة المغرب هي الرباط.",
-
-    "ما هي عاصمة فرنسا":
-        "عاصمة فرنسا هي باريس.",
+    "مرحبًا":
+        "أهلًا وسهلًا بك. كيف يمكنني مساعدتك؟",
 
     "شكرا":
         "على الرحب والسعة.",
@@ -1267,9 +1690,7 @@ def quick_response(
 ):
 
     if not message:
-
         return None
-
 
     try:
 
@@ -1281,41 +1702,63 @@ def quick_response(
 
         return None
 
-
     if not text:
-
         return None
 
+    # --------------------------------------------------------
+    # إذا كانت الرسالة تحتوي على تحية مع سؤال أو طلب،
+    # لا نستخدم الرد الثابت.
+    #
+    # مثال:
+    # "السلام عليكم اشرح لي بايثون"
+    #
+    # تذهب إلى Groq.
+    # --------------------------------------------------------
 
-    #
-    # IMPORTANT:
-    #
-    # Exact matching only.
-    #
-    # We no longer do:
-    #
-    # if "سلام" in text
-    #
-    # because that breaks:
-    #
-    # "السلام عليكم، أنشئ لي صورة..."
-    #
-
-
-    for key, value in (
-        QUICK_RESPONSES.items()
+    if contains_greeting(
+        text
     ):
+
+        words_after_greeting = text
+
+        for greeting in GREETING_WORDS:
+
+            words_after_greeting = (
+                words_after_greeting.replace(
+                    greeting.lower(),
+                    ""
+                )
+            )
+
+        words_after_greeting = (
+            words_after_greeting
+            .strip(" ,،.!؟?!")
+        )
+
+        if words_after_greeting:
+
+            return None
+
+        return (
+            "وعليكم السلام ورحمة الله وبركاته. "
+            "كيف يمكنني مساعدتك؟"
+        )
+
+    # --------------------------------------------------------
+    # الردود القصيرة فقط
+    # --------------------------------------------------------
+
+    for key, value in QUICK_RESPONSES.items():
 
         if text == key.lower():
 
             return value
 
-
     return None
 
 
 # ============================================================
-# MAIN RESPONSE ROUTER
+# MAIN TEXT ROUTER
 # ============================================================
 
 def get_response(
@@ -1325,65 +1768,46 @@ def get_response(
 
     if not message:
 
-        return (
-            "اكتب رسالة أولًا."
-        )
-
+        return "اكتب رسالة أولًا."
 
     original_message = str(
         message
     ).strip()
 
-
     if not original_message:
 
-        return (
-            "اكتب رسالة أولًا."
-        )
+        return "اكتب رسالة أولًا."
 
+    print("=" * 60)
+    print("DYNAMIC AI RESPONSE")
+    print("MESSAGE:", original_message)
+    print("CONVERSATION ID:", conversation_id)
+    print("=" * 60)
 
     # ========================================================
-    # IMAGE REQUEST MUST BE CHECKED FIRST
-    # ========================================================
-    #
-    # This is the most important fix.
-    #
-    # We do NOT send an image request to Groq as normal text.
-    #
-    # Otherwise Groq can answer:
-    #
-    # "I cannot create images..."
-    #
+    # IMAGE REQUEST MUST BE FIRST
     # ========================================================
 
     if is_image_generation_request(
         original_message
     ):
 
+        print(
+            "IMAGE REQUEST DETECTED"
+        )
+
         prompt = get_image_prompt(
             original_message
         )
 
-
-        if not prompt:
-
-            return {
-
-                "answer":
-                    "اكتب وصف الصورة التي تريد إنشاءها.",
-
-                "imageUrl":
-                    "",
-
-                "provider":
-                    None
-            }
-
+        print(
+            "IMAGE PROMPT:",
+            prompt
+        )
 
         return generate_image(
             prompt
         )
-
 
     # ========================================================
     # QUICK RESPONSE
@@ -1393,28 +1817,17 @@ def get_response(
         original_message
     )
 
-
     if quick:
+
+        print(
+            "QUICK RESPONSE SUCCESS"
+        )
 
         return quick
 
-
     # ========================================================
-    # TEXT ROUTE
+    # PRIMARY AI = GROQ
     # ========================================================
-    #
-    # PRIMARY:
-    #     GROQ
-    #
-    # SECONDARY:
-    #     MISTRAL
-    #     OPENROUTER
-    #     GEMINI
-    #     XAI
-    #     POLLINATIONS
-    #
-    # ========================================================
-
 
     routes = [
 
@@ -1434,11 +1847,6 @@ def get_response(
         ),
 
         (
-            "GEMINI",
-            ask_gemini
-        ),
-
-        (
             "XAI",
             ask_xai
         ),
@@ -1448,7 +1856,6 @@ def get_response(
             ask_pollinations
         )
     ]
-
 
     for name, function in routes:
 
@@ -1462,7 +1869,6 @@ def get_response(
             )
 
             continue
-
 
         try:
 
@@ -1479,7 +1885,6 @@ def get_response(
 
             answer = None
 
-
         if answer:
 
             print(
@@ -1488,704 +1893,20 @@ def get_response(
 
             return answer
 
-
         print(
             f"{name} failed. "
             "Trying next provider..."
         )
 
+    # ========================================================
+    # FINAL FALLBACK
+    # ========================================================
 
     return (
         "أنا Ido AI، لكن جميع مزودي الذكاء "
         "الاصطناعي المتاحين فشلوا حاليًا. "
-        "تحقق من المفاتيح والرصيد."
+        "تحقق من مفاتيح API والرصيد."
     )
-
-
-# ============================================================
-# MISTRAL - TEXT
-# ============================================================
-
-MISTRAL_API_KEY = os.getenv(
-    "MISTRAL_API_KEY"
-)
-
-
-MISTRAL_URL = (
-    "https://api.mistral.ai/v1/chat/completions"
-)
-
-
-MISTRAL_MODEL = os.getenv(
-    "MISTRAL_MODEL",
-    "mistral-small-latest"
-)
-
-
-MISTRAL_VISION_MODEL = os.getenv(
-    "MISTRAL_VISION_MODEL",
-    "pixtral-12b-2409"
-)
-
-
-if MISTRAL_API_KEY:
-
-    print(
-        "MISTRAL CLIENT: READY"
-    )
-
-    print(
-        "MISTRAL MODEL:",
-        MISTRAL_MODEL
-    )
-
-    print(
-        "MISTRAL VISION MODEL:",
-        MISTRAL_VISION_MODEL
-    )
-
-else:
-
-    print(
-        "MISTRAL_API_KEY: NOT FOUND"
-    )
-
-
-def ask_mistral(
-    message
-):
-
-    if not MISTRAL_API_KEY:
-
-        return None
-
-
-    if not message:
-
-        return None
-
-
-    if not provider_available(
-        "MISTRAL"
-    ):
-
-        return None
-
-
-    try:
-
-        print(
-            "Trying Mistral..."
-        )
-
-
-        response = requests.post(
-
-            MISTRAL_URL,
-
-            headers={
-
-                "Authorization":
-                    f"Bearer {MISTRAL_API_KEY}",
-
-                "Content-Type":
-                    "application/json"
-            },
-
-            json={
-
-                "model":
-                    MISTRAL_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content":
-                            message
-                    }
-
-                ],
-
-                "temperature":
-                    0.7,
-
-                "max_tokens":
-                    2048
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-
-        print(
-            "Mistral Status:",
-            response.status_code
-        )
-
-
-        if response.status_code != 200:
-
-            print(
-                "Mistral Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "MISTRAL",
-                response.status_code
-            )
-
-            return None
-
-
-        data = request_json(
-            response,
-            "Mistral"
-        )
-
-
-        if not data:
-
-            return None
-
-
-        choices = data.get(
-            "choices",
-            []
-        )
-
-
-        if not choices:
-
-            return None
-
-
-        content = (
-            choices[0]
-            .get(
-                "message",
-                {}
-            )
-            .get(
-                "content"
-            )
-        )
-
-
-        answer = clean_answer(
-            content
-        )
-
-
-        if answer:
-
-            print(
-                "Mistral response received."
-            )
-
-            return answer
-
-
-        return None
-
-
-    except Exception as exc:
-
-        print(
-            "Mistral ERROR:",
-            exc
-        )
-
-        return None
-
-
-# ============================================================
-# OPENROUTER - TEXT
-# ============================================================
-
-OPENROUTER_API_KEY = os.getenv(
-    "OPENROUTER_API_KEY"
-)
-
-
-OPENROUTER_CHAT_URL = (
-    "https://openrouter.ai/api/v1/chat/completions"
-)
-
-
-OPENROUTER_TEXT_MODEL = os.getenv(
-    "OPENROUTER_TEXT_MODEL",
-    "openai/gpt-oss-20b"
-)
-
-
-OPENROUTER_VISION_MODEL = os.getenv(
-    "OPENROUTER_VISION_MODEL",
-    "google/gemini-2.5-flash"
-)
-
-
-if OPENROUTER_API_KEY:
-
-    print(
-        "OPENROUTER CLIENT: READY"
-    )
-
-else:
-
-    print(
-        "OPENROUTER_API_KEY: NOT FOUND"
-    )
-
-
-def openrouter_headers():
-
-    return {
-
-        "Authorization":
-            f"Bearer {OPENROUTER_API_KEY}",
-
-        "Content-Type":
-            "application/json",
-
-        "X-Title":
-            "Ido AI"
-    }
-
-
-def ask_openrouter(
-    message
-):
-
-    if not OPENROUTER_API_KEY:
-
-        return None
-
-
-    if not message:
-
-        return None
-
-
-    if not provider_available(
-        "OPENROUTER"
-    ):
-
-        return None
-
-
-    try:
-
-        print(
-            "Trying OpenRouter..."
-        )
-
-
-        response = requests.post(
-
-            OPENROUTER_CHAT_URL,
-
-            headers=
-                openrouter_headers(),
-
-            json={
-
-                "model":
-                    OPENROUTER_TEXT_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content":
-                            message
-                    }
-
-                ]
-
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-
-        print(
-            "OpenRouter Status:",
-            response.status_code
-        )
-
-
-        if response.status_code != 200:
-
-            print(
-                "OpenRouter Response:",
-                response.text[:1500]
-            )
-
-            provider_failure(
-                "OPENROUTER",
-                response.status_code
-            )
-
-            return None
-
-
-        data = request_json(
-            response,
-            "OpenRouter"
-        )
-
-
-        if not data:
-
-            return None
-
-
-        choices = data.get(
-            "choices",
-            []
-        )
-
-
-        if not choices:
-
-            return None
-
-
-        content = (
-            choices[0]
-            .get(
-                "message",
-                {}
-            )
-            .get(
-                "content"
-            )
-        )
-
-
-        return clean_answer(
-            content
-        )
-
-
-    except Exception as exc:
-
-        print(
-            "OpenRouter ERROR:",
-            exc
-        )
-
-        return None
-
-
-# ============================================================
-# XAI - TEXT ONLY
-# ============================================================
-
-XAI_API_KEY = os.getenv(
-    "XAI_API_KEY"
-)
-
-
-XAI_URL = (
-    "https://api.x.ai/v1/chat/completions"
-)
-
-
-XAI_MODEL = os.getenv(
-    "XAI_MODEL",
-    "grok-4.5"
-)
-
-
-if XAI_API_KEY:
-
-    print(
-        "XAI CLIENT: READY"
-    )
-
-else:
-
-    print(
-        "XAI_API_KEY: NOT FOUND"
-    )
-
-
-def ask_xai(
-    message
-):
-
-    if not XAI_API_KEY:
-
-        return None
-
-
-    if not message:
-
-        return None
-
-
-    if not provider_available(
-        "XAI"
-    ):
-
-        return None
-
-
-    try:
-
-        response = requests.post(
-
-            XAI_URL,
-
-            headers={
-
-                "Authorization":
-                    f"Bearer {XAI_API_KEY}",
-
-                "Content-Type":
-                    "application/json"
-            },
-
-            json={
-
-                "model":
-                    XAI_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content":
-                            message
-                    }
-
-                ],
-
-                "temperature":
-                    0.7
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-
-        if response.status_code != 200:
-
-            provider_failure(
-                "XAI",
-                response.status_code
-            )
-
-            return None
-
-
-        data = request_json(
-            response,
-            "xAI"
-        )
-
-
-        if not data:
-
-            return None
-
-
-        choices = data.get(
-            "choices",
-            []
-        )
-
-
-        if not choices:
-
-            return None
-
-
-        content = (
-            choices[0]
-            .get(
-                "message",
-                {}
-            )
-            .get(
-                "content"
-            )
-        )
-
-
-        return clean_answer(
-            content
-        )
-
-
-    except Exception as exc:
-
-        print(
-            "xAI ERROR:",
-            exc
-        )
-
-        return None
-
-
-# ============================================================
-# POLLINATIONS - TEXT ONLY
-# ============================================================
-
-POLLINATIONS_API_KEY = os.getenv(
-    "POLLINATIONS_API_KEY"
-)
-
-
-POLLINATIONS_CHAT_URL = (
-    "https://gen.pollinations.ai/v1/chat/completions"
-)
-
-
-POLLINATIONS_TEXT_MODEL = os.getenv(
-    "POLLINATIONS_TEXT_MODEL",
-    "openai"
-)
-
-
-if POLLINATIONS_API_KEY:
-
-    print(
-        "POLLINATIONS CLIENT: READY"
-    )
-
-else:
-
-    print(
-        "POLLINATIONS_API_KEY: NOT FOUND"
-    )
-
-
-def ask_pollinations(
-    message
-):
-
-    if not POLLINATIONS_API_KEY:
-
-        return None
-
-
-    if not message:
-
-        return None
-
-
-    if not provider_available(
-        "POLLINATIONS"
-    ):
-
-        return None
-
-
-    try:
-
-        response = requests.post(
-
-            POLLINATIONS_CHAT_URL,
-
-            headers={
-
-                "Authorization":
-                    f"Bearer {POLLINATIONS_API_KEY}",
-
-                "Content-Type":
-                    "application/json"
-            },
-
-            json={
-
-                "model":
-                    POLLINATIONS_TEXT_MODEL,
-
-                "messages": [
-
-                    {
-                        "role":
-                            "user",
-
-                        "content":
-                            message
-                    }
-
-                ]
-
-            },
-
-            timeout=REQUEST_TIMEOUT
-        )
-
-
-        if response.status_code != 200:
-
-            provider_failure(
-                "POLLINATIONS",
-                response.status_code
-            )
-
-            return None
-
-
-        data = request_json(
-            response,
-            "Pollinations"
-        )
-
-
-        if not data:
-
-            return None
-
-
-        choices = data.get(
-            "choices",
-            []
-        )
-
-
-        if not choices:
-
-            return None
-
-
-        content = (
-            choices[0]
-            .get(
-                "message",
-                {}
-            )
-            .get(
-                "content"
-            )
-        )
-
-
-        return clean_answer(
-            content
-        )
-
-
-    except Exception as exc:
-
-        print(
-            "Pollinations ERROR:",
-            exc
-        )
-
-        return None
 
 
 # ============================================================
@@ -2199,21 +1920,15 @@ def ask_groq_image(
 ):
 
     if not GROQ_API_KEY:
-
         return None
-
 
     if not image_bytes:
-
         return None
-
 
     if not provider_available(
         "GROQ_VISION"
     ):
-
         return None
-
 
     try:
 
@@ -2223,24 +1938,20 @@ def ask_groq_image(
             "utf-8"
         )
 
-
         image_url = (
             f"data:{mime_type};base64,"
             f"{encoded}"
         )
 
-
         print(
             "Trying Groq Vision..."
         )
-
 
         response = requests.post(
 
             GROQ_URL,
 
             headers={
-
                 "Authorization":
                     f"Bearer {GROQ_API_KEY}",
 
@@ -2249,20 +1960,10 @@ def ask_groq_image(
             },
 
             json={
-
                 "model":
                     GROQ_VISION_MODEL,
 
                 "messages": [
-
-                    {
-                        "role":
-                            "system",
-
-                        "content":
-                            GROQ_SYSTEM_PROMPT
-                    },
-
                     {
                         "role":
                             "user",
@@ -2282,31 +1983,25 @@ def ask_groq_image(
                                     "image_url",
 
                                 "image_url": {
-
                                     "url":
                                         image_url
                                 }
                             }
-
                         ]
                     }
-
                 ],
 
                 "max_completion_tokens":
                     2048
-
             },
 
             timeout=REQUEST_TIMEOUT
         )
 
-
         print(
             "Groq Vision Status:",
             response.status_code
         )
-
 
         if response.status_code != 200:
 
@@ -2322,28 +2017,21 @@ def ask_groq_image(
 
             return None
 
-
         data = request_json(
             response,
             "Groq Vision"
         )
 
-
         if not data:
-
             return None
-
 
         choices = data.get(
             "choices",
             []
         )
 
-
         if not choices:
-
             return None
-
 
         content = (
             choices[0]
@@ -2356,23 +2044,19 @@ def ask_groq_image(
             )
         )
 
-
         answer = clean_answer(
             content
         )
 
-
         if answer:
 
             print(
-                "Groq Vision response received."
+                "VISION ROUTE SUCCESS: GROQ_VISION"
             )
 
             return answer
 
-
         return None
-
 
     except Exception as exc:
 
@@ -2385,36 +2069,25 @@ def ask_groq_image(
 
 
 # ============================================================
-# GEMINI VISION / IMAGE EDITING
+# MISTRAL VISION
 # ============================================================
 
-def ask_gemini_image(
+def ask_mistral_image(
     message,
     image_bytes,
     mime_type
 ):
 
-    if not GEMINI_ENABLED:
-
+    if not MISTRAL_API_KEY:
         return None
-
-
-    if gemini_client is None:
-
-        return None
-
 
     if not image_bytes:
-
         return None
-
 
     if not provider_available(
-        "GEMINI_VISION"
+        "MISTRAL_VISION"
     ):
-
         return None
-
 
     try:
 
@@ -2424,141 +2097,260 @@ def ask_gemini_image(
             "utf-8"
         )
 
-
-        response = (
-            gemini_client.models.generate_content(
-
-                model=
-                    GEMINI_IMAGE_MODEL,
-
-                contents=[
-
-                    types.Part.from_text(
-                        text=message
-                    ),
-
-                    types.Part.from_bytes(
-                        data=image_bytes,
-                        mime_type=mime_type
-                    )
-
-                ],
-
-                config=
-                    types.GenerateContentConfig(
-
-                        response_modalities=[
-                            "IMAGE"
-                        ]
-
-                    )
-            )
+        image_url = (
+            f"data:{mime_type};base64,"
+            f"{encoded}"
         )
 
+        print(
+            "Trying Mistral Vision..."
+        )
 
-        if not getattr(
-            response,
-            "candidates",
-            None
-        ):
+        response = requests.post(
+
+            MISTRAL_URL,
+
+            headers={
+                "Authorization":
+                    f"Bearer {MISTRAL_API_KEY}",
+
+                "Content-Type":
+                    "application/json"
+            },
+
+            json={
+                "model":
+                    MISTRAL_VISION_MODEL,
+
+                "messages": [
+                    {
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+                                "type":
+                                    "image_url",
+
+                                "image_url": {
+                                    "url":
+                                        image_url
+                                }
+                            }
+                        ]
+                    }
+                ],
+
+                "max_tokens":
+                    2048
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Mistral Vision Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "Mistral Vision Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "MISTRAL_VISION",
+                response.status_code
+            )
 
             return None
 
+        data = request_json(
+            response,
+            "Mistral Vision"
+        )
 
-        for candidate in response.candidates:
+        if not data:
+            return None
 
-            content = getattr(
-                candidate,
-                "content",
-                None
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if not choices:
+            return None
+
+        content = (
+            choices[0]
+            .get(
+                "message",
+                {}
             )
-
-
-            if not content:
-
-                continue
-
-
-            parts = getattr(
-                content,
-                "parts",
-                []
+            .get(
+                "content"
             )
+        )
 
-
-            for part in parts:
-
-                inline_data = getattr(
-                    part,
-                    "inline_data",
-                    None
-                )
-
-
-                if not inline_data:
-
-                    continue
-
-
-                data = getattr(
-                    inline_data,
-                    "data",
-                    None
-                )
-
-
-                if not data:
-
-                    continue
-
-
-                result_mime = getattr(
-                    inline_data,
-                    "mime_type",
-                    None
-                )
-
-
-                if not result_mime:
-
-                    result_mime = (
-                        "image/png"
-                    )
-
-
-                if isinstance(
-                    data,
-                    bytes
-                ):
-
-                    encoded_result = (
-                        base64.b64encode(
-                            data
-                        ).decode(
-                            "utf-8"
-                        )
-                    )
-
-                else:
-
-                    encoded_result = str(
-                        data
-                    )
-
-
-                return (
-                    f"data:{result_mime};base64,"
-                    f"{encoded_result}"
-                )
-
-
-        return None
-
+        return clean_answer(
+            content
+        )
 
     except Exception as exc:
 
         print(
-            "Gemini Vision ERROR:",
+            "Mistral Vision ERROR:",
+            exc
+        )
+
+        return None
+
+
+# ============================================================
+# OPENROUTER VISION
+# ============================================================
+
+def ask_openrouter_image(
+    message,
+    image_bytes,
+    mime_type
+):
+
+    if not OPENROUTER_API_KEY:
+        return None
+
+    if not image_bytes:
+        return None
+
+    if not provider_available(
+        "OPENROUTER_VISION"
+    ):
+        return None
+
+    try:
+
+        encoded = base64.b64encode(
+            image_bytes
+        ).decode(
+            "utf-8"
+        )
+
+        image_url = (
+            f"data:{mime_type};base64,"
+            f"{encoded}"
+        )
+
+        print(
+            "Trying OpenRouter Vision..."
+        )
+
+        response = requests.post(
+
+            OPENROUTER_CHAT_URL,
+
+            headers=openrouter_headers(),
+
+            json={
+                "model":
+                    OPENROUTER_VISION_MODEL,
+
+                "messages": [
+                    {
+                        "role":
+                            "user",
+
+                        "content": [
+
+                            {
+                                "type":
+                                    "text",
+
+                                "text":
+                                    message
+                            },
+
+                            {
+                                "type":
+                                    "image_url",
+
+                                "image_url": {
+                                    "url":
+                                        image_url
+                                }
+                            }
+                        ]
+                    }
+                ]
+            },
+
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "OpenRouter Vision Status:",
+            response.status_code
+        )
+
+        if response.status_code != 200:
+
+            print(
+                "OpenRouter Vision Response:",
+                response.text[:1500]
+            )
+
+            provider_failure(
+                "OPENROUTER_VISION",
+                response.status_code
+            )
+
+            return None
+
+        data = request_json(
+            response,
+            "OpenRouter Vision"
+        )
+
+        if not data:
+            return None
+
+        choices = data.get(
+            "choices",
+            []
+        )
+
+        if not choices:
+            return None
+
+        content = (
+            choices[0]
+            .get(
+                "message",
+                {}
+            )
+            .get(
+                "content"
+            )
+        )
+
+        return clean_answer(
+            content
+        )
+
+    except Exception as exc:
+
+        print(
+            "OpenRouter Vision ERROR:",
             exc
         )
 
@@ -2582,11 +2374,9 @@ def get_image_response(
             "لم يتم إرسال صورة صالحة."
         )
 
-
     if not mime_type:
 
         mime_type = "image/jpeg"
-
 
     if not mime_type.startswith(
         "image/"
@@ -2596,91 +2386,84 @@ def get_image_response(
             "الملف المرسل ليس صورة صالحة."
         )
 
-
-    if not message or not str(
-        message
-    ).strip():
+    if not message:
 
         message = (
             "حلل هذه الصورة واشرح لي "
             "ما الذي يظهر فيها."
         )
 
-
     message = str(
         message
     ).strip()
 
+    print("=" * 60)
+    print("IMAGE ANALYSIS REQUEST")
+    print("CONVERSATION ID:", conversation_id)
+    print("=" * 60)
 
-    # ========================================================
-    # IMAGE EDIT / IMAGE GENERATION WITH INPUT IMAGE
-    # ========================================================
-    #
-    # Gemini is the actual image engine here.
-    #
-    # ========================================================
+    routes = [
 
-    edited_image = ask_gemini_image(
+        (
+            "GROQ_VISION",
+            ask_groq_image
+        ),
 
-        message,
+        (
+            "MISTRAL_VISION",
+            ask_mistral_image
+        ),
 
-        image_bytes,
-
-        mime_type
-    )
-
-
-    if edited_image:
-
-        print(
-            "IMAGE ROUTE SUCCESS: GEMINI"
+        (
+            "OPENROUTER_VISION",
+            ask_openrouter_image
         )
+    ]
 
+    for name, function in routes:
 
-        return {
+        if not provider_available(
+            name
+        ):
 
-            "answer":
-                "تم إنشاء/تعديل الصورة بنجاح بواسطة Gemini.",
+            print(
+                f"{name}: SKIPPED "
+                "(temporary cooldown)"
+            )
 
-            "imageUrl":
-                edited_image,
+            continue
 
-            "provider":
-                "Gemini"
-        }
+        try:
 
+            answer = function(
 
-    # ========================================================
-    # IMAGE UNDERSTANDING
-    # ========================================================
-    #
-    # If Gemini image processing is unavailable,
-    # use Groq Vision for analysis.
-    #
-    # ========================================================
+                message,
 
-    answer = ask_groq_image(
+                image_bytes,
 
-        message,
+                mime_type
+            )
 
-        image_bytes,
+        except Exception as exc:
 
-        mime_type
-    )
+            print(
+                f"{name} ERROR:",
+                exc
+            )
 
+            answer = None
 
-    if answer:
+        if answer:
 
-        print(
-            "VISION ROUTE SUCCESS: GROQ"
-        )
+            print(
+                f"VISION ROUTE SUCCESS: {name}"
+            )
 
-        return answer
-
+            return answer
 
     return (
         "تعذر تحليل الصورة حاليًا. "
-        "تحقق من مفاتيح Groq وGemini."
+        "تحقق من مفاتيح مزودي الرؤية."
     )
 
 
@@ -2704,68 +2487,24 @@ print(
     "conversation_id=None)"
 )
 
-
-# ============================================================
-# STARTUP LOG
-# ============================================================
-
+print("=" * 60)
+print("PRIMARY AI: GROQ")
 print(
-    "=" * 60
+    "TEXT ROUTE: "
+    "GROQ -> MISTRAL -> OPENROUTER -> "
+    "XAI -> POLLINATIONS"
 )
-
 print(
-    "IDO AI BRAIN.PY LOADED"
+    "VISION ROUTE: "
+    "GROQ VISION -> MISTRAL VISION -> "
+    "OPENROUTER VISION"
 )
-
 print(
-    "PRIMARY AI:"
+    "IMAGE ROUTE: "
+    "GEMINI -> POLLINATIONS -> OPENROUTER"
 )
-
 print(
-    "    GROQ"
+    "IMAGE REQUESTS ARE SEPARATED "
+    "FROM TEXT REQUESTS"
 )
-
-print(
-    "TEXT ROUTE:"
-)
-
-print(
-    "    GROQ -> MISTRAL -> OPENROUTER "
-    "-> GEMINI -> XAI -> POLLINATIONS"
-)
-
-print(
-    "IMAGE UNDERSTANDING:"
-)
-
-print(
-    "    GROQ VISION"
-)
-
-print(
-    "IMAGE GENERATION:"
-)
-
-print(
-    "    GEMINI 3.1 FLASH IMAGE"
-)
-
-print(
-    "GREETING:"
-)
-
-print(
-    "    EXACT MATCH ONLY"
-)
-
-print(
-    "IMAGE REQUEST:"
-)
-
-print(
-    "    DETECT BEFORE TEXT ROUTE"
-)
-
-print(
-    "=" * 60
-)
+print("=" * 60)
