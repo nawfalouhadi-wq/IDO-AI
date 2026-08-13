@@ -112,7 +112,9 @@ GEMINI_TEXT_MODEL = os.getenv(
 # MISTRAL MODELS
 # ============================================================
 
-# Image understanding / Vision
+# ------------------------------------------------------------
+# Vision / image understanding
+# ------------------------------------------------------------
 
 MISTRAL_VISION_MODEL = os.getenv(
     "MISTRAL_VISION_MODEL",
@@ -120,7 +122,9 @@ MISTRAL_VISION_MODEL = os.getenv(
 ).strip()
 
 
+# ------------------------------------------------------------
 # Image generation
+# ------------------------------------------------------------
 
 MISTRAL_IMAGE_MODEL = os.getenv(
     "MISTRAL_IMAGE_MODEL",
@@ -192,7 +196,6 @@ print(
     "MISTRAL CLIENT:",
     "READY" if MISTRAL_API_KEY else "MISSING"
 )
-
 
 print("=" * 70)
 
@@ -284,6 +287,10 @@ GREETING_ONLY_PATTERNS = [
 
     r"^\s*السلام عليكم ورحمة الله وبركاته\s*[.!؟،]*\s*$",
 
+    r"^\s*السلام عليكم ورحمه الله وبركاته\s*[.!؟،]*\s*$",
+
+    r"^\s*السلام عليكم ورحمه الله\s*[.!؟،]*\s*$",
+
     r"^\s*سلام عليكم\s*[.!؟،]*\s*$",
 ]
 
@@ -293,7 +300,6 @@ def is_greeting_only(
 ):
 
     if not message:
-
         return False
 
     text = str(
@@ -314,10 +320,27 @@ def is_greeting_only(
 
 
 # ============================================================
-# IMAGE REQUEST DETECTION
+# IMAGE GENERATION KEYWORDS
+# ============================================================
+#
+# IMPORTANT:
+#
+# We intentionally DO NOT put:
+#
+#     "صورة"
+#     "صور"
+#
+# by themselves here.
+#
+# This prevents:
+#
+#     "هل يمكنك تحليل الصورة؟"
+#
+# from becoming an image-generation request.
+#
 # ============================================================
 
-IMAGE_KEYWORDS_AR = [
+IMAGE_GENERATION_KEYWORDS_AR = [
 
     "أنشئ صورة",
     "انشئ صورة",
@@ -325,75 +348,117 @@ IMAGE_KEYWORDS_AR = [
     "أنشئ لي صورة",
     "انشئ لي صورة",
 
+    "أنشئ صوره",
+    "انشئ صوره",
+
+    "أنشئ لي صوره",
+    "انشئ لي صوره",
+
     "اصنع صورة",
+    "اصنع صوره",
+
     "اصنع لي صورة",
+    "اصنع لي صوره",
 
     "اعمل صورة",
+    "اعمل صوره",
+
     "اعمل لي صورة",
+    "اعمل لي صوره",
 
     "ولّد صورة",
     "ولد صورة",
 
+    "ولّد صوره",
+    "ولد صوره",
+
     "ولّد لي صورة",
     "ولد لي صورة",
 
-    "توليد صورة",
-    "إنشاء صورة",
+    "ولّد لي صوره",
+    "ولد لي صوره",
 
+    "توليد صورة",
     "توليد صوره",
+
+    "إنشاء صورة",
+    "انشاء صورة",
+
     "إنشاء صوره",
+    "انشاء صوره",
+
+    "ارسم صورة",
+    "ارسم صوره",
+
+    "ارسم لي صورة",
+    "ارسم لي صوره",
 
     "ارسم",
     "ارسم لي",
-    "ارسم صورة",
-    "ارسم لي صورة",
 
     "صمم صورة",
     "صمّم صورة",
+
+    "صمم صوره",
+    "صمّم صوره",
+
+    "صمم لي صورة",
+    "صمّم لي صورة",
+
+    "صمم لي صوره",
+    "صمّم لي صوره",
+
     "تصميم صورة",
+    "تصميم صوره",
 
-    "صورة",
-    "صور",
+    "أعطني صورة",
+    "اعطني صورة",
 
-    "أنشئ رسمة",
-    "انشئ رسمة",
+    "أعطني صوره",
+    "اعطني صوره",
 
-    "اصنع رسمة",
-    "اعمل رسمة",
+    "أعطني صورة ل",
+    "اعطني صورة ل",
 
-    "عدّل الصورة",
-    "عدل الصورة",
+    "أعطني صوره ل",
+    "اعطني صوره ل",
 
-    "عدّل هذه الصورة",
-    "عدل هذه الصورة",
+    "أعطني صورة عن",
+    "اعطني صورة عن",
 
-    "تعديل الصورة",
-    "تحرير الصورة",
+    "أعطني صوره عن",
+    "اعطني صوره عن",
 
-    "حرر الصورة",
-    "حرّر الصورة",
+    "هل يمكنك إنشاء صورة",
+    "هل يمكنك انشاء صورة",
 
-    "غيّر الصورة",
-    "غير الصورة",
+    "هل يمكنك إنشاء صوره",
+    "هل يمكنك انشاء صوره",
 
-    "غيّر هذه الصورة",
-    "غير هذه الصورة",
+    "هل يمكنك رسم صورة",
+    "هل يمكنك رسم صوره",
 
-    "أضف إلى الصورة",
-    "اضف الى الصورة",
+    "هل تستطيع إنشاء صورة",
+    "هل تستطيع انشاء صورة",
 
-    "أضف للصورة",
-    "اضف للصورة",
+    "هل تستطيع رسم صورة",
+    "هل تستطيع رسم صوره",
 
-    "احذف من الصورة",
-    "احذف شيء من الصورة",
+    "صورة ل",
+    "صوره ل",
 
-    "استبدل في الصورة",
-    "استبدل الصورة",
+    "صورة عن",
+    "صوره عن",
+
+    "رسمة ل",
+    "رسمة عن",
+
+    "رسمة جميلة ل",
+    "رسمة جميلة عن",
 ]
 
 
-IMAGE_KEYWORDS_EN = [
+IMAGE_GENERATION_KEYWORDS_EN = [
 
     "generate an image",
     "generate image",
@@ -419,29 +484,27 @@ IMAGE_KEYWORDS_EN = [
     "make a picture",
     "make a photo",
 
-    "edit the image",
-    "edit image",
+    "give me an image",
+    "give me a picture",
+    "give me a photo",
 
-    "edit this image",
+    "can you generate an image",
+    "can you create an image",
 
-    "modify the image",
-    "modify image",
+    "can you make an image",
+    "can you draw an image",
 
-    "modify this image",
+    "an image of",
+    "a picture of",
+    "a photo of",
 
-    "change the image",
-    "change this image",
-
-    "remove from the image",
-    "add to the image",
-
-    "replace in the image",
-
-    "image generation",
+    "image of",
+    "picture of",
+    "photo of",
 ]
 
 
-IMAGE_KEYWORDS_FR = [
+IMAGE_GENERATION_KEYWORDS_FR = [
 
     "génère une image",
     "genere une image",
@@ -460,42 +523,230 @@ IMAGE_KEYWORDS_FR = [
     "dessine une image",
     "dessine-moi une image",
 
-    "modifier l'image",
-    "modifie l'image",
+    "donne-moi une image",
+    "donne moi une image",
 
-    "modifier cette image",
-    "modifie cette image",
+    "une image de",
+    "une photo de",
 
-    "changer l'image",
-    "change l'image",
+    "image de",
+    "photo de",
+
+    "peux-tu générer une image",
+    "peux tu generer une image",
+
+    "peux-tu créer une image",
+    "peux tu creer une image",
 ]
 
 
-def is_image_request(
-    message
+# ============================================================
+# IMAGE ANALYSIS KEYWORDS
+# ============================================================
+#
+# These NEVER trigger image generation when there is no
+# uploaded image.
+#
+# ============================================================
+
+IMAGE_ANALYSIS_KEYWORDS_AR = [
+
+    "حلل الصورة",
+    "حلل الصوره",
+
+    "حلل هذه الصورة",
+    "حلل هذه الصوره",
+
+    "حلل لي الصورة",
+    "حلل لي الصوره",
+
+    "تحليل الصورة",
+    "تحليل الصوره",
+
+    "تحليل هذه الصورة",
+    "تحليل هذه الصوره",
+
+    "ماذا في الصورة",
+    "ماذا في الصوره",
+
+    "ماذا يظهر في الصورة",
+    "ماذا يظهر في الصوره",
+
+    "ماذا يوجد في الصورة",
+    "ماذا يوجد في الصوره",
+
+    "اشرح الصورة",
+    "اشرح الصوره",
+
+    "اشرح لي الصورة",
+    "اشرح لي الصوره",
+
+    "صف الصورة",
+    "صف الصوره",
+
+    "صف لي الصورة",
+    "صف لي الصوره",
+
+    "اقرأ الصورة",
+    "اقرأ الصوره",
+
+    "اقرأ لي الصورة",
+    "اقرأ لي الصوره",
+
+    "افحص الصورة",
+    "افحص الصوره",
+
+    "افحص لي الصورة",
+    "افحص لي الصوره",
+
+    "ما الموجود في الصورة",
+    "ما الموجود في الصوره",
+
+    "ما هذا في الصورة",
+    "ما هذا في الصوره",
+
+    "هل يمكنك تحليل الصورة",
+    "هل يمكنك تحليل الصوره",
+
+    "هل تستطيع تحليل الصورة",
+    "هل تستطيع تحليل الصوره",
+
+    "انظر إلى الصورة",
+    "انظر الى الصورة",
+
+    "انظر إلى الصوره",
+    "انظر الى الصوره",
+]
+
+
+IMAGE_ANALYSIS_KEYWORDS_EN = [
+
+    "analyze the image",
+    "analyze this image",
+
+    "analyse the image",
+    "analyse this image",
+
+    "analyze image",
+    "analyse image",
+
+    "what is in the image",
+    "what's in the image",
+
+    "what does the image show",
+    "what is shown in the image",
+
+    "describe the image",
+    "describe this image",
+
+    "explain the image",
+    "explain this image",
+
+    "read the image",
+
+    "look at the image",
+    "look at this image",
+
+    "can you analyze the image",
+    "can you analyze this image",
+
+    "can you describe the image",
+    "can you describe this image",
+]
+
+
+IMAGE_ANALYSIS_KEYWORDS_FR = [
+
+    "analyse l'image",
+    "analyse cette image",
+
+    "analyser l'image",
+    "analyser cette image",
+
+    "décris l'image",
+    "décris cette image",
+
+    "decris l'image",
+    "decris cette image",
+
+    "qu'est-ce qu'il y a dans l'image",
+    "que montre l'image",
+
+    "explique l'image",
+    "explique cette image",
+
+    "regarde l'image",
+    "regarde cette image",
+]
+
+
+# ============================================================
+# IMAGE EDIT KEYWORDS
+# ============================================================
+
+IMAGE_EDIT_KEYWORDS = [
+
+    "عدل",
+    "عدّل",
+
+    "تعديل",
+
+    "حرر",
+    "حرّر",
+
+    "تحرير",
+
+    "غيّر",
+    "غير",
+
+    "أضف",
+    "اضف",
+
+    "احذف",
+
+    "استبدل",
+
+    "استبدلها",
+
+    "غيّرها",
+    "غيرها",
+
+    "عدلها",
+    "عدّلها",
+
+    "حررها",
+    "حرّرها",
+
+    "edit",
+    "modify",
+    "change",
+
+    "remove",
+    "add",
+
+    "replace",
+
+    "modifier",
+    "modifie",
+    "changer",
+
+    "supprimer",
+    "ajouter",
+
+    "remplacer",
+]
+
+
+# ============================================================
+# IMAGE REQUEST HELPERS
+# ============================================================
+
+def contains_any_keyword(
+    text,
+    keywords
 ):
 
-    if not message:
-
-        return False
-
-    text = str(
-        message
-    ).strip().lower()
-
-    for keyword in IMAGE_KEYWORDS_AR:
-
-        if keyword.lower() in text:
-
-            return True
-
-    for keyword in IMAGE_KEYWORDS_EN:
-
-        if keyword.lower() in text:
-
-            return True
-
-    for keyword in IMAGE_KEYWORDS_FR:
+    for keyword in keywords:
 
         if keyword.lower() in text:
 
@@ -504,74 +755,107 @@ def is_image_request(
     return False
 
 
-# ============================================================
-# IMAGE EDIT DETECTION
-# ============================================================
+def is_image_analysis_request(
+    message
+):
+
+    if not message:
+        return False
+
+    text = str(
+        message
+    ).strip().lower()
+
+    if contains_any_keyword(
+        text,
+        IMAGE_ANALYSIS_KEYWORDS_AR
+    ):
+
+        return True
+
+    if contains_any_keyword(
+        text,
+        IMAGE_ANALYSIS_KEYWORDS_EN
+    ):
+
+        return True
+
+    if contains_any_keyword(
+        text,
+        IMAGE_ANALYSIS_KEYWORDS_FR
+    ):
+
+        return True
+
+    return False
+
 
 def is_image_edit_request(
     message
 ):
 
     if not message:
-
         return False
 
     text = str(
         message
     ).strip().lower()
 
-    edit_keywords = [
+    return contains_any_keyword(
+        text,
+        IMAGE_EDIT_KEYWORDS
+    )
 
-        "عدل",
-        "عدّل",
 
-        "تعديل",
+def is_image_generation_request(
+    message
+):
 
-        "حرر",
-        "حرّر",
+    if not message:
+        return False
 
-        "تحرير",
+    text = str(
+        message
+    ).strip().lower()
 
-        "غيّر",
-        "غير",
+    if contains_any_keyword(
+        text,
+        IMAGE_GENERATION_KEYWORDS_AR
+    ):
 
-        "أضف",
-        "اضف",
+        return True
 
-        "احذف",
+    if contains_any_keyword(
+        text,
+        IMAGE_GENERATION_KEYWORDS_EN
+    ):
 
-        "استبدل",
+        return True
 
-        "استبدلها",
+    if contains_any_keyword(
+        text,
+        IMAGE_GENERATION_KEYWORDS_FR
+    ):
 
-        "غيّرها",
-
-        "عدلها",
-
-        "عدّلها",
-
-        "edit",
-        "modify",
-        "change",
-        "remove",
-        "add",
-        "replace",
-
-        "modifier",
-        "modifie",
-        "changer",
-        "supprimer",
-        "ajouter",
-        "remplacer",
-    ]
-
-    for keyword in edit_keywords:
-
-        if keyword.lower() in text:
-
-            return True
+        return True
 
     return False
+
+
+def is_image_request(
+    message
+):
+
+    """
+    Returns True only for an actual image-generation
+    request.
+
+    Image-analysis questions are intentionally excluded.
+    """
+
+    return is_image_generation_request(
+        message
+    )
 
 
 # ============================================================
@@ -600,6 +884,12 @@ def clean_image_prompt(
         "أنشئ صورة",
         "انشئ صورة",
 
+        "أنشئ لي صوره",
+        "انشئ لي صوره",
+
+        "أنشئ صوره",
+        "انشئ صوره",
+
         "أنشئ لي",
         "انشئ لي",
 
@@ -607,22 +897,34 @@ def clean_image_prompt(
         "انشئ",
 
         "اصنع لي صورة",
-        "اصنع لي",
+        "اصنع لي صوره",
 
         "اصنع صورة",
+        "اصنع صوره",
+
+        "اصنع لي",
         "اصنع",
 
         "اعمل لي صورة",
-        "اعمل لي",
+        "اعمل لي صوره",
 
         "اعمل صورة",
+        "اعمل صوره",
+
+        "اعمل لي",
         "اعمل",
 
         "ولّد لي صورة",
         "ولد لي صورة",
 
+        "ولّد لي صوره",
+        "ولد لي صوره",
+
         "ولّد صورة",
         "ولد صورة",
+
+        "ولّد صوره",
+        "ولد صوره",
 
         "ولّد لي",
         "ولد لي",
@@ -630,20 +932,68 @@ def clean_image_prompt(
         "ولّد",
         "ولد",
 
+        "توليد صورة",
+        "توليد صوره",
+
+        "إنشاء صورة",
+        "انشاء صورة",
+
+        "إنشاء صوره",
+        "انشاء صوره",
+
         "ارسم لي صورة",
+        "ارسم لي صوره",
+
         "ارسم صورة",
+        "ارسم صوره",
 
         "ارسم لي",
         "ارسم",
 
+        "صمم لي صورة",
+        "صمّم لي صورة",
+
         "صمم صورة",
         "صمّم صورة",
 
-        "صمم",
-        "صمّم",
+        "صمم لي صوره",
+        "صمّم لي صوره",
 
-        "توليد صورة",
-        "إنشاء صورة",
+        "صمم صوره",
+        "صمّم صوره",
+
+        "أعطني صورة",
+        "اعطني صورة",
+
+        "أعطني صوره",
+        "اعطني صوره",
+
+        "أعطني صورة ل",
+        "اعطني صورة ل",
+
+        "أعطني صوره ل",
+        "اعطني صوره ل",
+
+        "أعطني صورة عن",
+        "اعطني صورة عن",
+
+        "أعطني صوره عن",
+        "اعطني صوره عن",
+
+        "هل يمكنك إنشاء صورة",
+        "هل يمكنك انشاء صورة",
+
+        "هل يمكنك إنشاء صوره",
+        "هل يمكنك انشاء صوره",
+
+        "هل يمكنك رسم صورة",
+        "هل يمكنك رسم صوره",
+
+        "هل تستطيع إنشاء صورة",
+        "هل تستطيع انشاء صورة",
+
+        "هل تستطيع رسم صورة",
+        "هل تستطيع رسم صوره",
 
         "generate an image",
         "generate image",
@@ -662,6 +1012,9 @@ def clean_image_prompt(
 
         "generate a photo",
         "create a photo",
+
+        "give me an image",
+        "give me a picture",
 
         "generate",
         "create",
@@ -684,15 +1037,18 @@ def clean_image_prompt(
             break
 
     # --------------------------------------------------------
-    # Remove common greeting prefix from image prompts.
+    # Remove Arabic greeting from image prompt.
     # --------------------------------------------------------
 
     greeting_prefixes = [
 
-        "السلام عليكم",
         "السلام عليكم ورحمة الله وبركاته",
-        "سلام عليكم",
+        "السلام عليكم ورحمه الله وبركاته",
+
         "السلام عليكم ورحمه الله",
+        "السلام عليكم",
+
+        "سلام عليكم",
     ]
 
     for greeting in greeting_prefixes:
@@ -703,6 +1059,35 @@ def clean_image_prompt(
 
             cleaned = cleaned[
                 len(greeting):
+            ].strip()
+
+            break
+
+    # --------------------------------------------------------
+    # Remove common polite prefix.
+    # --------------------------------------------------------
+
+    polite_prefixes = [
+
+        "هل يمكنك",
+        "هل تستطيع",
+
+        "لو سمحت",
+        "من فضلك",
+
+        "please",
+        "can you",
+        "could you",
+    ]
+
+    for prefix in polite_prefixes:
+
+        if cleaned.lower().startswith(
+            prefix.lower()
+        ):
+
+            cleaned = cleaned[
+                len(prefix):
             ].strip()
 
             break
@@ -886,9 +1271,7 @@ def extract_text_response(
             return answer
 
     # --------------------------------------------------------
-    # Mistral tool-message response
-    #
-    # choices[0].messages
+    # Tool messages
     # --------------------------------------------------------
 
     messages = first.get(
@@ -943,12 +1326,15 @@ def extract_mistral_image_reference(
 ):
     """
     Supports:
+
         direct image URLs
         [Image: https://...]
-        image_url objects
+        image_url
         tool_file
         file_id
-        nested choices/messages/content
+        nested messages
+        nested content
+        nested choices
     """
 
     if not isinstance(
@@ -973,7 +1359,7 @@ def extract_mistral_image_reference(
         ):
 
             # ------------------------------------------------
-            # Explicit tool_file
+            # tool_file
             # ------------------------------------------------
 
             if value.get(
@@ -997,7 +1383,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Generic file_id
+            # generic file_id
             # ------------------------------------------------
 
             file_id = value.get(
@@ -1017,7 +1403,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # image_url as string
+            # image_url string
             # ------------------------------------------------
 
             image_url = value.get(
@@ -1054,7 +1440,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # image_url as object
+            # image_url object
             # ------------------------------------------------
 
             if isinstance(
@@ -1079,7 +1465,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Direct URL fields
+            # Direct URL
             # ------------------------------------------------
 
             for key in (
@@ -1121,54 +1507,56 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Text containing an image URL
-            #
-            # Example:
-            # [Image: https://files.mistral.ai/...]
-            # ------------------------------------------------
-
-            text = value.get(
-                "text"
-            )
-
-            if isinstance(
-                text,
-                str
-            ):
-
-                match = re.search(
-
-                    r"https?://[^\s\]\)>]+",
-
-                    text
-                )
-
-                if match:
-
-                    url = match.group(
-                        0
-                    ).rstrip(
-                        ".,;)]}>"
-                    )
-
-                    return {
-
-                        "type":
-                            "url",
-
-                        "value":
-                            url
-                    }
-
-
-            # ------------------------------------------------
-            # Recursive known fields
+            # Search text content for [Image: URL]
             # ------------------------------------------------
 
             for key in (
-                "content",
+                "text",
+                "content"
+            ):
+
+                item = value.get(
+                    key
+                )
+
+                if isinstance(
+                    item,
+                    str
+                ):
+
+                    match = re.search(
+
+                        r"https?://[^\s\]\)>]+",
+
+                        item
+                    )
+
+                    if match:
+
+                        url = match.group(
+                            0
+                        ).rstrip(
+                            ".,;)]}>"
+                        )
+
+                        return {
+
+                            "type":
+                                "url",
+
+                            "value":
+                                url
+                        }
+
+
+            # ------------------------------------------------
+            # Known nested fields
+            # ------------------------------------------------
+
+            for key in (
                 "messages",
                 "choices",
+                "content",
                 "outputs",
                 "output",
                 "response"
@@ -1190,7 +1578,7 @@ def extract_mistral_image_reference(
 
 
             # ------------------------------------------------
-            # Last recursive pass
+            # Final recursive scan
             # ------------------------------------------------
 
             for child in value.values():
@@ -1497,7 +1885,6 @@ def gemini_text(
         "contents": [
 
             {
-
                 "role":
                     "user",
 
@@ -1637,7 +2024,7 @@ def mistral_vision(
     """
     Mistral-only image understanding.
 
-    Uses Mistral Vision through Chat Completions.
+    Image must be supplied by the user.
     """
 
     if not MISTRAL_API_KEY:
@@ -1823,9 +2210,6 @@ def mistral_file_signed_url(
     file_id,
     expiry_hours=24
 ):
-    """
-    Convert a Mistral file_id into a temporary signed URL.
-    """
 
     if not file_id:
 
@@ -1917,19 +2301,10 @@ def mistral_generate_image(
     """
     Mistral-only image generation.
 
-    IMPORTANT:
-        tool_choice = "required"
+    Built-in tool:
+        image_generation
 
-    This forces Mistral to call the available image
-    generation tool instead of answering with text.
-
-    Mistral documents:
-        tools=[{"type": "image_generation"}]
-
-    and:
-        tool_choice="required"
-
-    as the mechanism for forcing tool use.
+    The request explicitly requires tool use.
     """
 
     if not MISTRAL_API_KEY:
@@ -1963,13 +2338,10 @@ def mistral_generate_image(
                     (
                         "You are Aido AI's image "
                         "generation system. "
-                        "For this request you MUST use "
-                        "the image_generation tool. "
-                        "Do not answer with a normal text "
-                        "response. "
-                        "Do not ask the user for more "
-                        "details if the image request is "
-                        "already understandable. "
+                        "You must use the image_generation "
+                        "tool for this request. "
+                        "Do not respond with a normal text "
+                        "answer when an image is requested. "
                         "Generate the requested image."
                     )
             },
@@ -1990,10 +2362,6 @@ def mistral_generate_image(
                     "image_generation"
             }
         ],
-
-        # ====================================================
-        # CRITICAL FIX
-        # ====================================================
 
         "tool_choice":
             "required",
@@ -2068,22 +2436,10 @@ def mistral_generate_image(
 
     except Exception as e:
 
-        print(
-            "MISTRAL IMAGE RAW RESPONSE:"
-        )
-
-        print(
-            response.text[:7000]
-        )
-
         raise RuntimeError(
             "Mistral Image returned invalid JSON: "
             f"{e}"
         )
-
-    # ========================================================
-    # COMPLETE RAW RESPONSE LOG
-    # ========================================================
 
     print(
         "MISTRAL IMAGE JSON:"
@@ -2093,10 +2449,6 @@ def mistral_generate_image(
         str(data)[:12000]
     )
 
-    # ========================================================
-    # FIND IMAGE REFERENCE
-    # ========================================================
-
     reference = (
         extract_mistral_image_reference(
             data
@@ -2105,10 +2457,6 @@ def mistral_generate_image(
 
     if not reference:
 
-        # ----------------------------------------------------
-        # Check whether the model still returned text only.
-        # ----------------------------------------------------
-
         text_answer = extract_text_response(
             data
         )
@@ -2116,15 +2464,14 @@ def mistral_generate_image(
         if text_answer:
 
             raise RuntimeError(
-                "Mistral returned text instead of a generated "
-                "image even though tool_choice='required'. "
-                "Mistral response: "
-                f"{text_answer[:2500]}"
+                "Mistral returned text instead of "
+                "a generated image. "
+                f"Response: {text_answer[:2500]}"
             )
 
         raise RuntimeError(
-            "Mistral completed the request but no "
-            "generated image reference was found."
+            "Mistral completed the request but "
+            "no generated image reference was found."
         )
 
     reference_type = reference.get(
@@ -2141,9 +2488,9 @@ def mistral_generate_image(
             "Mistral returned an empty image reference."
         )
 
-    # ========================================================
-    # DIRECT IMAGE URL
-    # ========================================================
+    # --------------------------------------------------------
+    # Direct URL
+    # --------------------------------------------------------
 
     if reference_type == "url":
 
@@ -2151,9 +2498,9 @@ def mistral_generate_image(
             reference_value
         )
 
-    # ========================================================
-    # MISTRAL FILE ID
-    # ========================================================
+    # --------------------------------------------------------
+    # file_id
+    # --------------------------------------------------------
 
     elif reference_type == "file_id":
 
@@ -2179,7 +2526,7 @@ def mistral_generate_image(
     if not image_url:
 
         raise RuntimeError(
-            "Mistral generated the image but "
+            "Mistral generated an image but "
             "no usable image URL was obtained."
         )
 
@@ -2222,19 +2569,13 @@ def mistral_edit_image(
     mime_type
 ):
     """
-    Mistral-only image transformation.
+    Mistral-only image editing/transformation.
 
-    Workflow:
-
-        uploaded image
-              ↓
-        Mistral Vision
-              ↓
-        detailed visual description
-              ↓
-        Mistral image_generation
-              ↓
-        generated result
+    Uploaded image:
+        ↓
+    Mistral Vision
+        ↓
+    Mistral image generation
     """
 
     if not image_bytes:
@@ -2256,19 +2597,15 @@ def mistral_edit_image(
 
     print("=" * 70)
 
-    # ========================================================
-    # STEP 1 - UNDERSTAND SOURCE IMAGE
-    # ========================================================
-
     source_description = mistral_vision(
 
         (
-            "Describe the supplied image accurately for "
-            "a visual transformation request. Include the "
+            "Describe the supplied image accurately "
+            "for a visual transformation. Include the "
             "main subject, composition, background, "
-            "important objects, colors, lighting, clothing, "
-            "environment and style. Do not invent details "
-            "that are not visible."
+            "important objects, colors, lighting, "
+            "clothing, environment and style. "
+            "Do not invent details that are not visible."
         ),
 
         image_bytes,
@@ -2284,32 +2621,24 @@ def mistral_edit_image(
         source_description[:5000]
     )
 
-    # ========================================================
-    # STEP 2 - BUILD IMAGE TRANSFORMATION PROMPT
-    # ========================================================
-
     transformed_prompt = f"""
-Create a final image based on this original image
-description and the requested modification.
+Create the final image based on the original image
+description and the user's requested modification.
 
-ORIGINAL IMAGE DESCRIPTION:
+ORIGINAL IMAGE:
 {source_description}
 
-USER'S REQUEST:
+USER REQUEST:
 {prompt}
 
-Preserve the original subject, composition, important
-visual details and environment unless the user explicitly
-asks to change them.
+Preserve the original subject, composition,
+important visual characteristics and environment
+unless the user explicitly requests a change.
 
-Apply the user's requested modification accurately.
+Apply the requested modification accurately.
 
 Return the final visual result.
 """.strip()
-
-    # ========================================================
-    # STEP 3 - GENERATE MODIFIED IMAGE
-    # ========================================================
 
     result = mistral_generate_image(
         transformed_prompt
@@ -2323,13 +2652,7 @@ Return the final visual result.
 
 
 # ============================================================
-# GENERATE IMAGE WITH FALLBACKS
-# ============================================================
-#
-# There is intentionally NO alternative image provider.
-#
-# Mistral is the ONLY image provider.
-#
+# GENERATE IMAGE
 # ============================================================
 
 def generate_image_with_fallbacks(
@@ -2350,6 +2673,11 @@ def generate_image_with_fallbacks(
     )
 
     print(
+        "IMAGE PROVIDER:",
+        "MISTRAL ONLY"
+    )
+
+    print(
         "HAS INPUT IMAGE:",
         bool(image_bytes)
     )
@@ -2357,11 +2685,6 @@ def generate_image_with_fallbacks(
     print(
         "MIME TYPE:",
         mime_type
-    )
-
-    print(
-        "IMAGE PROVIDER:",
-        "MISTRAL ONLY"
     )
 
     print(
@@ -2451,9 +2774,6 @@ def get_image_response(
     mime_type=None,
     conversation_id=None
 ):
-    """
-    Main image entry point used by app.py.
-    """
 
     message = str(
         message or ""
@@ -2500,7 +2820,7 @@ def get_image_response(
     if image_bytes:
 
         # ----------------------------------------------------
-        # Explicit modification
+        # Image edit
         # ----------------------------------------------------
 
         if is_image_edit_request(
@@ -2508,7 +2828,7 @@ def get_image_response(
         ):
 
             print(
-                "IMAGE EDIT REQUEST"
+                "MISTRAL IMAGE EDIT REQUEST"
             )
 
             try:
@@ -2570,11 +2890,11 @@ def get_image_response(
 
 
         # ----------------------------------------------------
-        # Image understanding
+        # Image analysis
         # ----------------------------------------------------
 
         print(
-            "IMAGE ANALYSIS REQUEST"
+            "MISTRAL VISION ANALYSIS"
         )
 
         try:
@@ -2630,26 +2950,57 @@ def get_image_response(
 
 
     # ========================================================
+    # NO IMAGE UPLOADED
+    # ========================================================
+
+    # --------------------------------------------------------
+    # Analysis request without an uploaded image.
+    #
+    # IMPORTANT:
+    # Do NOT send it to image generation.
+    # --------------------------------------------------------
+
+    if is_image_analysis_request(
+        message
+    ):
+
+        print(
+            "IMAGE ANALYSIS REQUEST WITHOUT IMAGE"
+        )
+
+        return {
+
+            "answer":
+                (
+                    "أرسل الصورة أولًا، ثم سأقوم "
+                    "بتحليلها لك باستخدام Mistral."
+                ),
+
+            "imageUrl":
+                "",
+
+            "provider":
+                "Mistral Vision",
+
+            "conversation_id":
+                conversation_id
+        }
+
+
+    # ========================================================
     # TEXT -> IMAGE
     # ========================================================
 
-    result = (
-        generate_image_with_fallbacks(
+    result = generate_image_with_fallbacks(
 
-            message,
+        message,
 
-            None,
+        None,
 
-            None,
+        None,
 
-            conversation_id
-        )
+        conversation_id
     )
-
-
-    # ========================================================
-    # IMAGE_URL RESULT
-    # ========================================================
 
     if (
         isinstance(
@@ -2682,10 +3033,6 @@ def get_image_response(
         }
 
 
-    # ========================================================
-    # ERROR / TEXT RESULT
-    # ========================================================
-
     return {
 
         "answer":
@@ -2710,19 +3057,6 @@ def get_response(
     message,
     conversation_id=None
 ):
-    """
-    Main application entry point.
-
-    TEXT:
-        Groq
-          ↓
-        OpenRouter
-          ↓
-        Gemini
-
-    IMAGE:
-        Mistral ONLY
-    """
 
     message = str(
         message or ""
@@ -2790,15 +3124,54 @@ def get_response(
 
 
     # ========================================================
-    # IMAGE REQUEST
+    # ANALYSIS WITHOUT IMAGE
+    # ========================================================
+    #
+    # Example:
+    #
+    #     هل يمكنك تحليل الصوره
+    #
+    # We DO NOT generate an image.
+    #
     # ========================================================
 
-    if is_image_request(
+    if is_image_analysis_request(
         message
     ):
 
         print(
-            "IMAGE REQUEST DETECTED"
+            "IMAGE ANALYSIS REQUEST WITHOUT UPLOADED IMAGE"
+        )
+
+        return {
+
+            "answer":
+                (
+                    "أرسل الصورة أولًا، ثم سأقوم "
+                    "بتحليلها لك باستخدام Mistral."
+                ),
+
+            "imageUrl":
+                "",
+
+            "provider":
+                "Mistral Vision",
+
+            "conversation_id":
+                conversation_id
+        }
+
+
+    # ========================================================
+    # IMAGE GENERATION
+    # ========================================================
+
+    if is_image_generation_request(
+        message
+    ):
+
+        print(
+            "IMAGE GENERATION REQUEST DETECTED"
         )
 
         return get_image_response(
@@ -2915,7 +3288,6 @@ def get_response(
             "TEXT ERROR:",
             error
         )
-
 
     return {
 
